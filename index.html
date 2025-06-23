@@ -62,6 +62,12 @@
         let FULL_STATE = {};
         const GID_MAP = {1:"Woodcutter",2:"Clay Pit",3:"Iron Mine",4:"Cropland",5:"Sawmill",6:"Brickyard",7:"Iron Foundry",8:"Grain Mill",9:"Bakery",10:"Warehouse",11:"Granary",13:"Smithy",14:"Tournament Square",15:"Main Building",16:"Rally Point",17:"Marketplace",18:"Embassy",19:"Barracks",20:"Stable",21:"Workshop",22:"Academy",23:"Cranny",24:"Town Hall",25:"Residence",26:"Palace",27:"Treasury",28:"Trade Office",29:"Great Barracks",30:"Great Stable",31:"City Wall",32:"Earth Wall",33:"Palisade",34:"Stonemason's Lodge",35:"Brewery",36:"Trapper",37:"Hero's Mansion",38:"Great Warehouse",39:"Great Granary",40:"Wonder of the World",41:"Horse Drinking Trough",42:"Stone Wall",43:"Makeshift Wall",44:"Command Center",45:"Waterworks",46:"Hospital"};
         let selectedVillageId = null;
+        let currentTab = 'fields';
+
+        function isMultiInstance(gid) {
+            gid = parseInt(gid);
+            return [10,11,23,36,38,39].includes(gid);
+        }
 
         socket.on('connect', () => document.querySelector('#log').innerHTML += '<p style="color:var(--green)">Dashboard connected.</p>');
         socket.on('log_message', msg => {
@@ -108,7 +114,17 @@
             gid = parseInt(gid);
             if (gid === 40) return 100; // Wonder of the World
             if (gid === 23) return 10; // Cranny
+            if ([5,6,7,8,9].includes(gid)) return 5; // Resource boosters
             return 20; // Default max level
+        }
+
+        function getWallGid(villageData) {
+            const wallGids = [31,32,33,42,43];
+            const slot40 = villageData.buildings.find(b => b.id === 40 && wallGids.includes(b.gid));
+            if (slot40) return slot40.gid;
+            const existing = villageData.buildings.find(b => wallGids.includes(b.gid));
+            if (existing) return existing.gid;
+            return 31; // fallback
         }
 
         function addBuildTask(villageId, location, gid, level, isMax = false) {
@@ -132,6 +148,16 @@
             };
             
             socket.emit('add_build_task', { villageId: villageId, task: task });
+        }
+
+        function updateMaxLevel(selectEl, levelInputId) {
+            const gid = selectEl.value;
+            const max = getMaxLevel(gid);
+            const input = document.getElementById(levelInputId);
+            if (input) {
+                input.max = max;
+                if (parseInt(input.value) > max) input.value = max;
+            }
         }
         
         function addNewBuildingTask(villageId, location, selectElementId, levelInputElementId) {
@@ -177,7 +203,11 @@
             html += `<tr><td>Iron</td><td>${villageData.resources.l3 || 0}</td><td>${villageData.storage.l3 || 0}</td><td>${villageData.production.l3 || 0}</td></tr>`;
             html += `<tr><td>Crop</td><td>${villageData.resources.l4 || 0}</td><td>${villageData.storage.l4 || 0}</td><td>${villageData.production.l4 || 0}</td></tr></tbody></table>`;
 
-            html += '<div class="tabs"><div class="tab active" onclick="openTab(event, \'fields\')">Resource Fields</div><div class="tab" onclick="openTab(event, \'buildings\')">City Buildings</div><div class="tab" onclick="openTab(event, \'new\')">New Build</div></div>';
+            html += '<div class="tabs">'
+                 + '<div class="tab" id="tab-fields" onclick="openTab(event, \'fields\')">Resource Fields</div>'
+                 + '<div class="tab" id="tab-buildings" onclick="openTab(event, \'buildings\')">City Buildings</div>'
+                 + '<div class="tab" id="tab-new" onclick="openTab(event, \'new\')">New Build</div>'
+                 + '</div>';
             
             // --- Resource Fields Tab ---
             html += '<div id="fields" class="tab-content active"><h4>Resource Fields</h4><table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
@@ -204,15 +234,22 @@
             html += '</tbody></table></div>';
             
             // --- New Build Tab ---
-            const buildableGIDs = Object.keys(GID_MAP).filter(gid => [5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46].includes(parseInt(gid)));
-            let optionsHtml = '<option value="0">-- Select Building --</option>';
-            buildableGIDs.forEach(gid => optionsHtml += `<option value="${gid}">${GID_MAP[gid]}</option>`);
+            const baseBuildable = [5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46];
+            const existingUnique = new Set(villageData.buildings.filter(b => b.gid > 0 && !isMultiInstance(b.gid)).map(b => b.gid));
+            const buildableGIDs = baseBuildable.filter(g => !existingUnique.has(g));
 
             html += '<div id="new" class="tab-content"><h4>Build in Empty Slot</h4><table><thead><tr><th>Location</th><th>Building</th><th>Target Level</th><th>Action</th></tr></thead><tbody>';
             villageData.buildings.filter(b => b.id > 18 && b.gid === 0).forEach(slot => {
+                let allowed = buildableGIDs.slice();
+                if (slot.id === 40) {
+                    const wallGid = getWallGid(villageData);
+                    allowed = [wallGid];
+                }
+                let optionsHtml = '<option value="0">-- Select Building --</option>';
+                allowed.forEach(gid => optionsHtml += `<option value="${gid}">${GID_MAP[gid]}</option>`);
                 html += `<tr>
                     <td>${slot.id}</td>
-                    <td><select id="gid-select-${villageId}-${slot.id}">${optionsHtml}</select></td>
+                    <td><select id="gid-select-${villageId}-${slot.id}" onchange="updateMaxLevel(this, 'level-input-new-${villageId}-${slot.id}')">${optionsHtml}</select></td>
                     <td><input type="number" id="level-input-new-${villageId}-${slot.id}" min="1" max="20" value="1" style="width: 80px;"></td>
                     <td><button onclick="addNewBuildingTask('${villageId}', '${slot.id}', 'gid-select-${villageId}-${slot.id}', 'level-input-new-${villageId}-${slot.id}')">Add to Queue</button></td>
                 </tr>`;
@@ -220,7 +257,11 @@
             html += '</tbody></table></div>';
             
             // --- Build Queue ---
-            html += `<h3>Build Queue (${villageQueue.length})</h3><ol id="build-queue-list">`;
+            html += `<h3>Build Queue (${villageQueue.length})</h3>`;
+            html += `<div><label><input type="checkbox" id="remember-slots-${villageId}" checked> Remember slots</label>
+                     <button onclick="exportQueue('${villageId}')">Export</button>
+                     <button onclick="importQueue('${villageId}')">Import</button></div>`;
+            html += `<ol id="build-queue-list">`;
             villageQueue.forEach((job, index) => {
                 const jobName = job.gid ? `${GID_MAP[job.gid] || 'Unknown'} (Loc: ${job.location})` : `Task ${job.type}`;
                 html += `<li><span>${jobName} to Level ${job.level}</span> <button class="remove-btn" onclick="removeQueueItem('${villageId}', ${index})">X</button></li>`;
@@ -228,7 +269,9 @@
             html += '</ol>';
 
             detailsDiv.innerHTML = html;
-            openTab({currentTarget: detailsDiv.querySelector('.tab.active')}, 'fields'); // Ensure first tab is shown
+            let tabElem = detailsDiv.querySelector(`#tab-${currentTab}`) || detailsDiv.querySelector('.tab');
+            let tabName = tabElem.id.replace('tab-','');
+            openTab({currentTarget: tabElem}, tabName);
         }
 
         function openTab(event, tabName) {
@@ -236,6 +279,7 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById(tabName).style.display = 'block';
             event.currentTarget.classList.add('active');
+            currentTab = tabName;
         }
 
         document.getElementById('startBtn').onclick = () => socket.emit('start_bot');
@@ -250,6 +294,47 @@
             if(confirm(`Are you sure you want to remove account: ${username}?`)) {
                 socket.emit('remove_account', {username});
             }
+        }
+
+        function parseCSharpBuildOrder(raw) {
+            let out = [];
+            try {
+                const items = JSON.parse(raw);
+                items.forEach(node => {
+                    const content = JSON.parse(node.Content);
+                    if (node.Type === 0) {
+                        out.push({type:'building', location: content.Location, level: content.Level, gid: content.Type});
+                    } else if (node.Type === 1) {
+                        out.push({type:'resource', level: content.Level, plan: content.Plan || 0});
+                    }
+                });
+            } catch(e) { alert('Failed to parse build order: ' + e); }
+            return out;
+        }
+
+        function exportCSharpBuildOrder(queue, rememberSlots) {
+            return JSON.stringify(queue.map((task, idx) => {
+                if (task.type === 'resource') {
+                    return {Id:{Value:0}, Position:idx, Type:1, Content:JSON.stringify({Level:task.level, Plan:task.plan||0})};
+                }
+                return {Id:{Value:0}, Position:idx, Type:0, Content:JSON.stringify({Location: rememberSlots ? task.location : 0, Level:task.level, Type:task.gid})};
+            }));
+        }
+
+        function exportQueue(villageId) {
+            const queue = FULL_STATE.build_queues[villageId] || [];
+            const remember = document.getElementById(`remember-slots-${villageId}`).checked;
+            const data = exportCSharpBuildOrder(queue, remember);
+            navigator.clipboard.writeText(data).then(()=>alert('Exported to clipboard')); 
+        }
+
+        function importQueue(villageId) {
+            const remember = document.getElementById(`remember-slots-${villageId}`).checked;
+            const text = prompt('Paste build order JSON:');
+            if(!text) return;
+            const parsed = parseCSharpBuildOrder(text);
+            if(!remember) parsed.forEach(t => { if(t.type==='building') t.location = 0; });
+            socket.emit('update_build_queue', { villageId:villageId, queue: parsed });
         }
         function removeQueueItem(villageId, index) {
            const currentQueue = FULL_STATE.build_queues[villageId] || [];
