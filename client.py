@@ -29,6 +29,7 @@ class TravianClient:
 
             soup = BeautifulSoup(login_page_resp.text, 'html.parser')
             server_version = "2554.3"
+            
             link_tag = soup.find("link", href=re.compile(r"gpack\.vardom\.net/([\d\.]+)/"))
             if link_tag and (match := re.search(r"gpack\.vardom\.net/([\d\.]+)/", link_tag['href'])):
                 server_version = match.group(1)
@@ -55,88 +56,79 @@ class TravianClient:
 
     def parse_village_page(self, html: str) -> Dict[str, Any]:
         soup = BeautifulSoup(html, "html.parser")
-        out: Dict[str, Any] = {"resources":{},"storage":{},"production":{},"buildings":[],"queue":[],"villages":[]}
+        out: Dict[str, Any] = {"resources": {}, "storage": {}, "production": {}, "buildings": [], "queue": [], "villages": []}
 
         try:
-            script_text = soup.find("script", string=re.compile(r"var\s+resources\s*="))
-            if script_text and (match := re.search(r"var\s+resources\s*=\s*(\{.*?\});", script_text.string, re.DOTALL)):
-                json_str = re.sub(r"([a-zA-Z_][\w]*)\s*:", r'"\1":', match.group(1))
-                res_data = json.loads(json_str)
-                out.update({
-                    "resources": {k: int(v) for k, v in res_data.get("storage", {}).items()},
-                    "storage": {k: int(v) for k, v in res_data.get("maxStorage", {}).items()},
-                    "production": {k: int(v) for k, v in res_data.get("production", {}).items()}
-                })
+            if script_text := soup.find("script", string=re.compile(r"var\s+resources\s*=")):
+                if match := re.search(r"var\s+resources\s*=\s*(\{.*?\});", script_text.string, re.DOTALL):
+                    json_str = re.sub(r'([a-zA-Z_][\w]*)\s*:', r'"\1":', match.group(1))
+                    res_data = json.loads(json_str)
+                    out.update({
+                        "resources": {k: int(v) for k, v in res_data.get("storage", {}).items()},
+                        "storage": {k: int(v) for k, v in res_data.get("maxStorage", {}).items()},
+                        "production": {k: int(v) for k, v in res_data.get("production", {}).items()}
+                    })
         except Exception as exc:
-            log.debug(f"Resource javascript parser failed – {exc}")
+            log.debug(f"Resource javascript parser failed: {exc}")
 
         found_buildings = {}
-        for slot in soup.select('#resourceFieldContainer > a.level, div.buildingSlot'):
-            loc_id, gid, name = None, None, None
+        # Combined selector for both dorf1 and dorf2
+        for slot in soup.select('#resourceFieldContainer > a[href*="build.php"], #villageContent > div.buildingSlot'):
+            loc_id, gid, name, level = None, None, None, 0
             
-            # Method for dorf2 buildings
-            if slot.has_attr('data-aid'):
-                loc_id = int(slot['data-aid'])
-                gid = int(slot.get('data-gid', 0))
-                name = slot.get('data-name')
-                level_tag = slot.select_one(f'a.aid{loc_id} .labelLayer')
-                level = int(level_tag.text.strip()) if level_tag else 0
-            # Method for dorf1 resource fields
+            # For dorf2 city buildings
+            if 'buildingSlot' in slot.get('class', []):
+                if slot.has_attr('data-aid') and slot.has_attr('data-gid'):
+                    loc_id = int(slot['data-aid'])
+                    gid = int(slot.get('data-gid', 0))
+                    name = slot.get('data-name')
+                    if level_tag := slot.select_one(f'a.level .labelLayer'):
+                        level = int(level_tag.text.strip())
+            # For dorf1 resource fields
             elif 'build.php?id=' in slot.get('href', ''):
-                loc_id = int(re.search(r'id=(\d+)', slot['href']).group(1))
-                gid_class = next((c for c in slot.get('class', []) if c.startswith('g') and c[1:].isdigit()), None)
-                gid = int(gid_class[1:]) if gid_class else 0
-                name = slot.get('title', '').split(' Level')[0]
-                level = int(slot.text.strip()) if slot.text.strip().isdigit() else 0
+                if match := re.search(r'id=(\d+)', slot['href']):
+                    loc_id = int(match.group(1))
+                if gid_class := next((c for c in slot.get('class', []) if c.startswith('g') and c[1:].isdigit()), None):
+                    gid = int(gid_class[1:])
+                if 'title' in slot.attrs:
+                    name = slot['title'].split('<br')[0].split(' Level')[0].strip()
+                if slot.text.strip().isdigit():
+                    level = int(slot.text.strip())
             
-            if loc_id and gid:
+            if loc_id is not None and gid is not None:
                 found_buildings[loc_id] = {'id': loc_id, 'gid': gid, 'level': level, 'name': name or f"GID {gid}"}
 
         out['buildings'] = list(found_buildings.values())
         log.debug(f"Parser found {len(out['buildings'])} buildings/fields.")
 
+        # ... (rest of the parser for queue and village list remains the same)
         for li in soup.select(".buildingList li"):
-            if name_div := li.find("div", class_="name"):
-                out["queue"].append({
-                    "name": name_div.text.split("\n")[0].strip(),
-                    "level": li.find("span", class_="lvl").text.strip(),
-                    "eta": int(li.find("span", class_="timer")["value"]),
-                })
-
+            if (name_div := li.find("div", class_="name")) and (lvl_span := li.find("span", class_="lvl")) and (timer_span := li.find("span", class_="timer")):
+                out["queue"].append({"name":name_div.text.split("\n")[0].strip(),"level":lvl_span.text.strip(),"eta":int(timer_span.get("value",0))})
         for v_entry in soup.select("#sidebarBoxVillageList .listEntry"):
-            if link := v_entry.find("a", href=re.compile(r"newdid=")):
-                out["villages"].append({
-                    "id": int(re.search(r"newdid=(\d+)", link["href"]).group(1)),
-                    "name": v_entry.find("span", class_="name").text.strip(),
-                    "active": "active" in v_entry.get("class", []),
-                })
+            if link := v_entry.find("a",href=re.compile(r"newdid=")):
+                out["villages"].append({"id":int(re.search(r"newdid=(\d+)",link["href"]).group(1)),"name":v_entry.find("span",class_="name").text.strip(),"active":"active" in v_entry.get("class",[])})
         return out
 
     def fetch_and_parse_village(self, village_id: int) -> Optional[Dict[str, Any]]:
-        """Fetch dorf1 and dorf2 for a village and return combined data."""
         log.info("[%s] Fetching data for village %d", self.username, village_id)
-        village_data = {}
-        try:
-            url_d1 = f"{self.server_url}/dorf1.php?newdid={village_id}"
-            resp_d1 = self.sess.get(url_d1, timeout=15)
-            resp_d1.raise_for_status()
-            village_data = self.parse_village_page(resp_d1.text)
-        except Exception as exc:
-            log.error("[%s] Failed to fetch/parse dorf1 for village %d: %s", self.username, village_id, exc)
-            return None
-
-        try:
-            url_d2 = f"{self.server_url}/dorf2.php?newdid={village_id}"
-            resp_d2 = self.sess.get(url_d2, timeout=15)
-            resp_d2.raise_for_status()
-            parsed_d2 = self.parse_village_page(resp_d2.text)
-            
-            existing_ids = {b['id'] for b in village_data.get("buildings", [])}
-            for building in parsed_d2.get("buildings", []):
-                if building['id'] not in existing_ids:
-                    village_data.setdefault("buildings", []).append(building)
-            village_data["queue"] = parsed_d2.get("queue", [])
-        except Exception as exc:
-            log.warning("[%s] Failed to fetch/parse dorf2 for village %d: %s", self.username, village_id, exc)
-
+        
+        url_d1 = f"{self.server_url}/dorf1.php?newdid={village_id}"
+        resp_d1 = self.sess.get(url_d1, timeout=15)
+        resp_d1.raise_for_status()
+        village_data = self.parse_village_page(resp_d1.text)
+        
+        url_d2 = f"{self.server_url}/dorf2.php?newdid={village_id}"
+        resp_d2 = self.sess.get(url_d2, timeout=15)
+        resp_d2.raise_for_status()
+        parsed_d2 = self.parse_village_page(resp_d2.text)
+        
+        # Merge buildings data
+        existing_ids = {b['id'] for b in village_data.get("buildings", [])}
+        for building in parsed_d2.get("buildings", []):
+            if building['id'] not in existing_ids:
+                village_data.setdefault("buildings", []).append(building)
+        
+        # Take the most recent queue data (likely the same, but good practice)
+        village_data["queue"] = parsed_d2.get("queue", [])
         return village_data
