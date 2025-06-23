@@ -19,11 +19,15 @@ from flask_socketio import SocketIO
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 log = logging.getLogger("TravianBot")
 log.setLevel(logging.INFO)
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
+log.addHandler(stream_handler)
+
 
 # In‑memory state that gets pushed to the dashboard
 BOT_STATE: Dict[str, Any] = {
     "accounts": [],               # List of account dicts → {username, password, server_url}
-    "villages": {},               # village_id → last scraped village snapshot
+    "village_data": {},           # Combined data store: username -> village_list, village_id -> village_data
     "build_queues": {}            # village_id → list[queue‑item]
 }
 state_lock = threading.Lock()       # thread‑safe writes to BOT_STATE
@@ -48,6 +52,9 @@ def load_config() -> None:
         with state_lock:
             BOT_STATE["accounts"] = data.get("accounts", [])
             BOT_STATE["build_queues"] = data.get("build_queues", {})
+            # Ensure village_data is initialized
+            if "village_data" not in BOT_STATE:
+                BOT_STATE["village_data"] = {}
         log.info("Configuration loaded ✔")
     except Exception as exc:
         log.warning("Could not read config.json → %s", exc)
@@ -56,6 +63,7 @@ def load_config() -> None:
 def save_config() -> None:
     """Persist accounts + queues back to disk."""
     with state_lock:
+        # Create a copy to avoid serializing the large village_data object
         payload = {
             "accounts": BOT_STATE["accounts"],
             "build_queues": BOT_STATE["build_queues"],
@@ -110,7 +118,8 @@ def gid_name(gid: int) -> str:
         1: "Woodcutter", 2: "Clay Pit", 3: "Iron Mine", 4: "Cropland", 5: "Sawmill", 6: "Brickyard",
         7: "Iron Foundry", 8: "Grain Mill", 9: "Bakery", 10: "Warehouse", 11: "Granary", 15: "Main Building",
         16: "Rally Point", 17: "Marketplace", 19: "Barracks", 20: "Stable", 21: "Workshop", 22: "Academy",
-        24: "Town Hall", 25: "Residence", 26: "Palace", 42: "Tournament Square",
+        24: "Town Hall", 25: "Residence", 26: "Palace", 42: "Tournament Square", 37: "Hero's Mansion",
+        45: "Waterworks", 13: "Smithy", 14: "Tournament Square"
     }
     return mapping.get(int(gid), f"GID {gid}")
 
@@ -122,18 +131,13 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = "8b8e2d43‐dashboard‐secret"
 socketio = SocketIO(app, async_mode="threading")
 
-def _ensure_index_html() -> None:
-    """Drop a *very* simple dashboard template the first time we run."""
-    if os.path.exists("index.html"):
-        return
-    tmpl = """<!DOCTYPE html><html><head><title>Travian Bot Dashboard</title><style>body{font-family:Segoe UI,Arial,sans-serif;margin:0;padding:1rem;background:#f5f4f2;color:#333}h1{margin-top:0}.flex{display:flex;gap:1rem}.card{background:#fff;padding:1rem;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,.1);flex:1;overflow:auto}button{cursor:pointer;padding:.5rem 1rem;border:0;border-radius:4px;background:#4caf50;color:#fff;margin-right:.5rem}button.danger{background:#e74c3c}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script></head><body><h1>Travian Bot Dashboard</h1><div class="flex"><div class="card" style="flex:0 0 250px"><h2>Controls</h2><button id="btn-start">Start</button><button id="btn-stop" class="danger">Stop</button><hr><h3>Accounts</h3><ul id="accounts"></ul></div><div class="card"><h2 id="village-title">Villages</h2><pre id="village-json" style="white-space:pre-wrap"></pre></div></div><div class="card" style="margin-top:1rem"><h2>Live log</h2><pre id="log" style="white-space:pre-wrap;height:200px;overflow:auto"></pre></div><script>const s=io();const logDiv=document.getElementById("log");const accountsUl=document.getElementById("accounts");const vJson=document.getElementById("village-json");const vTitle=document.getElementById("village-title");document.getElementById("btn-start").onclick=()=>s.emit("start_bot");document.getElementById("btn-stop").onclick=()=>s.emit("stop_bot");s.on("log",m=>{logDiv.textContent+=m+"\n";logDiv.scrollTop=logDiv.scrollHeight});s.on("state",st=>{accountsUl.innerHTML=st.accounts.map(a=>`<li>${a.username}@${a.server_url}</li>`).join("");vJson.textContent=JSON.stringify(st.villages,null,2);vTitle.textContent=`Villages (${Object.keys(st.villages).length})`;});</script></body></html>"""
-    with open("index.html", "w", encoding="utf‑8") as fh:
-        fh.write(tmpl)
-
-
 @app.route("/")
 def index_route():
-    return render_template_string(open("index.html", encoding="utf‑8").read())
+    try:
+        with open("index.html", "r", encoding="utf-8") as f:
+            return render_template_string(f.read())
+    except FileNotFoundError:
+        return "Error: index.html not found.", 404
 
 # ─────────────────────────────────────────
 # LOW‑LEVEL TRAVIAN CLIENT
@@ -148,14 +152,12 @@ class TravianClient:
         self.server_url = server_url.rstrip("/")
         self.sess = requests.Session()
         self.sess.headers.update({
-            "User-Agent": "Mozilla/5.0 (TravianBot)",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         })
 
-    # ── authentication ──────────────────
-
     def login(self) -> bool:
-        log.info("[%s] Logging in via API …", self.username)
+        log.info("[%s] Logging in...", self.username)
         try:
             self.sess.get(f"{self.server_url}/")
         except requests.RequestException as exc:
@@ -163,73 +165,83 @@ class TravianClient:
             return False
 
         api_url = f"{self.server_url}/api/v1/auth/login"
-        payload = {
-            "name": self.username,
-            "password": self.password,
-            "w": "1920:1080",
-            "mobileOptimizations": False,
-        }
-        headers = {
-            "Accept": "application/json, text/javascript, */*; q=0.01",
-            "Content-Type": "application/json; charset=UTF-8",
-            "X-Requested-With": "XMLHttpRequest",
-            "X-Version": "2554.3",
-            "Referer": f"{self.server_url}/",
-        }
+        payload = {"name": self.username, "password": self.password}
         try:
-            resp = self.sess.post(api_url, json=payload, headers=headers, timeout=15)
+            resp = self.sess.post(api_url, json=payload, timeout=15)
             resp.raise_for_status()
-            if "redirectTo" not in resp.json():
-                raise ValueError("API did not return a redirect → bad credentials?")
+            if "token" not in resp.json().get("data", {}):
+                raise ValueError("API did not return a token → bad credentials?")
             log.info("[%s] Logged in successfully ✔", self.username)
             return True
         except Exception as exc:
             log.error("[%s] Login failed ✖ – %s", self.username, exc)
             return False
 
-    # ── scraping helpers ────────────────
-
     def parse_village_page(self, html: str) -> Dict[str, Any]:
-        """Extract resources, buildings & queued upgrades from village HTML."""
+        """Extract resources, buildings & queued upgrades from a village page HTML."""
         soup = BeautifulSoup(html, "html.parser")
         out: Dict[str, Any] = {
-            "resources": {},
-            "storage": {},
-            "production": {},
-            "buildings": [],
-            "queue": [],
-            "villages": [],
+            "resources": {}, "storage": {}, "production": {},
+            "buildings": [], "queue": [], "villages": [],
         }
 
-        # ① resources block (inside a <script>)
+        # ① Resources block (from <script> tag)
         try:
-            script = soup.find("script", string=re.compile(r"var\s+resources\s*="))
-            if script:
-                m = re.search(r"var\s+resources\s*=\s*(\{.*?\});", script.string, re.DOTALL)
-                if m:
-                    fixed = re.sub(r"([a-zA-Z_][\w]*)\s*:", r'"\1":', m.group(1))
-                    res = json.loads(fixed)
-                    out["resources"] = {k: int(v) for k, v in res["storage"].items()}
-                    out["storage"] = {k: int(v) for k, v in res["maxStorage"].items()}
-                    out["production"] = {k: int(v) for k, v in res["production"].items()}
+            script_text = soup.find("script", string=re.compile(r"var\s+resources\s*="))
+            if script_text:
+                match = re.search(r"var\s+resources\s*=\s*(\{.*?\});", script_text.string, re.DOTALL)
+                if match:
+                    json_str = match.group(1)
+                    # It's not perfect JSON, needs keys quoted
+                    json_str_fixed = re.sub(r"([a-zA-Z_][\w]*)\s*:", r'"\1":', json_str)
+                    res_data = json.loads(json_str_fixed)
+                    out["resources"] = {k: int(v) for k, v in res_data.get("storage", {}).items()}
+                    out["storage"] = {k: int(v) for k, v in res_data.get("maxStorage", {}).items()}
+                    out["production"] = {k: int(v) for k, v in res_data.get("production", {}).items()}
         except Exception as exc:
-            log.debug("resource parser failed – %s", exc)
+            log.debug("Resource parser failed – %s", exc)
 
-        # ② buildings
-        for link in soup.select("#resourceFieldContainer a, #villageContent a"):
+        # ② Buildings (works for both dorf1 and dorf2)
+        for link in soup.select("#resourceFieldContainer a, #villageContent a.buildingSlot"):
             if "build.php?id=" not in link.get("href", ""):
-                continue
+                 continue
             lvl_div = link.find("div", class_="labelLayer")
             if not lvl_div:
                 continue
-            gid_cls = next((c for c in link.get("class", []) if c.startswith("gid")), None)
-            out["buildings"].append({
-                "id": int(re.search(r"id=(\d+)", link["href"]).group(1)),
-                "level": int(lvl_div.text.strip()),
-                "gid": int(gid_cls[3:]) if gid_cls else 0,
-            })
+            
+            gid_cls = next((c for c in link.get("class", []) if c.startswith("g") and c[1:].isdigit()), None)
+            
+            # For dorf2, the gid is in the parent div
+            if not gid_cls:
+                 parent_div = link.find_parent('div', class_='buildingSlot')
+                 if parent_div:
+                     gid_cls = next((c for c in parent_div.get("class", []) if c.startswith("g") and c[1:].isdigit()), None)
 
-        # ③ server build queue
+            if gid_cls:
+                out["buildings"].append({
+                    "id": int(re.search(r"id=(\d+)", link["href"]).group(1)),
+                    "level": int(lvl_div.text.strip()),
+                    "gid": int(gid_cls[1:]),
+                })
+        
+        # for dorf2, some building info is directly in divs
+        for b_slot in soup.select("#villageContent > .buildingSlot"):
+            gid = b_slot.get('data-gid')
+            loc_id = b_slot.get('data-aid')
+            if gid and loc_id:
+                level_tag = b_slot.select_one('a.level')
+                level = 0
+                if level_tag and level_tag.get('data-level'):
+                    level = int(level_tag.get('data-level'))
+                # avoid duplicates from previous loop
+                if not any(b['id'] == int(loc_id) for b in out['buildings']):
+                     out["buildings"].append({
+                        "id": int(loc_id),
+                        "level": level,
+                        "gid": int(gid),
+                    })
+
+        # ③ Server build queue
         for li in soup.select(".buildingList li"):
             name_div = li.find("div", class_="name")
             if not name_div:
@@ -240,18 +252,205 @@ class TravianClient:
                 "eta": int(li.find("span", class_="timer")["value"]),
             })
 
-        # ④ villages sidebar – so the Agent can spawn for each
-        for v in soup.select("#sidebarBoxVillageList .listEntry"):
-            link = v.find("a", href=re.compile(r"newdid="))
+        # ④ Villages sidebar
+        for v_entry in soup.select("#sidebarBoxVillageList .listEntry"):
+            link = v_entry.find("a", href=re.compile(r"newdid="))
             if not link:
                 continue
             out["villages"].append({
                 "id": int(re.search(r"newdid=(\d+)", link["href"]).group(1)),
-                "name": v.find("span", class_="name").text.strip(),
-                "active": "active" in v.get("class", []),
+                "name": v_entry.find("span", class_="name").text.strip(),
+                "active": "active" in v_entry.get("class", []),
             })
         return out
 
-    # ── high‑level helpers ───────────────
+    def fetch_and_parse_village(self, village_id: int) -> Optional[Dict[str, Any]]:
+        """Fetch dorf1 and dorf2 for a village and return combined data."""
+        log.info("[%s] Fetching data for village %d", self.username, village_id)
+        
+        # Fetch and parse dorf1 (resource fields)
+        try:
+            url_d1 = f"{self.server_url}/dorf1.php?newdid={village_id}"
+            resp_d1 = self.sess.get(url_d1, timeout=15)
+            resp_d1.raise_for_status()
+            village_data = self.parse_village_page(resp_d1.text)
+        except Exception as exc:
+            log.error("[%s] Failed to fetch/parse dorf1 for village %d: %s", self.username, village_id, exc)
+            return None
 
-    def fetch_v
+        # Fetch and parse dorf2 (village buildings)
+        try:
+            url_d2 = f"{self.server_url}/dorf2.php?newdid={village_id}"
+            resp_d2 = self.sess.get(url_d2, timeout=15)
+            resp_d2.raise_for_status()
+            parsed_d2 = self.parse_village_page(resp_d2.text)
+            
+            # Merge buildings list, avoiding duplicates
+            existing_building_ids = {b['id'] for b in village_data["buildings"]}
+            for building in parsed_d2["buildings"]:
+                if building['id'] not in existing_building_ids:
+                    village_data["buildings"].append(building)
+
+            village_data["queue"] = parsed_d2["queue"] # Overwrite with dorf2 queue
+        except Exception as exc:
+            log.warning("[%s] Failed to fetch/parse dorf2 for village %d: %s. Proceeding with dorf1 data only.", self.username, village_id, exc)
+
+        return village_data
+
+# ─────────────────────────────────────────
+# HIGH-LEVEL BOT / AGENT LOGIC
+# ─────────────────────────────────────────
+
+class BotThread(threading.Thread):
+    def __init__(self, app_context):
+        super().__init__()
+        self.daemon = True
+        self.stop_event = threading.Event()
+        self.app_context = app_context
+
+    def stop(self):
+        self.stop_event.set()
+
+    def run(self):
+        log.info("Bot thread started.")
+        socketio.emit('log_message', {'data': 'Bot thread started.'})
+        
+        while not self.stop_event.is_set():
+            with state_lock:
+                accounts = BOT_STATE["accounts"][:]
+
+            if not accounts:
+                log.info("No accounts configured. Waiting...")
+                time.sleep(15)
+                continue
+
+            for account in accounts:
+                if self.stop_event.is_set():
+                    break
+                
+                client = TravianClient(account["username"], account["password"], account["server_url"])
+                if not client.login():
+                    time.sleep(10) # Wait before retrying
+                    continue
+
+                try:
+                    dorf1_resp = client.sess.get(f"{client.server_url}/dorf1.php", timeout=15)
+                    dorf1_resp.raise_for_status()
+                    sidebar_data = client.parse_village_page(dorf1_resp.text)
+                    villages = sidebar_data.get("villages", [])
+                except Exception as exc:
+                    log.error("[%s] Could not get village list: %s", client.username, exc)
+                    continue
+
+                if not villages:
+                    log.warning("[%s] No villages found for this account.", client.username)
+                    continue
+
+                with state_lock:
+                    BOT_STATE["village_data"][client.username] = villages
+
+                for village in villages:
+                    if self.stop_event.is_set():
+                        break
+                        
+                    village_id = village['id']
+                    full_village_data = client.fetch_and_parse_village(village_id)
+                    
+                    if full_village_data:
+                        with state_lock:
+                            BOT_STATE["village_data"][str(village_id)] = full_village_data
+                            if str(village_id) not in BOT_STATE["build_queues"]:
+                                log.info("No build queue in config for village %s, creating default.", village_id)
+                                BOT_STATE["build_queues"][str(village_id)] = load_default_build_queue()
+                                save_config()
+
+                        with self.app_context:
+                            socketio.emit("state_update", BOT_STATE)
+
+                    time.sleep(5) # Stagger village updates
+
+            log.info("Finished checking all accounts. Waiting for 60 seconds.")
+            self.stop_event.wait(60)
+            
+        log.info("Bot thread stopped.")
+        socketio.emit('log_message', {'data': 'Bot thread stopped.'})
+
+
+# ─────────────────────────────────────────
+# SOCKET.IO EVENT HANDLERS
+# ─────────────────────────────────────────
+bot_thread = None
+
+@socketio.on('connect')
+def on_connect():
+    log.info("Dashboard connected.")
+    # Send initial state on connect
+    socketio.emit("state_update", BOT_STATE)
+
+@socketio.on('start_bot')
+def handle_start_bot():
+    global bot_thread
+    if bot_thread is None or not bot_thread.is_alive():
+        log.info("Starting bot...")
+        bot_thread = BotThread(app.app_context())
+        bot_thread.start()
+        socketio.emit("log_message", {'data': "Bot started."})
+    else:
+        log.info("Bot is already running.")
+        socketio.emit("log_message", {'data': "Bot is already running."})
+
+@socketio.on('stop_bot')
+def handle_stop_bot():
+    global bot_thread
+    if bot_thread and bot_thread.is_alive():
+        log.info("Stopping bot...")
+        bot_thread.stop()
+        bot_thread = None
+        socketio.emit("log_message", {'data': "Bot stopped."})
+    else:
+        log.info("Bot is not running.")
+        socketio.emit("log_message", {'data': "Bot is not running."})
+
+@socketio.on('add_account')
+def handle_add_account(data):
+    log.info("Adding account: %s", data['username'])
+    with state_lock:
+        if any(a['username'] == data['username'] for a in BOT_STATE['accounts']):
+            log.warning("Account %s already exists.", data['username'])
+            return
+        BOT_STATE['accounts'].append({
+            "username": data["username"],
+            "password": data["password"],
+            "server_url": data["server_url"],
+        })
+    save_config()
+    socketio.emit("state_update", BOT_STATE)
+
+@socketio.on('remove_account')
+def handle_remove_account(data):
+    username_to_remove = data.get('username')
+    log.info("Removing account: %s", username_to_remove)
+    with state_lock:
+        BOT_STATE['accounts'] = [acc for acc in BOT_STATE['accounts'] if acc['username'] != username_to_remove]
+    save_config()
+    socketio.emit("state_update", BOT_STATE)
+
+@socketio.on('update_build_queue')
+def handle_update_build_queue(data):
+    village_id = data.get('villageId')
+    queue = data.get('queue')
+    if village_id and queue is not None:
+        log.info("Updating build queue for village %s", village_id)
+        with state_lock:
+            BOT_STATE['build_queues'][str(village_id)] = queue
+        save_config()
+        socketio.emit("state_update", BOT_STATE)
+
+# ─────────────────────────────────────────
+# MAIN EXECUTION
+# ─────────────────────────────────────────
+
+if __name__ == "__main__":
+    load_config()
+    log.info("Dashboard available at http://127.0.0.1:5000")
+    socketio.run(app, host="0.0.0.0", port=5000)
