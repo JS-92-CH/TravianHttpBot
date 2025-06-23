@@ -29,17 +29,17 @@ class TravianClient:
 
             soup = BeautifulSoup(login_page_resp.text, 'html.parser')
             server_version = "2554.3"
-            
+
             link_tag = soup.find("link", href=re.compile(r"gpack\.vardom\.net/([\d\.]+)/"))
             if link_tag and (match := re.search(r"gpack\.vardom\.net/([\d\.]+)/", link_tag['href'])):
                 server_version = match.group(1)
-            
+
             log.info("[%s] Using server version: %s", self.username, server_version)
 
             api_url = f"{self.server_url}/api/v1/auth/login"
             headers = {'X-Version': server_version, 'X-Requested-With': 'XMLHttpRequest'}
             payload = {"name": self.username, "password": self.password, "w": "1920:1080", "mobileOptimizations": False}
-            
+
             resp = self.sess.post(api_url, json=payload, headers=headers, timeout=15)
             resp.raise_for_status()
             response_json = resp.json()
@@ -72,34 +72,58 @@ class TravianClient:
             log.debug(f"Resource javascript parser failed: {exc}")
 
         found_buildings = {}
-        selector = '#resourceFieldContainer > a[href*="build.php"], #villageContent > div.buildingSlot'
-        for slot in soup.select(selector):
-            loc_id, gid, name, level = None, None, None, 0
-            
-            if 'buildingSlot' in slot.get('class', []): # dorf2 city building
-                if slot.has_attr('data-aid') and slot.has_attr('data-gid'):
+
+        # --- Dcentereddorf1 Resource Fields ---
+        container = soup.find(id="resourceFieldContainer")
+        if container:
+            dorf1_fields = container.select('a[href*="build.php?id="]')
+            for slot in dorf1_fields:
+                try:
+                    loc_id = int(re.search(r'id=(\d+)', slot['href']).group(1))
+
+                    # *** THE BUG FIX IS HERE ***
+                    class_list = slot.get('class', [])
+                    gid_class = next((c for c in class_list if c.startswith('gid') and c[3:].isdigit()), None)
+                    if not gid_class:
+                        continue
+                    gid = int(gid_class[3:])
+                    # *** END OF BUG FIX ***
+
+                    level = 0
+                    if label := slot.find('div', class_='labelLayer'):
+                        if label.text.strip().isdigit():
+                            level = int(label.text.strip())
+
+                    name = None
+                    if 'title' in slot.attrs and slot['title']:
+                        title_soup = BeautifulSoup(slot['title'], 'html.parser')
+                        name = title_soup.get_text().split('||')[0].strip()
+
+                    found_buildings[loc_id] = {'id': loc_id, 'gid': gid, 'level': level, 'name': name}
+                except Exception as e:
+                    log.warning(f"Could not parse a dorf1 resource field link. Link: {slot}. Error: {e}", exc_info=True)
+
+        # --- Dcentereddorf2 City Buildings ---
+        dorf2_buildings = soup.select('#villageContent > .buildingSlot')
+        if dorf2_buildings:
+            for slot in dorf2_buildings:
+                try:
+                    if not (slot.has_attr('data-aid') and slot.has_attr('data-gid')): continue
                     loc_id = int(slot['data-aid'])
                     gid = int(slot.get('data-gid', 0))
                     name = slot.get('data-name')
-                    if level_tag := slot.select_one(f'a.level .labelLayer'):
-                        level = int(level_tag.text.strip())
-            elif 'build.php?id=' in slot.get('href', ''): # dorf1 resource field
-                if match := re.search(r'id=(\d+)', slot['href']):
-                    loc_id = int(match.group(1))
-                if gid_class := next((c for c in slot.get('class', []) if c.startswith('g') and c[1:].isdigit()), None):
-                    gid = int(gid_class[1:])
-                if 'title' in slot.attrs and slot['title']:
-                    name = BeautifulSoup(slot['title'], 'html.parser').contents[0].strip()
-                if label_layer := slot.find('div', class_='labelLayer'):
-                    if label_layer.text.strip().isdigit():
-                        level = int(label_layer.text.strip())
-            
-            if loc_id is not None and gid is not None:
-                found_buildings[loc_id] = {'id': loc_id, 'gid': gid, 'level': level, 'name': name}
+                    level = 0
+                    if level_tag := slot.select_one('a.level .labelLayer'):
+                        if level_tag.text.strip().isdigit(): level = int(level_tag.text.strip())
+                    elif level_tag := slot.select_one('a.level[data-level]'):
+                         if level_tag['data-level'].isdigit(): level = int(level_tag['data-level'])
+                    found_buildings[loc_id] = {'id': loc_id, 'gid': gid, 'level': level, 'name': name}
+                except Exception as e:
+                    log.warning(f"Could not parse a dorf2 building slot. Slot: {slot}. Error: {e}")
 
         out['buildings'] = list(found_buildings.values())
-        log.debug(f"Parser found {len(out['buildings'])} buildings/fields on {page_type} page.")
-        
+        log.info(f"Parser found a total of {len(out['buildings'])} buildings/fields on {page_type} page.")
+
         for li in soup.select(".buildingList li"):
             if (name_div := li.find("div", class_="name")) and (lvl_span := li.find("span", class_="lvl")) and (timer_span := li.find("span", class_="timer")):
                 out["queue"].append({"name":name_div.text.split("\n")[0].strip(),"level":lvl_span.text.strip(),"eta":int(timer_span.get("value",0))})
@@ -110,26 +134,31 @@ class TravianClient:
 
     def fetch_and_parse_village(self, village_id: int) -> Optional[Dict[str, Any]]:
         log.info("[%s] Fetching data for village %d", self.username, village_id)
-        
-        # Fetch and parse dorf1
-        url_d1 = f"{self.server_url}/dorf1.php?newdid={village_id}"
-        resp_d1 = self.sess.get(url_d1, timeout=15)
-        resp_d1.raise_for_status()
-        village_data = self.parse_village_page(resp_d1.text, "dorf1")
-        
-        # Fetch and parse dorf2
-        url_d2 = f"{self.server_url}/dorf2.php?newdid={village_id}"
-        resp_d2 = self.sess.get(url_d2, timeout=15)
-        resp_d2.raise_for_status()
-        parsed_d2 = self.parse_village_page(resp_d2.text, "dorf2")
-        
-        # *** FIX: Correctly merge the building lists ***
-        final_buildings = {b['id']: b for b in village_data.get("buildings", [])}
-        for building in parsed_d2.get("buildings", []):
-            final_buildings[building['id']] = building
-        
-        village_data["buildings"] = list(final_buildings.values())
-        
-        # Take the most recent queue data (likely the same, but good practice)
-        village_data["queue"] = parsed_d2.get("queue", [])
-        return village_data
+
+        try:
+            url_d1 = f"{self.server_url}/dorf1.php?newdid={village_id}"
+            resp_d1 = self.sess.get(url_d1, timeout=15)
+            resp_d1.raise_for_status()
+            village_data = self.parse_village_page(resp_d1.text, "dorf1")
+
+            url_d2 = f"{self.server_url}/dorf2.php?newdid={village_id}"
+            resp_d2 = self.sess.get(url_d2, timeout=15)
+            resp_d2.raise_for_status()
+            parsed_d2 = self.parse_village_page(resp_d2.text, "dorf2")
+
+            final_buildings = {b['id']: b for b in village_data.get("buildings", [])}
+            for building in parsed_d2.get("buildings", []):
+                final_buildings[building['id']] = building
+
+            village_data["buildings"] = list(final_buildings.values())
+            log.info(f"Total buildings for village {village_id} after merge: {len(village_data['buildings'])}")
+
+            village_data["queue"] = parsed_d2.get("queue", [])
+            return village_data
+
+        except requests.exceptions.RequestException as e:
+            log.error(f"Network error fetching village data for {village_id}: {e}")
+            return None
+        except Exception as e:
+            log.error(f"An unexpected error occurred in fetch_and_parse_village for {village_id}: {e}", exc_info=True)
+            return None
