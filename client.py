@@ -1,7 +1,7 @@
 import re
+import json
 import requests
 import logging
-import json
 from typing import Dict, Any, Optional
 from bs4 import BeautifulSoup
 
@@ -28,7 +28,7 @@ class TravianClient:
             login_page_resp.raise_for_status()
 
             soup = BeautifulSoup(login_page_resp.text, 'html.parser')
-            server_version = "2554.3" 
+            server_version = "2554.3"
             
             link_tag = soup.find("link", href=re.compile(r"gpack\.vardom\.net/([\d\.]+)/"))
             if link_tag and (match := re.search(r"gpack\.vardom\.net/([\d\.]+)/", link_tag['href'])):
@@ -54,7 +54,7 @@ class TravianClient:
             log.error("[%s] Login process failed with an exception: %s", self.username, exc)
             return False
 
-    def parse_village_page(self, html: str) -> Dict[str, Any]:
+    def parse_village_page(self, html: str, page_type: str) -> Dict[str, Any]:
         soup = BeautifulSoup(html, "html.parser")
         out: Dict[str, Any] = {"resources": {}, "storage": {}, "production": {}, "buildings": [], "queue": [], "villages": []}
 
@@ -72,36 +72,33 @@ class TravianClient:
             log.debug(f"Resource javascript parser failed: {exc}")
 
         found_buildings = {}
-        # This selector now correctly handles both dorf1 and dorf2
-        for slot in soup.select('#resourceFieldContainer > a[href*="build.php"], div.buildingSlot'):
+        selector = '#resourceFieldContainer > a[href*="build.php"], #villageContent > div.buildingSlot'
+        for slot in soup.select(selector):
             loc_id, gid, name, level = None, None, None, 0
             
-            # For dorf2 city buildings
-            if slot.has_attr('data-aid'):
-                loc_id = int(slot['data-aid'])
-                gid = int(slot.get('data-gid', 0))
-                name = slot.get('data-name')
-                if level_tag := slot.select_one(f'a.level .labelLayer'):
-                    level = int(level_tag.text.strip())
-            # For dorf1 resource fields
-            elif 'build.php?id=' in slot.get('href', ''):
+            if 'buildingSlot' in slot.get('class', []): # dorf2 city building
+                if slot.has_attr('data-aid') and slot.has_attr('data-gid'):
+                    loc_id = int(slot['data-aid'])
+                    gid = int(slot.get('data-gid', 0))
+                    name = slot.get('data-name')
+                    if level_tag := slot.select_one(f'a.level .labelLayer'):
+                        level = int(level_tag.text.strip())
+            elif 'build.php?id=' in slot.get('href', ''): # dorf1 resource field
                 if match := re.search(r'id=(\d+)', slot['href']):
                     loc_id = int(match.group(1))
                 if gid_class := next((c for c in slot.get('class', []) if c.startswith('g') and c[1:].isdigit()), None):
                     gid = int(gid_class[1:])
-                # The name is in the title attribute for resource fields
-                if 'title' in slot.attrs:
-                    # Extracts name like "Woodcutter" from "Woodcutter<br />Level 16"
+                if 'title' in slot.attrs and slot['title']:
                     name = BeautifulSoup(slot['title'], 'html.parser').contents[0].strip()
                 if label_layer := slot.find('div', class_='labelLayer'):
                     if label_layer.text.strip().isdigit():
                         level = int(label_layer.text.strip())
-
+            
             if loc_id is not None and gid is not None:
-                found_buildings[loc_id] = {'id': loc_id, 'gid': gid, 'level': level, 'name': name or f"GID {gid}"}
+                found_buildings[loc_id] = {'id': loc_id, 'gid': gid, 'level': level, 'name': name}
 
         out['buildings'] = list(found_buildings.values())
-        log.debug(f"Parser found {len(out['buildings'])} buildings/fields.")
+        log.debug(f"Parser found {len(out['buildings'])} buildings/fields on {page_type} page.")
         
         for li in soup.select(".buildingList li"):
             if (name_div := li.find("div", class_="name")) and (lvl_span := li.find("span", class_="lvl")) and (timer_span := li.find("span", class_="timer")):
@@ -114,24 +111,25 @@ class TravianClient:
     def fetch_and_parse_village(self, village_id: int) -> Optional[Dict[str, Any]]:
         log.info("[%s] Fetching data for village %d", self.username, village_id)
         
+        # Fetch and parse dorf1
         url_d1 = f"{self.server_url}/dorf1.php?newdid={village_id}"
         resp_d1 = self.sess.get(url_d1, timeout=15)
         resp_d1.raise_for_status()
-        village_data = self.parse_village_page(resp_d1.text)
+        village_data = self.parse_village_page(resp_d1.text, "dorf1")
         
+        # Fetch and parse dorf2
         url_d2 = f"{self.server_url}/dorf2.php?newdid={village_id}"
         resp_d2 = self.sess.get(url_d2, timeout=15)
         resp_d2.raise_for_status()
-        parsed_d2 = self.parse_village_page(resp_d2.text)
+        parsed_d2 = self.parse_village_page(resp_d2.text, "dorf2")
         
-        # Merge buildings data
-        # Create a dictionary of buildings from dorf1 for quick lookup
-        existing_buildings = {b['id']: b for b in village_data.get("buildings", [])}
-        # Update with or add buildings from dorf2
+        # *** FIX: Correctly merge the building lists ***
+        final_buildings = {b['id']: b for b in village_data.get("buildings", [])}
         for building in parsed_d2.get("buildings", []):
-            existing_buildings[building['id']] = building
+            final_buildings[building['id']] = building
         
-        village_data["buildings"] = list(existing_buildings.values())
+        village_data["buildings"] = list(final_buildings.values())
         
+        # Take the most recent queue data (likely the same, but good practice)
         village_data["queue"] = parsed_d2.get("queue", [])
         return village_data

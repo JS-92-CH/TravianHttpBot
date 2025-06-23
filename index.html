@@ -56,22 +56,123 @@
         </div>
     </div>
     <script>
-        const socket=io();let FULL_STATE={};let selectedVillageId=null;
-        const GID_MAP={1:"Woodcutter",2:"Clay Pit",3:"Iron Mine",4:"Cropland",5:"Sawmill",6:"Brickyard",7:"Iron Foundry",8:"Grain Mill",9:"Bakery",10:"Warehouse",11:"Granary",12:"Flour Mill",13:"Smithy",14:"Tournament Square",15:"Main Building",16:"Rally Point",17:"Marketplace",18:"Embassy",19:"Barracks",20:"Stable",21:"Workshop",22:"Academy",23:"Cranny",24:"Town Hall",25:"Residence",26:"Palace",27:"Treasury",28:"Trade Office",29:"Great Barracks",30:"Great Stable",31:"City Wall",32:"Earth Wall",33:"Palisade",34:"Stonemason's Lodge",35:"Brewery",36:"Trapper",37:"Hero's Mansion",38:"Great Warehouse",39:"Great Granary",40:"Wonder of the World",41:"Horse Drinking Trough",42:"Stone Wall",43:"Makeshift Wall",44:"Command Center",45:"Waterworks",46:"Hospital"};
-        
-        socket.on('connect',()=>document.querySelector('#log').innerHTML+='<p style="color:var(--green)">Dashboard connected.</p>');
-        socket.on('log_message',msg=>{const e=document.getElementById("log");e.innerHTML+=msg.data.replace(/</g,"&lt;").replace(/>/g,"&gt;")+"<br>",e.scrollTop=e.scrollHeight});
-        socket.on('state_update',e=>{FULL_STATE=e,renderAccountsAndVillages(),selectedVillageId&&showVillageDetails(selectedVillageId)});
-        
-        function renderAccountsAndVillages(){const e=document.getElementById("account-list");e&&(e.innerHTML="<ul>"+(FULL_STATE.accounts||[]).map(e=>`<li><span>${e.username}</span> <button class="remove-btn" onclick="removeAccount('${e.username}')">X</button></li>`).join("")+"</ul>");const t=document.getElementById("village-list");if(t){t.innerHTML="";for(const e in FULL_STATE.village_data){const l=FULL_STATE.village_data[e];Array.isArray(l)&&l.forEach(e=>{t.innerHTML+=`<div class="village-list-item" id="village-item-${e.id}" onclick="showVillageDetails('${e.id}')">${e.name}</div>`})}}}
-        
-        function showVillageDetails(e){selectedVillageId=e,document.querySelectorAll(".village-list-item").forEach(e=>e.classList.remove("active")),document.getElementById(`village-item-${e}`)?.classList.add("active");const t=FULL_STATE.village_data[e],l=FULL_STATE.build_queues[e]||[],a=document.getElementById("village-details");if(!t||!t.resources)return void(a.innerHTML=`<h2>Details for Village ${e}</h2><p>Waiting for data from agent...</p>`);let i="Unknown";for(const t in FULL_STATE.village_data)if(Array.isArray(FULL_STATE.village_data[t])){const l=FULL_STATE.village_data[t].find(t=>t.id==e);if(l){i=l.name;break}}let d=`<h2>Village: ${i} (ID: ${e})</h2>`;d+="<h3>Resources</h3><table><thead><tr><th>Resource</th><th>Current</th><th>Storage</th><th>Production/hr</th></tr></thead><tbody>",d+=`<tr><td>Wood</td><td>${t.resources.l1||0}</td><td>${t.storage.l1||0}</td><td>${t.production.l1||0}</td></tr>`,d+=`<tr><td>Clay</td><td>${t.resources.l2||0}</td><td>${t.storage.l2||0}</td><td>${t.production.l2||0}</td></tr>`,d+=`<tr><td>Iron</td><td>${t.resources.l3||0}</td><td>${t.storage.l3||0}</td><td>${t.production.l3||0}</td></tr>`,d+=`<tr><td>Crop</td><td>${t.resources.l4||0}</td><td>${t.storage.l4||0}</td><td>${t.production.l4||0}</td></tr></tbody></table>`,d+='<div class="tabs"><div class="tab active" onclick="openTab(event, \'fields\')">Resource Fields</div><div class="tab" onclick="openTab(event, \'buildings\')">City Buildings</div></div>',d+='<div id="fields" class="tab-content active" style="display:block;"><h4>Resource Fields</h4><table><thead><tr><th>Location</th><th>Name</th><th>Level</th></tr></thead><tbody>',t.buildings.filter(e=>e.id<=18).sort((e,t)=>e.id-t.id).forEach(e=>{d+=`<tr><td>${e.id}</td><td>${e.name||GID_MAP[e.gid]||`GID ${e.gid}`}</td><td>${e.level}</td></tr>`}),d+="</tbody></table></div>",d+='<div id="buildings" class="tab-content"><h4>City Buildings</h4><table><thead><tr><th>Location</th><th>Name</th><th>Level</th></tr></thead><tbody>',t.buildings.filter(e=>e.id>18).sort((e,t)=>e.id-t.id).forEach(e=>{d+=`<tr><td>${e.id}</td><td>${e.name||GID_MAP[e.gid]||`GID ${e.gid}`}</td><td>${e.level}</td></tr>`}),d+="</tbody></table></div>",d+=`<h3>Build Queue (${l.length})</h3><ol id="build-queue-list">`,l.forEach((t,l)=>{const i=t.type==="building"?`${GID_MAP[t.gid]||"Unknown"} (Loc: ${t.location})`:`All ${0===t.plan?"Resource":"Infra"} Fields`;d+=`<li><span>${i} to Level ${t.level}</span> <button class="remove-btn" onclick="removeQueueItem('${e}', ${l})">X</button></li>`}),d+="</ol>",a.innerHTML=d}
-        
-        function openTab(e,t){document.querySelectorAll(".tab-content").forEach(e=>e.style.display="none"),document.querySelectorAll(".tab").forEach(e=>e.classList.remove("active")),document.getElementById(t).style.display="block",e.currentTarget.classList.add("active")}
-        
-        document.getElementById("startBtn").onclick=()=>socket.emit("start_bot",{}),document.getElementById("stopBtn").onclick=()=>socket.emit("stop_bot",{}),document.getElementById("add-account-form").onsubmit=e=>{e.preventDefault(),socket.emit("add_account",{username:document.getElementById("username").value,password:document.getElementById("password").value,server_url:document.getElementById("server_url").value}),e.target.reset()};
-        function removeAccount(e){confirm(`Are you sure you want to remove account: ${e}?`)&&socket.emit("remove_account",{username:e})}
-        function removeQueueItem(e,t){const l=FULL_STATE.build_queues[e]||[];l.splice(t,1),socket.emit("update_build_queue",{villageId:e,queue:l})}
+        const socket = io();
+        let FULL_STATE = {};
+        const GID_MAP = {1:"Woodcutter",2:"Clay Pit",3:"Iron Mine",4:"Cropland",5:"Sawmill",6:"Brickyard",7:"Iron Foundry",8:"Grain Mill",9:"Bakery",10:"Warehouse",11:"Granary",12:"Flour Mill",13:"Smithy",14:"Tournament Square",15:"Main Building",16:"Rally Point",17:"Marketplace",18:"Embassy",19:"Barracks",20:"Stable",21:"Workshop",22:"Academy",23:"Cranny",24:"Town Hall",25:"Residence",26:"Palace",27:"Treasury",28:"Trade Office",29:"Great Barracks",30:"Great Stable",31:"City Wall",32:"Earth Wall",33:"Palisade",34:"Stonemason's Lodge",35:"Brewery",36:"Trapper",37:"Hero's Mansion",38:"Great Warehouse",39:"Great Granary",40:"Wonder of the World",41:"Horse Drinking Trough",42:"Stone Wall",43:"Makeshift Wall",44:"Command Center",45:"Waterworks",46:"Hospital"};
+        let selectedVillageId = null;
+
+        socket.on('connect', () => document.querySelector('#log').innerHTML += '<p style="color:var(--green)">Dashboard connected.</p>');
+        socket.on('log_message', msg => {
+            const log = document.getElementById('log');
+            log.innerHTML += msg.data.replace(/</g, "&lt;").replace(/>/g, "&gt;") + '<br>';
+            log.scrollTop = log.scrollHeight;
+        });
+
+        socket.on('state_update', newState => {
+            FULL_STATE = newState;
+            renderAccountsAndVillages();
+            if(selectedVillageId) {
+                showVillageDetails(selectedVillageId);
+            }
+        });
+
+        function renderAccountsAndVillages() {
+            const accList = document.getElementById('account-list');
+            if (accList) accList.innerHTML = '<ul>' + (FULL_STATE.accounts || []).map(acc => `<li><span>${acc.username}</span> <button class="remove-btn" onclick="removeAccount('${acc.username}')">X</button></li>`).join('') + '</ul>';
+
+            const villageList = document.getElementById('village-list');
+            if (villageList) {
+                villageList.innerHTML = '';
+                for (const username in FULL_STATE.village_data) {
+                    const villageData = FULL_STATE.village_data[username];
+                    if (Array.isArray(villageData)) {
+                        villageData.forEach(village => {
+                            villageList.innerHTML += `<div class="village-list-item" id="village-item-${village.id}" onclick="showVillageDetails('${village.id}')">${village.name}</div>`;
+                        });
+                    }
+                }
+            }
+        }
+
+        function showVillageDetails(villageId) {
+            selectedVillageId = villageId;
+            document.querySelectorAll('.village-list-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`village-item-${villageId}`)?.classList.add('active');
+
+            const villageData = FULL_STATE.village_data[villageId];
+            const villageQueue = FULL_STATE.build_queues[villageId] || [];
+            const detailsDiv = document.getElementById('village-details');
+            
+            if (!villageData || !villageData.resources || !villageData.buildings) {
+                detailsDiv.innerHTML = `<h2>Details for Village ${villageId}</h2><p>Waiting for data from agent...</p>`;
+                return;
+            }
+            
+            let villageName = "Unknown";
+            for (const username in FULL_STATE.village_data) {
+                if (Array.isArray(FULL_STATE.village_data[username])) {
+                    const found = FULL_STATE.village_data[username].find(v => v.id == villageId);
+                    if (found) { villageName = found.name; break; }
+                }
+            }
+
+            let html = `<h2>Village: ${villageName} (ID: ${villageId})</h2>`;
+            html += '<h3>Resources</h3><table><thead><tr><th>Resource</th><th>Current</th><th>Storage</th><th>Production/hr</th></tr></thead><tbody>';
+            html += `<tr><td>Wood</td><td>${villageData.resources.l1 || 0}</td><td>${villageData.storage.l1 || 0}</td><td>${villageData.production.l1 || 0}</td></tr>`;
+            html += `<tr><td>Clay</td><td>${villageData.resources.l2 || 0}</td><td>${villageData.storage.l2 || 0}</td><td>${villageData.production.l2 || 0}</td></tr>`;
+            html += `<tr><td>Iron</td><td>${villageData.resources.l3 || 0}</td><td>${villageData.storage.l3 || 0}</td><td>${villageData.production.l3 || 0}</td></tr>`;
+            html += `<tr><td>Crop</td><td>${villageData.resources.l4 || 0}</td><td>${villageData.storage.l4 || 0}</td><td>${villageData.production.l4 || 0}</td></tr></tbody></table>`;
+
+            html += '<div class="tabs"><div class="tab active" onclick="openTab(event, \'fields\')">Resource Fields</div><div class="tab" onclick="openTab(event, \'buildings\')">City Buildings</div></div>';
+            
+            html += '<div id="fields" class="tab-content active"><h4>Resource Fields</h4><table><thead><tr><th>Location</th><th>Name</th><th>Level</th></tr></thead><tbody>';
+            villageData.buildings.filter(b => b.id <= 18).sort((a,b) => a.id - b.id).forEach(b => {
+                html += `<tr><td>${b.id}</td><td>${b.name || GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td></tr>`;
+            });
+            html += '</tbody></table></div>';
+
+            html += '<div id="buildings" class="tab-content"><h4>City Buildings</h4><table><thead><tr><th>Location</th><th>Name</th><th>Level</th></tr></thead><tbody>';
+            villageData.buildings.filter(b => b.id > 18).sort((a,b) => a.id - b.id).forEach(b => {
+                html += `<tr><td>${b.id}</td><td>${b.name || GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td></tr>`;
+            });
+            html += '</tbody></table></div>';
+            
+            html += `<h3>Build Queue (${villageQueue.length})</h3><ol id="build-queue-list">`;
+            villageQueue.forEach((job, index) => {
+                const jobName = job.type === 'building' ? `${GID_MAP[job.gid] || 'Unknown'} (Loc: ${job.location})` : `All ${job.plan === 0 ? 'Resource' : 'Infra'} Fields`;
+                html += `<li><span>${jobName} to Level ${job.level}</span> <button class="remove-btn" onclick="removeQueueItem('${villageId}', ${index})">X</button></li>`;
+            });
+            html += '</ol>';
+
+            detailsDiv.innerHTML = html;
+            openTab({currentTarget: detailsDiv.querySelector('.tab.active')}, 'fields'); // Ensure first tab is shown
+        }
+
+        function openTab(event, tabName) {
+            document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabName).style.display = 'block';
+            event.currentTarget.classList.add('active');
+        }
+
+        document.getElementById('startBtn').onclick = () => socket.emit('start_bot');
+        document.getElementById('stopBtn').onclick = () => socket.emit('stop_bot');
+        document.getElementById('add-account-form').onsubmit = (e) => {
+            e.preventDefault();
+            socket.emit('add_account', { username: document.getElementById('username').value, password: document.getElementById('password').value, server_url: document.getElementById('server_url').value });
+            e.target.reset();
+        };
+
+        function removeAccount(username) {
+            if(confirm(`Are you sure you want to remove account: ${username}?`)) {
+                socket.emit('remove_account', {username});
+            }
+        }
+        function removeQueueItem(villageId, index) {
+           const currentQueue = FULL_STATE.build_queues[villageId] || [];
+           currentQueue.splice(index, 1);
+           socket.emit('update_build_queue', { villageId: villageId, queue: currentQueue });
+        }
     </script>
 </body>
 </html>

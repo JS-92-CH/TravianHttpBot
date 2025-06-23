@@ -86,7 +86,8 @@ class BotManager(threading.Thread):
                 try:
                     dorf1_resp = client.sess.get(f"{client.server_url}/dorf1.php", timeout=15)
                     dorf1_resp.raise_for_status()
-                    sidebar_data = client.parse_village_page(dorf1_resp.text)
+                    # FIX: Added the missing 'page_type' argument to the call
+                    sidebar_data = client.parse_village_page(dorf1_resp.text, "dorf1")
                     villages = sidebar_data.get("villages", [])
 
                     with state_lock:
