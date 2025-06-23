@@ -24,11 +24,11 @@ def on_connect():
     socketio.emit("state_update", BOT_STATE)
 
 @socketio.on('start_bot')
-def handle_start_bot():
+def handle_start_bot(data=None):  # <-- FIX: Added optional argument
     global bot_thread
     if bot_thread is None or not bot_thread.is_alive():
         log.info("Starting bot...")
-        bot_thread = BotThread()
+        bot_thread = BotThread(socketio)
         bot_thread.start()
         socketio.emit("log_message", {'data': "Bot started."})
     else:
@@ -36,7 +36,7 @@ def handle_start_bot():
         socketio.emit("log_message", {'data': "Bot is already running."})
 
 @socketio.on('stop_bot')
-def handle_stop_bot():
+def handle_stop_bot(data=None):  # <-- FIX: Added optional argument
     global bot_thread
     if bot_thread and bot_thread.is_alive():
         log.info("Stopping bot...")

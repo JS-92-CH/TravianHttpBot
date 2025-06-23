@@ -1,5 +1,6 @@
 import time
 import threading
+import concurrent.futures
 from typing import Optional
 
 from client import TravianClient
@@ -7,17 +8,26 @@ from dashboard import socketio
 from config import log, BOT_STATE, state_lock, save_config, load_default_build_queue
 
 class BotThread(threading.Thread):
-    def __init__(self):
+    def __init__(self, socketio_instance):
         super().__init__()
+        self.socketio = socketio_instance
         self.daemon = True
         self.stop_event = threading.Event()
 
     def stop(self):
         self.stop_event.set()
+        
+    def fetch_village_task(self, client, village_id):
+        """Wrapper task for the thread pool."""
+        try:
+            return village_id, client.fetch_and_parse_village(village_id)
+        except Exception as e:
+            log.error(f"Error fetching village {village_id}: {e}")
+            return village_id, None
 
     def run(self):
         log.info("Bot thread started.")
-        socketio.emit('log_message', {'data': 'Bot thread started.'})
+        self.socketio.emit('log_message', {'data': 'Bot thread started.'})
         
         while not self.stop_event.is_set():
             with state_lock:
@@ -52,25 +62,25 @@ class BotThread(threading.Thread):
                 with state_lock:
                     BOT_STATE["village_data"][client.username] = villages
 
-                for village in villages:
-                    if self.stop_event.is_set(): break
-                        
-                    village_id = village['id']
-                    full_village_data = client.fetch_and_parse_village(village_id)
+                # Use a ThreadPool to fetch village data in parallel
+                with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                    future_to_village = {executor.submit(self.fetch_village_task, client, v['id']): v for v in villages}
                     
-                    if full_village_data:
-                        with state_lock:
-                            BOT_STATE["village_data"][str(village_id)] = full_village_data
-                            if str(village_id) not in BOT_STATE["build_queues"]:
-                                log.info("No build queue for village %s, creating default.", village_id)
-                                BOT_STATE["build_queues"][str(village_id)] = load_default_build_queue()
-                                save_config()
-                        socketio.emit("state_update", BOT_STATE)
-
-                    time.sleep(5)
+                    for future in concurrent.futures.as_completed(future_to_village):
+                        if self.stop_event.is_set(): break
+                        village_id, full_village_data = future.result()
+                        
+                        if full_village_data:
+                            with state_lock:
+                                BOT_STATE["village_data"][str(village_id)] = full_village_data
+                                if str(village_id) not in BOT_STATE["build_queues"]:
+                                    log.info("No build queue for village %s, creating default.", village_id)
+                                    BOT_STATE["build_queues"][str(village_id)] = load_default_build_queue()
+                                    save_config()
+                            self.socketio.emit("state_update", BOT_STATE)
 
             log.info("Finished checking all accounts. Waiting for 60 seconds.")
             self.stop_event.wait(60)
             
         log.info("Bot thread stopped.")
-        socketio.emit('log_message', {'data': 'Bot thread stopped.'})
+        self.socketio.emit('log_message', {'data': 'Bot thread stopped.'})

@@ -21,95 +21,101 @@ class TravianClient:
         })
 
     def login(self) -> bool:
-        log.info("[%s] Logging in...", self.username)
+        log.info("[%s] Attempting API login to Vardom server...", self.username)
         try:
-            self.sess.get(f"{self.server_url}/")
-        except requests.RequestException as exc:
-            log.error("[%s] Cannot reach server: %s", self.username, exc)
-            return False
+            login_page_url = f"{self.server_url}/"
+            login_page_resp = self.sess.get(login_page_url, timeout=15)
+            login_page_resp.raise_for_status()
 
-        api_url = f"{self.server_url}/api/v1/auth/login"
-        payload = {"name": self.username, "password": self.password}
-        try:
-            resp = self.sess.post(api_url, json=payload, timeout=15)
+            soup = BeautifulSoup(login_page_resp.text, 'html.parser')
+            server_version = "2554.3"
+            link_tag = soup.find("link", href=re.compile(r"gpack\.vardom\.net/([\d\.]+)/"))
+            if link_tag and (match := re.search(r"gpack\.vardom\.net/([\d\.]+)/", link_tag['href'])):
+                server_version = match.group(1)
+            
+            log.info("[%s] Using server version: %s", self.username, server_version)
+
+            api_url = f"{self.server_url}/api/v1/auth/login"
+            headers = {'X-Version': server_version, 'X-Requested-With': 'XMLHttpRequest'}
+            payload = {"name": self.username, "password": self.password, "w": "1920:1080", "mobileOptimizations": False}
+            
+            resp = self.sess.post(api_url, json=payload, headers=headers, timeout=15)
             resp.raise_for_status()
-            if "token" not in resp.json().get("data", {}):
-                raise ValueError("API did not return a token → bad credentials?")
-            log.info("[%s] Logged in successfully ✔", self.username)
-            return True
+            response_json = resp.json()
+
+            if response_json.get("redirectTo") == "dorf1.php":
+                log.info("[%s] Logged in successfully ✔", self.username)
+                return True
+            else:
+                log.error("[%s] Login failed. Server response: %s", self.username, response_json)
+                return False
         except Exception as exc:
-            log.error("[%s] Login failed ✖ – %s", self.username, exc)
+            log.error("[%s] Login process failed with an exception: %s", self.username, exc)
             return False
 
     def parse_village_page(self, html: str) -> Dict[str, Any]:
-        """Extract resources, buildings & queued upgrades from a village page HTML."""
         soup = BeautifulSoup(html, "html.parser")
-        out: Dict[str, Any] = {
-            "resources": {}, "storage": {}, "production": {},
-            "buildings": [], "queue": [], "villages": [],
-        }
+        out: Dict[str, Any] = {"resources":{},"storage":{},"production":{},"buildings":[],"queue":[],"villages":[]}
 
         try:
             script_text = soup.find("script", string=re.compile(r"var\s+resources\s*="))
-            if script_text:
-                match = re.search(r"var\s+resources\s*=\s*(\{.*?\});", script_text.string, re.DOTALL)
-                if match:
-                    json_str = re.sub(r"([a-zA-Z_][\w]*)\s*:", r'"\1":', match.group(1))
-                    res_data = json.loads(json_str)
-                    out["resources"] = {k: int(v) for k, v in res_data.get("storage", {}).items()}
-                    out["storage"] = {k: int(v) for k, v in res_data.get("maxStorage", {}).items()}
-                    out["production"] = {k: int(v) for k, v in res_data.get("production", {}).items()}
-        except Exception as exc:
-            log.debug("Resource parser failed – %s", exc)
-
-        for link in soup.select("#resourceFieldContainer a, #villageContent a.buildingSlot"):
-            if "build.php?id=" not in link.get("href", ""):
-                 continue
-            lvl_div = link.find("div", class_="labelLayer")
-            if not lvl_div: continue
-            
-            gid_cls = next((c for c in link.get("class", []) if c.startswith("g") and c[1:].isdigit()), None)
-            if not gid_cls:
-                 parent_div = link.find_parent('div', class_='buildingSlot')
-                 if parent_div: gid_cls = next((c for c in parent_div.get("class", []) if c.startswith("g") and c[1:].isdigit()), None)
-
-            if gid_cls:
-                out["buildings"].append({
-                    "id": int(re.search(r"id=(\d+)", link["href"]).group(1)),
-                    "level": int(lvl_div.text.strip()),
-                    "gid": int(gid_cls[1:]),
+            if script_text and (match := re.search(r"var\s+resources\s*=\s*(\{.*?\});", script_text.string, re.DOTALL)):
+                json_str = re.sub(r"([a-zA-Z_][\w]*)\s*:", r'"\1":', match.group(1))
+                res_data = json.loads(json_str)
+                out.update({
+                    "resources": {k: int(v) for k, v in res_data.get("storage", {}).items()},
+                    "storage": {k: int(v) for k, v in res_data.get("maxStorage", {}).items()},
+                    "production": {k: int(v) for k, v in res_data.get("production", {}).items()}
                 })
+        except Exception as exc:
+            log.debug(f"Resource javascript parser failed – {exc}")
 
-        for b_slot in soup.select("#villageContent > .buildingSlot"):
-            if b_slot.get('data-gid') and b_slot.get('data-aid'):
-                level_tag = b_slot.select_one('a.level')
-                level = int(level_tag.get('data-level')) if level_tag and level_tag.get('data-level') else 0
-                if not any(b['id'] == int(b_slot['data-aid']) for b in out['buildings']):
-                     out["buildings"].append({ "id": int(b_slot['data-aid']), "level": level, "gid": int(b_slot['data-gid']) })
+        found_buildings = {}
+        for slot in soup.select('#resourceFieldContainer > a.level, div.buildingSlot'):
+            loc_id, gid, name = None, None, None
+            
+            # Method for dorf2 buildings
+            if slot.has_attr('data-aid'):
+                loc_id = int(slot['data-aid'])
+                gid = int(slot.get('data-gid', 0))
+                name = slot.get('data-name')
+                level_tag = slot.select_one(f'a.aid{loc_id} .labelLayer')
+                level = int(level_tag.text.strip()) if level_tag else 0
+            # Method for dorf1 resource fields
+            elif 'build.php?id=' in slot.get('href', ''):
+                loc_id = int(re.search(r'id=(\d+)', slot['href']).group(1))
+                gid_class = next((c for c in slot.get('class', []) if c.startswith('g') and c[1:].isdigit()), None)
+                gid = int(gid_class[1:]) if gid_class else 0
+                name = slot.get('title', '').split(' Level')[0]
+                level = int(slot.text.strip()) if slot.text.strip().isdigit() else 0
+            
+            if loc_id and gid:
+                found_buildings[loc_id] = {'id': loc_id, 'gid': gid, 'level': level, 'name': name or f"GID {gid}"}
+
+        out['buildings'] = list(found_buildings.values())
+        log.debug(f"Parser found {len(out['buildings'])} buildings/fields.")
 
         for li in soup.select(".buildingList li"):
-            name_div = li.find("div", class_="name")
-            if not name_div: continue
-            out["queue"].append({
-                "name": name_div.text.split("\n")[0].strip(),
-                "level": li.find("span", class_="lvl").text.strip(),
-                "eta": int(li.find("span", class_="timer")["value"]),
-            })
+            if name_div := li.find("div", class_="name"):
+                out["queue"].append({
+                    "name": name_div.text.split("\n")[0].strip(),
+                    "level": li.find("span", class_="lvl").text.strip(),
+                    "eta": int(li.find("span", class_="timer")["value"]),
+                })
 
         for v_entry in soup.select("#sidebarBoxVillageList .listEntry"):
-            link = v_entry.find("a", href=re.compile(r"newdid="))
-            if not link: continue
-            out["villages"].append({
-                "id": int(re.search(r"newdid=(\d+)", link["href"]).group(1)),
-                "name": v_entry.find("span", class_="name").text.strip(),
-                "active": "active" in v_entry.get("class", []),
-            })
+            if link := v_entry.find("a", href=re.compile(r"newdid=")):
+                out["villages"].append({
+                    "id": int(re.search(r"newdid=(\d+)", link["href"]).group(1)),
+                    "name": v_entry.find("span", class_="name").text.strip(),
+                    "active": "active" in v_entry.get("class", []),
+                })
         return out
 
     def fetch_and_parse_village(self, village_id: int) -> Optional[Dict[str, Any]]:
         """Fetch dorf1 and dorf2 for a village and return combined data."""
         log.info("[%s] Fetching data for village %d", self.username, village_id)
-        
+        village_data = {}
         try:
             url_d1 = f"{self.server_url}/dorf1.php?newdid={village_id}"
             resp_d1 = self.sess.get(url_d1, timeout=15)
@@ -128,7 +134,7 @@ class TravianClient:
             existing_ids = {b['id'] for b in village_data.get("buildings", [])}
             for building in parsed_d2.get("buildings", []):
                 if building['id'] not in existing_ids:
-                    village_data["buildings"].append(building)
+                    village_data.setdefault("buildings", []).append(building)
             village_data["queue"] = parsed_d2.get("queue", [])
         except Exception as exc:
             log.warning("[%s] Failed to fetch/parse dorf2 for village %d: %s", self.username, village_id, exc)

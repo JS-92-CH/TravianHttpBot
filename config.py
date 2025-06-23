@@ -109,10 +109,10 @@ def load_default_build_queue() -> List[Dict[str, Any]]:
 def gid_name(gid: int) -> str:
     """Returns the name of a building from its GID."""
     mapping = {
-        1: "Woodcutter", 2: "Clay Pit", 3: "Iron Mine", 4: "Cropland", 5: "Sawmill", 6: "Brickyard",
-        7: "Iron Foundry", 8: "Grain Mill", 9: "Bakery", 10: "Warehouse", 11: "Granary", 15: "Main Building",
-        16: "Rally Point", 17: "Marketplace", 19: "Barracks", 20: "Stable", 21: "Workshop", 22: "Academy",
-        24: "Town Hall", 25: "Residence", 26: "Palace", 42: "Tournament Square", 37: "Hero's Mansion",
-        45: "Waterworks", 13: "Smithy", 14: "Tournament Square"
+        0: "Empty Slot", 1: "Woodcutter", 2: "Clay Pit", 3: "Iron Mine", 4: "Cropland", 5: "Sawmill", 6: "Brickyard",
+        7: "Iron Foundry", 8: "Grain Mill", 9: "Bakery", 10: "Warehouse", 11: "Granary", 13: "Smithy", 14: "Tournament Square", 15: "Main Building",
+        16: "Rally Point", 17: "Marketplace", 18: "Embassy", 19: "Barracks", 20: "Stable", 21: "Workshop", 22: "Academy",
+        24: "Town Hall", 25: "Residence", 26: "Palace", 28: "Hero's Mansion", 42: "Tournament Square", 37: "Heros Mansion",
+        45: "Waterworks", 46: "Hospital"
     }
     return mapping.get(int(gid), f"GID {gid}")
