@@ -11,13 +11,12 @@
     <style>
         :root{--bg-dark:#1a1a1a;--bg-light:#2c2c2c;--border-color:#444;--text-primary:#f0f0f0;--text-secondary:#a0a0a0;--accent-color:#00bfff;--btn-bg:#333;--btn-hover-bg:#444;--btn-danger-bg:#5c1a1a;--btn-danger-hover:#7d2a2a;--green:#28a745;--red:#dc3545}
         body{font-family:'Inter',sans-serif;background-color:var(--bg-dark);color:var(--text-primary);margin:0;padding:1rem;display:flex;flex-direction:column;height:100vh;box-sizing:border-box}
-        h1,h2,h3,h4{font-weight:700;margin-top:0; color: var(--text-primary);}
+        h1,h2,h3{font-weight:700;margin-top:0; color: var(--text-primary);}
         h1{color:var(--accent-color)}
         hr{border:1px solid var(--border-color); margin: 1.5rem 0;}
         button{background-color:var(--btn-bg);color:var(--text-primary);border:1px solid var(--border-color);padding:.5rem 1rem;border-radius:6px;cursor:pointer;transition:background-color .2s;font-weight:500}
         button:hover{background-color:var(--btn-hover-bg)}
-        input,select,textarea{background-color:var(--bg-dark);color:var(--text-primary);border:1px solid var(--border-color);padding:.5rem;border-radius:6px;margin-bottom:.5rem;width:calc(100% - 1rem); font-family: 'Inter', sans-serif;}
-        textarea { resize: vertical; min-height: 100px; }
+        input,select{background-color:var(--bg-dark);color:var(--text-primary);border:1px solid var(--border-color);padding:.5rem;border-radius:6px;margin-bottom:.5rem;width:calc(100% - 1rem)}
         form{display:flex;flex-direction:column}
         table{width:100%;border-collapse:collapse;margin-top:1rem}
         th,td{padding:.75rem;text-align:left;border-bottom:1px solid var(--border-color)}
@@ -44,7 +43,6 @@
         .tab-content.active{display:block}
         .action-cell input { width: 60px; margin-right: 5px; }
         .action-cell button { padding: 0.4rem 0.6rem; margin-right: 5px;}
-        .import-export-section { margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
     </style>
 </head>
 <body>
@@ -63,10 +61,7 @@
         const socket = io();
         let FULL_STATE = {};
         const GID_MAP = {1:"Woodcutter",2:"Clay Pit",3:"Iron Mine",4:"Cropland",5:"Sawmill",6:"Brickyard",7:"Iron Foundry",8:"Grain Mill",9:"Bakery",10:"Warehouse",11:"Granary",13:"Smithy",14:"Tournament Square",15:"Main Building",16:"Rally Point",17:"Marketplace",18:"Embassy",19:"Barracks",20:"Stable",21:"Workshop",22:"Academy",23:"Cranny",24:"Town Hall",25:"Residence",26:"Palace",27:"Treasury",28:"Trade Office",29:"Great Barracks",30:"Great Stable",31:"City Wall",32:"Earth Wall",33:"Palisade",34:"Stonemason's Lodge",35:"Brewery",36:"Trapper",37:"Hero's Mansion",38:"Great Warehouse",39:"Great Granary",40:"Wonder of the World",41:"Horse Drinking Trough",42:"Stone Wall",43:"Makeshift Wall",44:"Command Center",45:"Waterworks",46:"Hospital"};
-        const SINGLE_INSTANCE_GIDS = [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40, 41, 42, 43, 44, 45, 46];
-
         let selectedVillageId = null;
-        let activeTabs = {}; // Store active tab per village
 
         socket.on('connect', () => document.querySelector('#log').innerHTML += '<p style="color:var(--green)">Dashboard connected.</p>');
         socket.on('log_message', msg => {
@@ -89,23 +84,21 @@
 
             const villageList = document.getElementById('village-list');
             if (villageList) {
-                let currentListHTML = villageList.innerHTML;
-                let newListHTML = '';
+                villageList.innerHTML = '';
+                // Clear list before re-rendering
                 let activeVillageFound = false;
                 for (const username in FULL_STATE.village_data) {
+                    // Only iterate over keys that are not village IDs
                     if (isNaN(parseInt(username))) {
                          const villageData = FULL_STATE.village_data[username];
                         if (Array.isArray(villageData)) {
                             villageData.forEach(village => {
                                 const activeClass = village.id == selectedVillageId ? 'active' : '';
                                 if(village.id == selectedVillageId) activeVillageFound = true;
-                                newListHTML += `<div class="village-list-item ${activeClass}" id="village-item-${village.id}" onclick="showVillageDetails('${village.id}')">${village.name}</div>`;
+                                villageList.innerHTML += `<div class="village-list-item ${activeClass}" id="village-item-${village.id}" onclick="showVillageDetails('${village.id}')">${village.name}</div>`;
                             });
                         }
                     }
-                }
-                if (currentListHTML !== newListHTML) {
-                    villageList.innerHTML = newListHTML;
                 }
                 if (!activeVillageFound) selectedVillageId = null;
             }
@@ -114,9 +107,7 @@
         function getMaxLevel(gid) {
             gid = parseInt(gid);
             if (gid === 40) return 100; // Wonder of the World
-            if (gid === 23) return 10;  // Cranny
-            // Buildings with max level 5
-            if ([5, 6, 7, 8, 9].includes(gid)) return 5;
+            if (gid === 23) return 10; // Cranny
             return 20; // Default max level
         }
 
@@ -128,9 +119,8 @@
                 alert("Invalid level specified.");
                 return;
             }
-            const currentBuilding = FULL_STATE.village_data[villageId].buildings.find(b => b.id == location);
-            if (currentBuilding && targetLevel <= currentBuilding.level) {
-                alert(`Target level must be higher than current level (${currentBuilding.level}).`);
+            if (targetLevel > maxLevel) {
+                 alert(`Level cannot exceed ${maxLevel} for this building.`);
                 return;
             }
 
@@ -159,11 +149,6 @@
         }
 
         function showVillageDetails(villageId) {
-            if (!villageId) {
-                selectedVillageId = null;
-                document.getElementById('village-details').innerHTML = '<p>Select a village to see details.</p>';
-                return;
-            }
             selectedVillageId = villageId;
             document.querySelectorAll('.village-list-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`village-item-${villageId}`)?.classList.add('active');
@@ -178,34 +163,27 @@
             }
             
             let villageName = "Unknown";
-            for (const username in FULL_STATE.village_data) {
+             for (const username in FULL_STATE.village_data) {
                 if (isNaN(parseInt(username)) && Array.isArray(FULL_STATE.village_data[username])) {
                     const found = FULL_STATE.village_data[username].find(v => v.id == villageId);
                     if (found) { villageName = found.name; break; }
                 }
             }
-            
-            const tribe = villageData.tribe || 'unknown';
 
-            let html = `<h2>Village: ${villageName} (ID: ${villageId}) <span style="text-transform: capitalize; font-size: 0.8em; color: var(--text-secondary);">- ${tribe}</span></h2>`;
+            let html = `<h2>Village: ${villageName} (ID: ${villageId})</h2>`;
             html += '<h3>Resources</h3><table><thead><tr><th>Resource</th><th>Current</th><th>Storage</th><th>Production/hr</th></tr></thead><tbody>';
-            html += `<tr><td>Wood</td><td>${Math.floor(villageData.resources.l1) || 0}</td><td>${villageData.storage.l1 || 0}</td><td>${villageData.production.l1 || 0}</td></tr>`;
-            html += `<tr><td>Clay</td><td>${Math.floor(villageData.resources.l2) || 0}</td><td>${villageData.storage.l2 || 0}</td><td>${villageData.production.l2 || 0}</td></tr>`;
-            html += `<tr><td>Iron</td><td>${Math.floor(villageData.resources.l3) || 0}</td><td>${villageData.storage.l3 || 0}</td><td>${villageData.production.l3 || 0}</td></tr>`;
-            html += `<tr><td>Crop</td><td>${Math.floor(villageData.resources.l4) || 0}</td><td>${villageData.storage.l4 || 0}</td><td>${villageData.production.l4 || 0}</td></tr></tbody></table>`;
+            html += `<tr><td>Wood</td><td>${villageData.resources.l1 || 0}</td><td>${villageData.storage.l1 || 0}</td><td>${villageData.production.l1 || 0}</td></tr>`;
+            html += `<tr><td>Clay</td><td>${villageData.resources.l2 || 0}</td><td>${villageData.storage.l2 || 0}</td><td>${villageData.production.l2 || 0}</td></tr>`;
+            html += `<tr><td>Iron</td><td>${villageData.resources.l3 || 0}</td><td>${villageData.storage.l3 || 0}</td><td>${villageData.production.l3 || 0}</td></tr>`;
+            html += `<tr><td>Crop</td><td>${villageData.resources.l4 || 0}</td><td>${villageData.storage.l4 || 0}</td><td>${villageData.production.l4 || 0}</td></tr></tbody></table>`;
 
-            const currentTab = activeTabs[villageId] || 'fields';
-            html += `<div class="tabs">
-                <div class="tab ${currentTab === 'fields' ? 'active' : ''}" onclick="openTab(event, 'fields', '${villageId}')">Resource Fields</div>
-                <div class="tab ${currentTab === 'buildings' ? 'active' : ''}" onclick="openTab(event, 'buildings', '${villageId}')">City Buildings</div>
-                <div class="tab ${currentTab === 'new' ? 'active' : ''}" onclick="openTab(event, 'new', '${villageId}')">New Build</div>
-            </div>`;
+            html += '<div class="tabs"><div class="tab active" onclick="openTab(event, \'fields\')">Resource Fields</div><div class="tab" onclick="openTab(event, \'buildings\')">City Buildings</div><div class="tab" onclick="openTab(event, \'new\')">New Build</div></div>';
             
             // --- Resource Fields Tab ---
-            html += `<div id="fields" class="tab-content ${currentTab === 'fields' ? 'active' : ''}"><h4>Resource Fields</h4><table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>`;
+            html += '<div id="fields" class="tab-content active"><h4>Resource Fields</h4><table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
             villageData.buildings.filter(b => b.id <= 18).sort((a,b) => a.id - b.id).forEach(b => {
                 const maxLvl = getMaxLevel(b.gid);
-                html += `<tr><td>${b.id}</td><td>${GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td class="action-cell">
+                html += `<tr><td>${b.id}</td><td>${b.name || GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td class="action-cell">
                     <input type="number" id="level-input-${villageId}-${b.id}" min="${b.level + 1}" max="${maxLvl}" value="${b.level + 1}" ${b.level >= maxLvl ? 'disabled' : ''}>
                     <button onclick="addBuildTask('${villageId}', '${b.id}', '${b.gid}', document.getElementById('level-input-${villageId}-${b.id}').value)" ${b.level >= maxLvl ? 'disabled' : ''}>+</button>
                     <button onclick="addBuildTask('${villageId}', '${b.id}', '${b.gid}', 0, true)" ${b.level >= maxLvl ? 'disabled' : ''}>Max</button>
@@ -214,10 +192,10 @@
             html += '</tbody></table></div>';
 
             // --- City Buildings Tab ---
-            html += `<div id="buildings" class="tab-content ${currentTab === 'buildings' ? 'active' : ''}"><h4>City Buildings</h4><table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>`;
+            html += '<div id="buildings" class="tab-content"><h4>City Buildings</h4><table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
             villageData.buildings.filter(b => b.id > 18 && b.gid > 0).sort((a,b) => a.id - b.id).forEach(b => {
                 const maxLvl = getMaxLevel(b.gid);
-                html += `<tr><td>${b.id}</td><td>${GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td class="action-cell">
+                html += `<tr><td>${b.id}</td><td>${b.name || GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td class="action-cell">
                     <input type="number" id="level-input-${villageId}-${b.id}" min="${b.level + 1}" max="${maxLvl}" value="${b.level + 1}" ${b.level >= maxLvl ? 'disabled' : ''}>
                     <button onclick="addBuildTask('${villageId}', '${b.id}', '${b.gid}', document.getElementById('level-input-${villageId}-${b.id}').value)" ${b.level >= maxLvl ? 'disabled' : ''}>+</button>
                     <button onclick="addBuildTask('${villageId}', '${b.id}', '${b.gid}', 0, true)" ${b.level >= maxLvl ? 'disabled' : ''}>Max</button>
@@ -226,39 +204,22 @@
             html += '</tbody></table></div>';
             
             // --- New Build Tab ---
-            const existingGIDs = villageData.buildings.map(b => b.gid);
-            const buildableGIDs = Object.keys(GID_MAP)
-                .map(gid => parseInt(gid))
-                .filter(gid => gid >= 5 && gid <= 46) // Filter for only buildable buildings
-                .filter(gid => !(SINGLE_INSTANCE_GIDS.includes(gid) && existingGIDs.includes(gid)));
-
+            const buildableGIDs = Object.keys(GID_MAP).filter(gid => [5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46].includes(parseInt(gid)));
             let optionsHtml = '<option value="0">-- Select Building --</option>';
-            buildableGIDs.sort((a,b) => GID_MAP[a].localeCompare(GID_MAP[b])).forEach(gid => optionsHtml += `<option value="${gid}">${GID_MAP[gid]}</option>`);
+            buildableGIDs.forEach(gid => optionsHtml += `<option value="${gid}">${GID_MAP[gid]}</option>`);
 
-            html += `<div id="new" class="tab-content ${currentTab === 'new' ? 'active' : ''}"><h4>Build in Empty Slot</h4><table><thead><tr><th>Location</th><th>Building</th><th>Target Level</th><th>Action</th></tr></thead><tbody>`;
+            html += '<div id="new" class="tab-content"><h4>Build in Empty Slot</h4><table><thead><tr><th>Location</th><th>Building</th><th>Target Level</th><th>Action</th></tr></thead><tbody>';
             villageData.buildings.filter(b => b.id > 18 && b.gid === 0).forEach(slot => {
-                let slotOptions = optionsHtml;
-                // Special handling for wall slot 40
-                if (slot.id == 40) {
-                    const wallMap = {'roman': 31, 'teuton': 32, 'gaul': 33, 'egyptian': 42, 'hun': 43};
-                    const wallGid = wallMap[tribe];
-                    if (wallGid && !existingGIDs.includes(wallGid)) {
-                         slotOptions = `<option value="${wallGid}">${GID_MAP[wallGid]}</option>`;
-                    } else {
-                        slotOptions = `<option value="0">Wall already built</option>`;
-                    }
-                }
-
                 html += `<tr>
                     <td>${slot.id}</td>
-                    <td><select id="gid-select-${villageId}-${slot.id}">${slotOptions}</select></td>
+                    <td><select id="gid-select-${villageId}-${slot.id}">${optionsHtml}</select></td>
                     <td><input type="number" id="level-input-new-${villageId}-${slot.id}" min="1" max="20" value="1" style="width: 80px;"></td>
                     <td><button onclick="addNewBuildingTask('${villageId}', '${slot.id}', 'gid-select-${villageId}-${slot.id}', 'level-input-new-${villageId}-${slot.id}')">Add to Queue</button></td>
                 </tr>`;
             });
             html += '</tbody></table></div>';
             
-            // --- Build Queue & Import/Export ---
+            // --- Build Queue ---
             html += `<h3>Build Queue (${villageQueue.length})</h3><ol id="build-queue-list">`;
             villageQueue.forEach((job, index) => {
                 const jobName = job.gid ? `${GID_MAP[job.gid] || 'Unknown'} (Loc: ${job.location})` : `Task ${job.type}`;
@@ -266,80 +227,16 @@
             });
             html += '</ol>';
 
-            html += `<div class="import-export-section">
-                <h4>Import / Export Queue</h4>
-                <button onclick="exportQueue('${villageId}')">Export Queue</button>
-                <hr>
-                <textarea id="import-json-area" placeholder="Paste JSON build queue here..."></textarea>
-                <button onclick="importQueue('${villageId}')">Import and Replace Queue</button>
-            </div>`;
-
             detailsDiv.innerHTML = html;
+            openTab({currentTarget: detailsDiv.querySelector('.tab.active')}, 'fields'); // Ensure first tab is shown
         }
 
-        function openTab(event, tabName, villageId) {
-            activeTabs[villageId] = tabName;
-            const parent = event.currentTarget.closest('#village-details');
-            parent.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
-            parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            parent.querySelector(`#${tabName}`).style.display = 'block';
+        function openTab(event, tabName) {
+            document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabName).style.display = 'block';
             event.currentTarget.classList.add('active');
         }
-
-        function exportQueue(villageId) {
-            const queue = FULL_STATE.build_queues[villageId] || [];
-            const exportData = queue.map((task, index) => {
-                const content = JSON.stringify({
-                    Location: task.location,
-                    Level: task.level,
-                    Type: task.gid
-                });
-                return {
-                    Id: { Value: 0 },
-                    Position: index,
-                    Type: 0, // Assuming type 0 for building tasks
-                    Content: content
-                };
-            });
-            const jsonString = JSON.stringify(exportData, null, 2);
-            const importArea = document.getElementById('import-json-area');
-            importArea.value = jsonString;
-            alert('Queue exported to the text area below.');
-        }
-
-        function importQueue(villageId) {
-            const jsonString = document.getElementById('import-json-area').value;
-            if (!jsonString) {
-                alert('Paste a JSON queue into the text area first.');
-                return;
-            }
-            try {
-                const importData = JSON.parse(jsonString);
-                if (!Array.isArray(importData)) {
-                    throw new Error("Input is not a JSON array.");
-                }
-
-                const newQueue = importData.map(item => {
-                    if (item.Type === 0 && item.Content) {
-                        const content = JSON.parse(item.Content);
-                        return {
-                            type: 'building',
-                            location: parseInt(content.Location),
-                            gid: parseInt(content.Type),
-                            level: parseInt(content.Level)
-                        };
-                    }
-                    return null;
-                }).filter(task => task !== null);
-
-                if (confirm(`This will replace the current queue for this village with ${newQueue.length} new tasks. Are you sure?`)) {
-                    socket.emit('update_build_queue', { villageId: villageId, queue: newQueue });
-                }
-            } catch (e) {
-                alert('Error parsing JSON. Please check the format.\n' + e.message);
-            }
-        }
-
 
         document.getElementById('startBtn').onclick = () => socket.emit('start_bot');
         document.getElementById('stopBtn').onclick = () => socket.emit('stop_bot');
