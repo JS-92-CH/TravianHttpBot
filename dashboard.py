@@ -2,13 +2,14 @@ from flask import Flask, render_template_string
 from flask_socketio import SocketIO
 
 from config import BOT_STATE, state_lock, save_config, log
-from bot import BotThread
+from bot import BotManager # Correctly import BotManager
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "8b8e2d43‐dashboard‐secret"
 socketio = SocketIO(app, async_mode="threading")
 
-bot_thread = None
+# This will hold our main bot thread
+bot_manager_thread = None
 
 @app.route("/")
 def index_route():
@@ -25,25 +26,24 @@ def on_connect():
 
 @socketio.on('start_bot')
 def handle_start_bot(data=None):
-    global bot_thread
-    if bot_thread is None or not bot_thread.is_alive():
-        log.info("Starting bot...")
-        # FIX: Pass the socketio instance to the bot thread constructor
-        bot_thread = BotThread(socketio)
-        bot_thread.start()
-        socketio.emit("log_message", {'data': "Bot started."})
+    global bot_manager_thread
+    if bot_manager_thread is None or not bot_manager_thread.is_alive():
+        log.info("Starting bot manager...")
+        # Pass the socketio instance to the bot manager constructor
+        bot_manager_thread = BotManager(socketio)
+        bot_manager_thread.start()
     else:
         log.info("Bot is already running.")
         socketio.emit("log_message", {'data': "Bot is already running."})
 
 @socketio.on('stop_bot')
 def handle_stop_bot(data=None):
-    global bot_thread
-    if bot_thread and bot_thread.is_alive():
-        log.info("Stopping bot...")
-        bot_thread.stop()
-        bot_thread = None
-        socketio.emit("log_message", {'data': "Bot stopped."})
+    global bot_manager_thread
+    if bot_manager_thread and bot_manager_thread.is_alive():
+        log.info("Stopping bot manager...")
+        bot_manager_thread.stop()
+        bot_manager_thread.join() # Wait for the thread to fully stop
+        bot_manager_thread = None
     else:
         log.info("Bot is not running.")
         socketio.emit("log_message", {'data': "Bot is not running."})

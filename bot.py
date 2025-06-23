@@ -4,7 +4,6 @@ import concurrent.futures
 from typing import Optional, Dict
 
 from client import TravianClient
-from dashboard import socketio
 from config import log, BOT_STATE, state_lock, save_config, load_default_build_queue
 
 class VillageAgent(threading.Thread):
@@ -81,7 +80,7 @@ class BotManager(threading.Thread):
                 
                 client = TravianClient(account["username"], account["password"], account["server_url"])
                 if not client.login():
-                    self.stop_event.wait(60) # Wait before retrying failed login
+                    self.stop_event.wait(60)
                     continue
 
                 try:
@@ -93,7 +92,6 @@ class BotManager(threading.Thread):
                     with state_lock:
                         BOT_STATE["village_data"][client.username] = villages
                     
-                    # Synchronize agents - start new ones, stop old ones
                     current_village_ids = {v['id'] for v in villages}
                     agents_to_stop = set(self.village_agents.keys()) - current_village_ids
                     
@@ -113,7 +111,7 @@ class BotManager(threading.Thread):
                     log.error(f"Failed to manage agents for account {account['username']}: {exc}")
 
             log.info("Account sync complete. Manager sleeping for 5 minutes.")
-            self.stop_event.wait(300) # Re-check accounts every 5 minutes
+            self.stop_event.wait(300)
 
         log.info("Bot Manager stopped.")
         self.socketio.emit('log_message', {'data': 'Bot Manager stopped.'})
