@@ -1,182 +1,244 @@
+import asyncio
 import time
-import threading
-from typing import Dict, Optional
+from threading import Thread, Event
+from config import BOT_STATE, state_lock, log, save_config
+from client import Client
 
-from client import TravianClient
-from config import log, BOT_STATE, state_lock, save_config, load_default_build_queue, gid_name, is_multi_instance
-
-# Global lock to ensure only one agent performs a build action at a time.
-build_lock = threading.Lock()
-
-class VillageAgent(threading.Thread):
-    def __init__(self, client: TravianClient, village_info: Dict, socketio_instance):
-        super().__init__()
-        self.client = client
-        self.village_id = village_info['id']
-        self.village_name = village_info['name']
-        self.socketio = socketio_instance
-        self.stop_event = threading.Event()
-        self.daemon = True
-
-    def stop(self):
-        self.stop_event.set()
-
-    def run(self):
-        log.info(f"Agent started for village: {self.village_name} ({self.village_id})")
-        while not self.stop_event.is_set():
-            try:
-                village_data = self.client.fetch_and_parse_village(self.village_id)
-                if not village_data:
-                    self.stop_event.wait(300); continue
-
-                with state_lock:
-                    BOT_STATE["village_data"][str(self.village_id)] = village_data
-                self.socketio.emit("state_update", BOT_STATE)
-
-                if active_builds := village_data.get("queue", []):
-                    build_info = active_builds[0]
-                    wait_time = build_info.get('eta', 60) + 0.25
-                    log.info(f"AGENT({self.village_name}): Construction of '{build_info.get('name')}' in progress. Waiting for {wait_time:.2f}s.")
-                    self.stop_event.wait(wait_time)
-                    continue
-
-                with state_lock:
-                    build_queue = BOT_STATE["build_queues"].get(str(self.village_id), [])[:]
-                
-                if not build_queue:
-                    self.stop_event.wait(60); continue
-                
-                all_buildings = village_data.get("buildings", [])
-                
-                # Full Queue Sanitization
-                sanitized_queue = []
-                needs_save = False
-                for task in build_queue:
-                    goal_gid, goal_level = task.get('gid'), task.get('level')
-                    
-                    # Find any existing buildings of the same type
-                    existing_instances = [b for b in all_buildings if b['gid'] == goal_gid]
-                    
-                    # If any instance meets or exceeds the goal level, the goal is met (for non-multi-instance)
-                    if not is_multi_instance(goal_gid) and any(b['level'] >= goal_level for b in existing_instances):
-                        log.info(f"AGENT({self.village_name}): Sanitizing. Goal '{gid_name(goal_gid)} Lvl {goal_level}' is complete. Purging.")
-                        needs_save = True
-                    else:
-                        sanitized_queue.append(task)
-                
-                if needs_save:
-                    with state_lock: BOT_STATE["build_queues"][str(self.village_id)] = sanitized_queue
-                    save_config()
-                
-                if not sanitized_queue: continue
-                
-                goal_task = sanitized_queue[0]
-                goal_gid, goal_level = goal_task.get('gid'), goal_task.get('level')
-                
-                log.info(f"AGENT({self.village_name}): Next goal is '{gid_name(goal_gid)}' to Lvl {goal_level}.")
-                
-                action_plan = None
-                
-                # *** FINAL REVISED Action Plan Logic ***
-                if is_multi_instance(goal_gid):
-                    # For multi-instance buildings, find all existing ones and upgrade the highest level one.
-                    candidates = [b for b in all_buildings if b['gid'] == goal_gid and b['level'] < 20]
-                    if candidates:
-                        # Sort by level descending to find the highest level one
-                        candidates.sort(key=lambda x: x['level'], reverse=True)
-                        building_to_upgrade = candidates[0]
-                        if building_to_upgrade['level'] < goal_level:
-                             action_plan = {'type': 'upgrade', 'location': building_to_upgrade['id'], 'gid': goal_gid}
-                             log.info(f"-> Found {len(candidates)} candidate(s) for multi-instance GID {goal_gid}. Targeting highest Lvl {building_to_upgrade['level']} at slot {building_to_upgrade['id']}.")
-                    else:
-                        # No existing ones to upgrade, so plan a new one in an empty slot
-                        empty_slot = next((b for b in all_buildings if b['id'] > 18 and b['gid'] == 0), None)
-                        if empty_slot:
-                            action_plan = {'type': 'new', 'location': empty_slot['id'], 'gid': goal_gid}
-                else: # Unique building
-                    existing_building = next((b for b in all_buildings if b['gid'] == goal_gid), None)
-                    if existing_building:
-                        action_plan = {'type': 'upgrade', 'location': existing_building['id'], 'gid': goal_gid}
-                    else:
-                        empty_slot = next((b for b in all_buildings if b['id'] > 18 and b['gid'] == 0), None)
-                        if empty_slot: action_plan = {'type': 'new', 'location': empty_slot['id'], 'gid': goal_gid}
-
-                if not action_plan:
-                    log.error(f"AGENT({self.village_name}): Could not determine action plan for {gid_name(goal_gid)}. Village may be full. Skipping task for now.")
-                    self.stop_event.wait(300); continue
-
-                prereqs = self.client.get_prerequisites(self.village_id, action_plan['location'], goal_gid)
-                existing_gids_map = {b['gid']: b for b in all_buildings if b['gid'] != 0}
-                missing_prereqs = [req for req in prereqs if not (b := existing_gids_map.get(req['gid'])) or b['level'] < req['level']]
-                
-                if missing_prereqs:
-                    new_tasks = [{'type': 'building', 'gid': r['gid'], 'level': r['level']} for r in missing_prereqs]
-                    log.warning(f"AGENT({self.village_name}): Prepending prerequisites for '{gid_name(goal_gid)}'.")
-                    with state_lock: BOT_STATE["build_queues"][str(self.village_id)] = new_tasks + sanitized_queue
-                    save_config(); self.stop_event.wait(5); continue
-
-                with build_lock:
-                    log.info(f"AGENT({self.village_name}): Build lock acquired.")
-                    quick_check_data = self.client.fetch_and_parse_village(self.village_id)
-                    if quick_check_data.get("queue", []):
-                        log.warning(f"AGENT({self.village_name}): Another build started while waiting for lock. Releasing lock.")
-                        build_result = {'status': 'skipped'}
-                    else:
-                        is_new = action_plan['type'] == 'new'
-                        log.info(f"--> EXECUTING BUILD: {action_plan['type']} {gid_name(goal_gid)} at location {action_plan['location']}.")
-                        build_result = self.client.initiate_build(self.village_id, action_plan['location'], goal_gid, is_new_build=is_new)
-
-                if build_result.get('status') == 'success':
-                    log.info(f"AGENT({self.village_name}): Successfully started task for '{gid_name(goal_gid)}'.")
-                    self.stop_event.wait(10)
-                elif build_result.get('status') != 'skipped':
-                    log.warning(f"AGENT({self.village_name}): Failed to build '{gid_name(goal_gid)}'. Reason: {build_result.get('reason')}. Waiting 5 mins.")
-                    self.stop_event.wait(300)
-
-            except Exception as e:
-                log.error(f"Agent for village {self.village_name} CRITICAL ERROR: {e}", exc_info=True)
-                self.stop_event.wait(300)
-
-        log.info(f"Agent stopped for village: {self.village_name} ({self.village_id})")
-
-class BotManager(threading.Thread):
+class BotManager(Thread):
     def __init__(self, socketio_instance):
         super().__init__()
+        self.stop_event = Event()
         self.socketio = socketio_instance
-        self.stop_event = threading.Event()
-        self.village_agents: Dict[int, VillageAgent] = {}
-        self.daemon = True
-
-    def stop(self):
-        log.info("Stopping all village agents...")
-        for agent in self.village_agents.values(): agent.stop()
-        for agent in self.village_agents.values(): agent.join()
-        self.stop_event.set()
-        log.info("All agents stopped.")
+        self.agents = {}
 
     def run(self):
         log.info("Bot Manager started.")
-        self.socketio.emit('log_message', {'data': 'Bot Manager started.'})
+        self.socketio.emit("log_message", {'data': "Bot Manager started."})
+        
+        asyncio.run(self.main_loop())
+
+    async def main_loop(self):
         while not self.stop_event.is_set():
-            with state_lock: accounts = BOT_STATE["accounts"][:]
-            if not accounts: self.stop_event.wait(15); continue
-            for account in accounts:
-                if self.stop_event.is_set(): break
-                client = TravianClient(account["username"], account["password"], account["server_url"])
-                if not client.login(): self.stop_event.wait(60); continue
-                try:
-                    resp = client.sess.get(f"{client.server_url}/dorf1.php", timeout=15)
-                    sidebar_data = client.parse_village_page(resp.text, "dorf1")
-                    villages = sidebar_data.get("villages", [])
-                    with state_lock: BOT_STATE["village_data"][client.username] = villages
-                    current_ids = {v['id'] for v in villages}
-                    for vid in list(self.village_agents.keys()):
-                        if vid not in current_ids: self.village_agents.pop(vid).stop()
-                    for village in villages:
-                        if village['id'] not in self.village_agents:
-                            agent = VillageAgent(client, village, self.socketio)
-                            self.village_agents[village['id']] = agent
-                            agent.start()
-                except Exception as exc: log.error(f"Failed to manage agents for {account['username']}: {exc}", exc_info=True)
-            self.stop_event.wait(300)
+            with state_lock:
+                accounts = list(BOT_STATE['accounts'])
+            
+            for account_config in accounts:
+                username = account_config['username']
+                if username not in self.agents:
+                    self.agents[username] = AccountAgent(account_config, self.socketio)
+                    self.agents[username].start()
+            
+            # Clean up stopped agents
+            stopped_agents = [u for u, a in self.agents.items() if not a.is_alive()]
+            for username in stopped_agents:
+                del self.agents[username]
+
+            await asyncio.sleep(5) # Check for new accounts every 5 seconds
+            
+        # Stop all running agents
+        for agent in self.agents.values():
+            agent.stop()
+        for agent in self.agents.values():
+            agent.join()
         log.info("Bot Manager stopped.")
+        self.socketio.emit("log_message", {'data': "Bot Manager stopped."})
+
+
+    def stop(self):
+        self.stop_event.set()
+        log.info("Stopping Bot Manager...")
+
+
+class AccountAgent(Thread):
+    def __init__(self, account_config, socketio):
+        super().__init__()
+        self.account_config = account_config
+        self.socketio = socketio
+        self.client = Client(account_config['username'], account_config['password'], account_config['server_url'])
+        self.stop_event = Event()
+        self.village_agents = {}
+
+    def run(self):
+        log.info(f"Agent for account {self.account_config['username']} started.")
+        asyncio.run(self.manage_villages())
+
+    async def manage_villages(self):
+        if not await self.client.login():
+            log.error(f"Could not start agent for {self.account_config['username']}, login failed.")
+            return
+
+        # Fetch tribe once per account
+        player_tribe = await self.client.get_player_tribe()
+        with state_lock:
+             if 'account_data' not in BOT_STATE:
+                BOT_STATE['account_data'] = {}
+             BOT_STATE['account_data'][self.account_config['username']] = {'tribe': player_tribe}
+
+
+        while not self.stop_event.is_set():
+            villages = await self.client.get_villages()
+            with state_lock:
+                BOT_STATE['village_data'][self.account_config['username']] = villages
+            
+            for village in villages:
+                village_id = village['id']
+                if village_id not in self.village_agents:
+                    log.info(f"Starting agent for village {village['name']} ({village_id})")
+                    agent = VillageAgent(village_id, self.client, self.socketio)
+                    agent.start()
+                    self.village_agents[village_id] = agent
+            
+            # Clean up stopped village agents
+            stopped_villages = [vid for vid, a in self.village_agents.items() if not a.is_alive()]
+            for vid in stopped_villages:
+                del self.village_agents[vid]
+            
+            await asyncio.sleep(300) # Re-check village list every 5 minutes
+            
+        # Stop all village agents
+        for agent in self.village_agents.values():
+            agent.stop()
+        for agent in self.village_agents.values():
+            agent.join()
+        await self.client.close_session()
+
+    def stop(self):
+        self.stop_event.set()
+
+
+class VillageAgent(Thread):
+    def __init__(self, village_id, client, socketio):
+        super().__init__()
+        self.village_id = village_id
+        self.client = client
+        self.socketio = socketio
+        self.stop_event = Event()
+
+    def run(self):
+        log.info(f"Village agent {self.village_id} started.")
+        asyncio.run(self.task_loop())
+
+    async def task_loop(self):
+        while not self.stop_event.is_set():
+            try:
+                # 1. Update village state
+                data = await self.client.get_village_data(self.village_id)
+                if data:
+                    with state_lock:
+                        BOT_STATE['village_data'][self.village_id] = data
+                        # Add tribe info to village data for easy access on frontend
+                        username = self.client.username
+                        if username in BOT_STATE.get('account_data', {}):
+                           BOT_STATE['village_data'][self.village_id]['tribe'] = BOT_STATE['account_data'][username].get('tribe', 'unknown')
+
+
+                    self.socketio.emit('state_update', BOT_STATE)
+                
+                # 2. Check build queue
+                with state_lock:
+                    queue = list(BOT_STATE['build_queues'].get(self.village_id, []))
+                
+                if queue:
+                    current_goal = queue[0]
+                    
+                    # Sanitize: check if goal is already met
+                    if self.is_goal_met(current_goal, data['buildings']):
+                        log.info(f"Goal {current_goal} already met. Removing from queue.")
+                        self.remove_from_queue(0)
+                        continue
+
+                    # Check for prerequisites
+                    prereqs = await self.check_prerequisites(current_goal, data['buildings'])
+                    if prereqs:
+                        log.info(f"Found prerequisites for {current_goal}: {prereqs}")
+                        # Prepend prerequisites to the queue
+                        self.prepend_to_queue(prereqs)
+                        continue # Restart the loop to process the new first item
+
+                    # Attempt to build
+                    if await self.can_build(current_goal, data['resources']):
+                        log.info(f"Attempting to build {current_goal}")
+                        success = await self.client.initiate_build(self.village_id, current_goal['location'], current_goal['gid'])
+                        if success:
+                            # Assuming build takes time, just wait.
+                            # A better approach would be to check the construction list.
+                            log.info("Build initiated. Waiting for next cycle.")
+                        else:
+                            log.warning("Build command failed. Will retry.")
+                    else:
+                        log.info(f"Not enough resources for {current_goal}. Waiting.")
+
+            except Exception as e:
+                log.error(f"Error in VillageAgent {self.village_id} loop: {e}")
+
+            await asyncio.sleep(60) # Wait 60 seconds before next cycle
+
+    def is_goal_met(self, goal, buildings):
+        """Check if the building goal is already achieved."""
+        if goal['type'] == 'building':
+            for b in buildings:
+                if b['id'] == goal['location']:
+                    # For a new build, gid must match. For an upgrade, id is enough.
+                    if b['gid'] == 0: # It's an empty slot, so goal is not met
+                         return False
+                    if b['gid'] == goal['gid'] and b['level'] >= goal['level']:
+                        return True
+                    # If GID is different, it means another building is there. This is a conflict.
+                    # For simplicity, we'll let the user handle this. Bot will get stuck.
+        return False
+        
+    async def check_prerequisites(self, goal, buildings):
+        """Check for and return any missing prerequisites for a building goal."""
+        # This is a simplified check. A real implementation would parse the build page.
+        # For this example, we'll assume the client can fetch them.
+        gid_to_build = goal.get('gid')
+        # Find an empty slot if location is not fixed
+        target_location = goal.get('location')
+        if not target_location:
+            for b in buildings:
+                if b['id'] > 18 and b['gid'] == 0:
+                    target_location = b['id']
+                    break
+        if not target_location:
+            log.warning("No empty slots to build prerequisites.")
+            return [] # No empty slots
+
+        # Let's assume a function get_prerequisites(gid) exists
+        required = await self.client.get_prerequisites(self.village_id, target_location)
+        missing = []
+        for req in required:
+            is_met = False
+            for b in buildings:
+                if b['gid'] == req['gid'] and b['level'] >= req['level']:
+                    is_met = True
+                    break
+            if not is_met:
+                # Find an empty slot for this prerequisite
+                prereq_location = None
+                for b_slot in buildings:
+                     if b_slot['id'] > 18 and b_slot['gid'] == 0 and b_slot['id'] != target_location:
+                         prereq_location = b_slot['id']
+                         break
+                if prereq_location:
+                    missing.append({'type': 'building', 'gid': req['gid'], 'level': req['level'], 'location': prereq_location})
+        return missing
+
+    def prepend_to_queue(self, tasks):
+        with state_lock:
+            BOT_STATE['build_queues'].setdefault(self.village_id, []).insert(0, *tasks)
+        save_config()
+        self.socketio.emit('state_update', BOT_STATE)
+
+    def remove_from_queue(self, index):
+        with state_lock:
+            if self.village_id in BOT_STATE['build_queues']:
+                del BOT_STATE['build_queues'][self.village_id][index]
+        save_config()
+        self.socketio.emit('state_update', BOT_STATE)
+        
+    async def can_build(self, goal, resources):
+        # This is a placeholder. A real implementation would fetch costs.
+        return True
+
+    def stop(self):
+        self.stop_event.set()

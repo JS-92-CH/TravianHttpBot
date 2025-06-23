@@ -71,6 +71,22 @@ def handle_remove_account(data):
         BOT_STATE['accounts'] = [acc for acc in BOT_STATE['accounts'] if acc['username'] != username_to_remove]
     save_config()
     socketio.emit("state_update", BOT_STATE)
+    
+@socketio.on('add_build_task')
+def handle_add_build_task(data):
+    """Handles adding a single build task to a village's queue."""
+    village_id = data.get('villageId')
+    task = data.get('task')
+    if village_id and task:
+        log.info(f"Adding task to build queue for village {village_id}: {task}")
+        with state_lock:
+            # Ensure the village has a build queue initialized
+            if str(village_id) not in BOT_STATE['build_queues']:
+                BOT_STATE['build_queues'][str(village_id)] = []
+            BOT_STATE['build_queues'][str(village_id)].append(task)
+        save_config()
+        socketio.emit("state_update", BOT_STATE)
+
 
 @socketio.on('update_build_queue')
 def handle_update_build_queue(data):

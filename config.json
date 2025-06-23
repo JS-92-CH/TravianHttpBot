@@ -7,14 +7,7 @@
         }
     ],
     "build_queues": {
-        "71995": [
-            {
-                "type": "building",
-                "location": 30,
-                "level": 20,
-                "gid": 14
-            }
-        ],
+        "71995": [],
         "83631": [],
         "83234": [],
         "83632": [],
@@ -22,12 +15,6 @@
         "84032": [],
         "83635": [],
         "83235": [
-            {
-                "type": "building",
-                "location": 22,
-                "level": 20,
-                "gid": 25
-            },
             {
                 "type": "building",
                 "location": 19,
@@ -44,7 +31,20 @@
         "83231": [],
         "84034": [],
         "82831": [],
-        "82832": [],
+        "82832": [
+            {
+                "type": "building",
+                "location": 24,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 38,
+                "gid": 11,
+                "level": 20
+            }
+        ],
         "84035": [
             {
                 "type": "building",
@@ -82,8 +82,34 @@
                 "gid": 11
             }
         ],
-        "84436": [],
-        "84437": [],
+        "84436": [
+            {
+                "type": "building",
+                "location": 21,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 31,
+                "gid": 13,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 20
+            }
+        ],
+        "84437": [
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 20
+            }
+        ],
         "82835": [],
         "82434": [],
         "82029": [],
