@@ -130,8 +130,8 @@ class VillageAgent(threading.Thread):
                     log.info(f"AGENT({self.village_name}): Successfully started task for '{gid_name(goal_gid)}'.")
                     self.stop_event.wait(10)
                 elif build_result.get('status') != 'skipped':
-                    log.warning(f"AGENT({self.village_name}): Failed to build '{gid_name(goal_gid)}'. Reason: {build_result.get('reason')}. Waiting 5 mins.")
-                    self.stop_event.wait(300)
+                    log.warning(f"AGENT({self.village_name}): Failed to build '{gid_name(goal_gid)}'. Reason: {build_result.get('reason')}. Waiting 5 seconds.")
+                    self.stop_event.wait(5)
 
             except Exception as e:
                 log.error(f"Agent for village {self.village_name} CRITICAL ERROR: {e}", exc_info=True)

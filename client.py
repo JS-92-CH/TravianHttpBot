@@ -80,6 +80,9 @@ class TravianClient:
                         if button := wrapper.find('button', class_='green', disabled=False):
                             if match := re.search(r"window\.location\.href\s*=\s*'([^']+)'", button.get('onclick', '')):
                                 action_url = urljoin(self.server_url, match.group(1).replace('&amp;', '&'))
+                                if 'newdid=' not in action_url:
+                                    sep = '&' if '?' in action_url else '?'
+                                    action_url = f"{action_url}{sep}newdid={village_id}"
                 if not action_url: return {'status': 'error', 'reason': f'Could not find build button for GID {gid}'}
             else: # Upgrade
                 resp = self.sess.get(build_page_url, timeout=15)
@@ -90,6 +93,9 @@ class TravianClient:
                 if button := soup.find('button', class_=re.compile(r'\b(green|build)\b'), disabled=False):
                     if match := re.search(r"window\.location\.href\s*=\s*'([^']+)'", button.get('onclick', '')):
                         action_url = urljoin(self.server_url, match.group(1).replace('&amp;', '&'))
+                        if 'newdid=' not in action_url:
+                            sep = '&' if '?' in action_url else '?'
+                            action_url = f"{action_url}{sep}newdid={village_id}"
                 if not action_url: return {'status': 'error', 'reason': 'Could not find upgrade button'}
 
             log.info(f"[{self.username}] Executing build action URL: {action_url}")
