@@ -11,7 +11,7 @@ from config import log, gid_name, NAME_TO_GID
 class TravianClient:
     """Lightweight HTTP wrapper around the Travian *HTML* and JSON endpoints."""
 
-    def __init__(self, username: str, password: str, server_url: str):
+    def __init__(self, username: str, password: str, server_url: str, proxy: Optional[Dict[str, Any]] = None):
         self.username = username
         self.password = password
         self.server_url = server_url.rstrip("/")
@@ -20,6 +20,24 @@ class TravianClient:
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
         })
         self.server_version = None
+
+        if proxy and proxy.get('ip') and proxy.get('port'):
+            proxy_user = proxy.get('username')
+            proxy_pass = proxy.get('password')
+            proxy_ip = proxy.get('ip')
+            proxy_port = proxy.get('port')
+            
+            proxy_auth = ""
+            if proxy_user and proxy_pass:
+                proxy_auth = f"{proxy_user}:{proxy_pass}@"
+            
+            proxy_url = f"http://{proxy_auth}{proxy_ip}:{proxy_port}"
+            
+            self.sess.proxies = {
+                "http": proxy_url,
+                "https": proxy_url,
+            }
+            log.info(f"[{self.username}] Using proxy: {proxy_ip}:{proxy_port}")
 
     def login(self) -> bool:
         log.info("[%s] Attempting API login to Vardom server...", self.username)

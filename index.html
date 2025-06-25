@@ -52,7 +52,7 @@
     <header class="header"><h1>Travian Bot Dashboard</h1><div class="controls"><button id="startBtn">Start Bot</button><button id="stopBtn">Stop Bot</button></div></header>
     <div id="main-container">
         <div id="left-panel" class="panel">
-            <div><h2>Accounts</h2><div id="account-list"></div><hr><form id="add-account-form"><h3>Add New Account</h3><input type="text" id="username" placeholder="Username" required><input type="password" id="password" placeholder="Password" required><input type="text" id="server_url" placeholder="Server URL" required><label><input type="checkbox" id="use_dual_queue">Use Plus Account (2 builds)</label><button type="submit">Add Account</button></form></div>
+            <div><h2>Accounts</h2><div id="account-list"></div><hr><form id="add-account-form"><h3>Add New Account</h3><input type="text" id="username" placeholder="Username" required><input type="password" id="password" placeholder="Password" required><input type="text" id="server_url" placeholder="Server URL" required><label><input type="checkbox" id="use_dual_queue">Use Plus Account (2 builds)</label><hr><h4>Proxy (Optional)</h4><input type="text" id="proxy_ip" placeholder="Proxy IP/Host"><input type="text" id="proxy_port" placeholder="Proxy Port"><input type="text" id="proxy_user" placeholder="Proxy Username"><input type="password" id="proxy_pass" placeholder="Proxy Password"><button type="submit" style="margin-top: 1rem;">Add Account</button></form></div>
             <div><h2>Villages</h2><div id="village-list"></div></div>
         </div>
         <div id="right-panel" class="panel">
@@ -90,14 +90,32 @@
         function renderAccountsAndVillages() {
             const accList = document.getElementById('account-list');
             if (accList) {
-                accList.innerHTML = '<ul>' + (FULL_STATE.accounts || []).map(acc => `
-                    <li>
-                        <label style="margin-bottom:0; flex-grow: 1;">
-                            <input type="checkbox" onchange="updateAccount('${acc.username}', 'use_dual_queue', this.checked)" ${acc.use_dual_queue ? 'checked' : ''}>
-                            ${acc.username}
-                        </label>
-                        <button class="remove-btn" onclick="removeAccount('${acc.username}')">X</button>
-                    </li>`).join('') + '</ul>';
+                let html = '<ul>';
+                (FULL_STATE.accounts || []).forEach(acc => {
+                    const proxy_info = acc.proxy && acc.proxy.ip ? ` <small style="color:var(--text-secondary);">(Proxy: ${acc.proxy.ip})</small>` : '';
+                    html += `
+                        <li style="background-color: #333">
+                            <label style="margin-bottom:0; flex-grow: 1;">
+                                <input type="checkbox" onchange="updateAccount('${acc.username}', 'use_dual_queue', this.checked)" ${acc.use_dual_queue ? 'checked' : ''}>
+                                ${acc.username} ${proxy_info}
+                            </label>
+                            <button class="remove-btn" onclick="removeAccount('${acc.username}')">X</button>
+                        </li>
+                        <li style="background: #282828; padding: 0.5rem 0.5rem 0.5rem 2rem; margin-bottom: 0.5rem;">
+                            <details>
+                                <summary style="cursor: pointer; font-size: 0.9em; color: var(--text-secondary);">Proxy Settings</summary>
+                                <div style="padding: 0.5rem 0; display: flex; flex-wrap: wrap; gap: 5px;">
+                                    <input type="text" placeholder="Proxy IP" value="${acc.proxy ? acc.proxy.ip || '' : ''}" onchange="updateAccount('${acc.username}', 'proxy_ip', this.value)" style="flex: 1 1 120px; min-width: 120px;">
+                                    <input type="text" placeholder="Port" value="${acc.proxy ? acc.proxy.port || '' : ''}" onchange="updateAccount('${acc.username}', 'proxy_port', this.value)" style="flex: 1 1 60px; min-width: 60px;">
+                                    <input type="text" placeholder="Username" value="${acc.proxy ? acc.proxy.username || '' : ''}" onchange="updateAccount('${acc.username}', 'proxy_user', this.value)" style="flex: 1 1 120px; min-width: 120px;">
+                                    <input type="password" placeholder="Password" value="${acc.proxy ? acc.proxy.password || '' : ''}" onchange="updateAccount('${acc.username}', 'proxy_pass', this.value)" style="flex: 1 1 120px; min-width: 120px;">
+                                </div>
+                            </details>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+                accList.innerHTML = html;
             }
 
             const villageList = document.getElementById('village-list');
@@ -328,7 +346,11 @@
                 username: document.getElementById('username').value,
                 password: document.getElementById('password').value,
                 server_url: document.getElementById('server_url').value,
-                use_dual_queue: document.getElementById('use_dual_queue').checked
+                use_dual_queue: document.getElementById('use_dual_queue').checked,
+                proxy_ip: document.getElementById('proxy_ip').value,
+                proxy_port: document.getElementById('proxy_port').value,
+                proxy_user: document.getElementById('proxy_user').value,
+                proxy_pass: document.getElementById('proxy_pass').value
             });
             e.target.reset();
         };

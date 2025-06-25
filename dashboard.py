@@ -52,12 +52,24 @@ def handle_add_account(data):
         if any(a['username'] == data['username'] for a in BOT_STATE['accounts']):
             log.warning("Account %s already exists.", data['username'])
             return
-        BOT_STATE['accounts'].append({
+        
+        new_account = {
             "username": data["username"],
             "password": data["password"],
             "server_url": data["server_url"],
-            "use_dual_queue": data.get("use_dual_queue", False) # Added this line
-        })
+            "use_dual_queue": data.get("use_dual_queue", False)
+        }
+        
+        # Add proxy settings if they exist
+        if data.get('proxy_ip') and data.get('proxy_port'):
+            new_account['proxy'] = {
+                "ip": data.get('proxy_ip'),
+                "port": data.get('proxy_port'),
+                "username": data.get('proxy_user', ''),
+                "password": data.get('proxy_pass', '')
+            }
+        
+        BOT_STATE['accounts'].append(new_account)
     save_config()
     socketio.emit("state_update", BOT_STATE)
 
@@ -71,7 +83,16 @@ def handle_update_account_setting(data):
     with state_lock:
         for acc in BOT_STATE['accounts']:
             if acc['username'] == username:
-                acc[key] = value
+                if key.startswith('proxy_'):
+                    proxy_key = key.split('_', 1)[1]
+                    if 'proxy' not in acc:
+                        acc['proxy'] = {"ip": "", "port": "", "username": "", "password": ""}
+                    if proxy_key == 'ip': acc['proxy']['ip'] = value
+                    elif proxy_key == 'port': acc['proxy']['port'] = value
+                    elif proxy_key == 'user': acc['proxy']['username'] = value
+                    elif proxy_key == 'pass': acc['proxy']['password'] = value
+                else:
+                    acc[key] = value
                 break
     save_config()
     socketio.emit("state_update", BOT_STATE)
