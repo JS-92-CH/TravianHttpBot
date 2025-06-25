@@ -8,7 +8,7 @@ def load_modules(agent):
     """Dynamically load all module classes in this package and instantiate them."""
     modules = []
     base_dir = os.path.dirname(__file__)
-    for fname in os.listdir(base_dir):
+    for fname in sorted(os.listdir(base_dir)):
         if fname.endswith('.py') and fname not in ('__init__.py', 'base.py'):
             mod_name = fname[:-3]
             mod = importlib.import_module(f'.{mod_name}', package=__name__)
