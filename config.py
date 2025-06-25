@@ -26,6 +26,7 @@ log = setup_logging()
 # ─────────────────────────────────────────
 BOT_STATE: Dict[str, Any] = {"accounts": [], "village_data": {}, "build_queues": {}}
 state_lock = threading.Lock()
+build_lock = threading.Lock()
 
 # ─────────────────────────────────────────
 # CONFIG & DEFAULTS
