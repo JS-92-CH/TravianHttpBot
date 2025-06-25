@@ -7,13 +7,14 @@ from config import log, BOT_STATE, state_lock, save_config
 from modules import load_modules
 
 class VillageAgent(threading.Thread):
-    def __init__(self, client: TravianClient, village_info: Dict, socketio_instance, use_dual_queue: bool = False):
+    def __init__(self, client: TravianClient, village_info: Dict, socketio_instance, use_dual_queue: bool = False, use_hero_resources: bool = False):
         super().__init__()
         self.client = client
         self.village_id = village_info['id']
         self.village_name = village_info['name']
         self.socketio = socketio_instance
         self.use_dual_queue = use_dual_queue
+        self.use_hero_resources = use_hero_resources
         self.stop_event = threading.Event()
         self.daemon = True
         self.modules = load_modules(self)
@@ -87,12 +88,14 @@ class BotManager(threading.Thread):
                             log.info(f"Stopped and removed agent for stale village ID: {vid}")
 
                     use_dual_queue = account.get("use_dual_queue", False)
+                    use_hero_resources = account.get("use_hero_resources", False)
                     for village in villages:
                         if agent := self.village_agents.get(village['id']):
                             agent.use_dual_queue = use_dual_queue
+                            agent.use_hero_resources = use_hero_resources
                         else:
                             log.info(f"Creating new agent for {village['name']}")
-                            agent = VillageAgent(client, village, self.socketio, use_dual_queue)
+                            agent = VillageAgent(client, village, self.socketio, use_dual_queue, use_hero_resources)
                             self.village_agents[village['id']] = agent
                             agent.start()
 

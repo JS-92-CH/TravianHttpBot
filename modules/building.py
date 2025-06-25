@@ -135,6 +135,12 @@ class Module(BaseModule):
             agent.stop_event.wait(5)
             return
 
+        if agent.use_hero_resources and hasattr(agent, 'hero_module'):
+            try:
+                agent.hero_module.ensure_resources_for_build(agent.village_id, action_plan['location'], goal_gid)
+            except Exception as exc:
+                log.error(f"AGENT({agent.village_name}): Hero resource step failed: {exc}")
+
         with build_lock:
             log.info(f"AGENT({agent.village_name}): Build lock acquired.")
             quick_check_data = agent.client.fetch_and_parse_village(agent.village_id)
