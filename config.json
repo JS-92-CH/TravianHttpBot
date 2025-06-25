@@ -3,7 +3,8 @@
         {
             "username": "zero",
             "password": "22222222",
-            "server_url": "https://x500.vardom.net"
+            "server_url": "https://x500.vardom.net",
+            "use_dual_queue": true
         }
     ],
     "build_queues": {
@@ -14,917 +15,259 @@
         "83230": [],
         "84032": [],
         "83635": [],
-        "83235": [
-            {
-                "type": "building",
-                "location": 19,
-                "level": 20,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 20,
-                "gid": 11
-            }
-        ],
+        "83235": [],
         "83231": [],
         "84034": [],
         "82831": [],
-        "82832": [
+        "82832": [],
+        "84035": [],
+        "82430": [],
+        "84435": [],
+        "82431": [],
+        "84436": [],
+        "84437": [],
+        "82835": [],
+        "82434": [],
+        "82029": [
             {
                 "type": "building",
-                "location": 24,
+                "location": 28,
                 "gid": 10,
                 "level": 20
             },
             {
                 "type": "building",
-                "location": 38,
-                "gid": 11,
+                "location": 27,
+                "gid": 10,
                 "level": 20
-            }
-        ],
-        "84035": [
-            {
-                "type": "building",
-                "location": 19,
-                "level": 20,
-                "gid": 10
             },
             {
                 "type": "building",
-                "location": 20,
-                "level": 20,
-                "gid": 11
-            }
-        ],
-        "82430": [
-            {
-                "type": "building",
-                "location": 19,
-                "level": 5,
-                "gid": 10
+                "location": 23,
+                "gid": 10,
+                "level": 20
             },
             {
                 "type": "building",
-                "location": 20,
-                "level": 5,
-                "gid": 11
-            },
-            {
-                "type": "resource",
-                "level": 5,
-                "plan": 0
-            },
-            {
-                "type": "resource",
-                "level": 10,
-                "plan": 0
+                "location": 22,
+                "gid": 10,
+                "level": 20
             },
             {
                 "type": "building",
                 "location": 19,
-                "level": 20,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 20,
-                "gid": 11
-            }
-        ],
-        "84435": [
-            {
-                "type": "building",
-                "location": 0,
-                "level": 5,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 0,
-                "level": 5,
-                "gid": 11
-            },
-            {
-                "type": "resource",
-                "level": 5,
-                "plan": 0
-            },
-            {
-                "type": "resource",
-                "level": 10,
-                "plan": 0
-            },
-            {
-                "type": "building",
-                "location": 0,
-                "level": 20,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 0,
-                "level": 20,
-                "gid": 11
-            }
-        ],
-        "82431": [
-            {
-                "type": "building",
-                "location": 19,
-                "level": 5,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 5,
-                "gid": 11
-            },
-            {
-                "type": "resource",
-                "level": 5,
-                "plan": 0
-            },
-            {
-                "type": "resource",
-                "level": 10,
-                "plan": 0
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "level": 20,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 20,
-                "gid": 11
-            }
-        ],
-        "84436": [
-            {
-                "type": "building",
-                "location": 19,
-                "level": 5,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 5,
-                "gid": 11
-            },
-            {
-                "type": "resource",
-                "level": 5,
-                "plan": 0
-            },
-            {
-                "type": "resource",
-                "level": 10,
-                "plan": 0
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "level": 20,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 20,
-                "gid": 11
-            },
-            {
-                "type": "building",
-                "location": 27,
-                "level": 20,
-                "gid": 13
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "level": 20,
-                "gid": 20
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "level": 20,
-                "gid": 46
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "level": 20,
-                "gid": 16
-            },
-            {
-                "type": "building",
-                "location": 30,
-                "level": 20,
-                "gid": 14
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "level": 20,
-                "gid": 42
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "level": 20,
-                "gid": 21
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "level": 5,
-                "gid": 5
-            },
-            {
-                "type": "building",
-                "location": 33,
-                "level": 5,
-                "gid": 6
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "level": 5,
-                "gid": 7
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "level": 5,
-                "gid": 8
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "level": 5,
-                "gid": 9
-            }
-        ],
-        "84437": [
-            {
-                "type": "building",
-                "location": 19,
-                "level": 5,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 5,
-                "gid": 11
-            },
-            {
-                "type": "resource",
-                "level": 5,
-                "plan": 0
-            },
-            {
-                "type": "resource",
-                "level": 10,
-                "plan": 0
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "level": 20,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 20,
-                "gid": 11
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "level": 20,
-                "gid": 20
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "level": 20,
-                "gid": 46
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "level": 20,
-                "gid": 16
-            },
-            {
-                "type": "building",
-                "location": 30,
-                "level": 20,
-                "gid": 14
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "level": 20,
-                "gid": 42
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "level": 20,
-                "gid": 21
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "level": 5,
-                "gid": 5
-            },
-            {
-                "type": "building",
-                "location": 33,
-                "level": 5,
-                "gid": 6
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "level": 5,
-                "gid": 7
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "level": 5,
-                "gid": 8
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "level": 5,
-                "gid": 9
-            }
-        ],
-        "82835": [
-            {
-                "type": "building",
-                "location": 19,
-                "level": 5,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 5,
-                "gid": 11
-            },
-            {
-                "type": "resource",
-                "level": 5,
-                "plan": 0
-            },
-            {
-                "type": "resource",
-                "level": 10,
-                "plan": 0
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "level": 20,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 20,
-                "gid": 11
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "level": 20,
-                "gid": 20
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "level": 20,
-                "gid": 46
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "level": 20,
-                "gid": 16
-            },
-            {
-                "type": "building",
-                "location": 30,
-                "level": 20,
-                "gid": 14
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "level": 20,
-                "gid": 42
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "level": 20,
-                "gid": 21
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "level": 5,
-                "gid": 5
-            },
-            {
-                "type": "building",
-                "location": 33,
-                "level": 5,
-                "gid": 6
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "level": 5,
-                "gid": 7
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "level": 5,
-                "gid": 8
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "level": 5,
-                "gid": 9
-            }
-        ],
-        "82434": [
-            {
-                "type": "building",
-                "location": 19,
-                "level": 5,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 5,
-                "gid": 11
-            },
-            {
-                "type": "resource",
-                "level": 5,
-                "plan": 0
-            },
-            {
-                "type": "resource",
-                "level": 10,
-                "plan": 0
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "level": 20,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 20,
-                "gid": 11
-            },
-            {
-                "type": "building",
-                "location": 27,
-                "level": 20,
-                "gid": 13
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "level": 20,
-                "gid": 20
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "level": 20,
-                "gid": 46
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "level": 20,
-                "gid": 16
-            },
-            {
-                "type": "building",
-                "location": 30,
-                "level": 20,
-                "gid": 14
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "level": 20,
-                "gid": 42
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "level": 20,
-                "gid": 21
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "level": 5,
-                "gid": 5
-            },
-            {
-                "type": "building",
-                "location": 33,
-                "level": 5,
-                "gid": 6
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "level": 5,
-                "gid": 7
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "level": 5,
-                "gid": 8
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "level": 5,
-                "gid": 9
-            }
-        ],
-        "82029": [
-            {
-                "type": "building",
-                "location": 19,
-                "level": 5,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 5,
-                "gid": 11
-            },
-            {
-                "type": "resource",
-                "level": 5,
-                "plan": 0
-            },
-            {
-                "type": "resource",
-                "level": 10,
-                "plan": 0
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "level": 20,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 20,
-                "gid": 11
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "level": 20,
-                "gid": 46
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "level": 20,
-                "gid": 16
-            },
-            {
-                "type": "building",
-                "location": 30,
-                "level": 20,
-                "gid": 14
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "level": 20,
-                "gid": 42
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "level": 20,
-                "gid": 21
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "level": 5,
-                "gid": 5
-            },
-            {
-                "type": "building",
-                "location": 33,
-                "level": 5,
-                "gid": 6
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "level": 5,
-                "gid": 7
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "level": 5,
-                "gid": 8
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "level": 5,
-                "gid": 9
-            }
-        ],
-        "82028": [
-            {
-                "type": "building",
-                "location": 19,
-                "level": 5,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 5,
-                "gid": 11
-            },
-            {
-                "type": "resource",
-                "level": 5,
-                "plan": 0
-            },
-            {
-                "type": "resource",
-                "level": 10,
-                "plan": 0
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "level": 20,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 20,
-                "gid": 11
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "level": 20,
-                "gid": 46
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "level": 20,
-                "gid": 16
-            },
-            {
-                "type": "building",
-                "location": 30,
-                "level": 20,
-                "gid": 14
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "level": 20,
-                "gid": 42
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "level": 20,
-                "gid": 21
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "level": 5,
-                "gid": 5
-            },
-            {
-                "type": "building",
-                "location": 33,
-                "level": 5,
-                "gid": 6
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "level": 5,
-                "gid": 7
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "level": 5,
-                "gid": 8
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "level": 5,
-                "gid": 9
-            }
-        ],
-        "84031": [
-            {
-                "type": "building",
-                "location": 19,
-                "level": 5,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 5,
-                "gid": 11
-            },
-            {
-                "type": "resource",
-                "level": 5,
-                "plan": 0
-            },
-            {
-                "type": "resource",
-                "level": 10,
-                "plan": 0
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "level": 20,
-                "gid": 10
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 20,
-                "gid": 11
-            },
-            {
-                "type": "building",
-                "location": 27,
-                "level": 20,
-                "gid": 13
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "level": 20,
-                "gid": 20
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "level": 20,
-                "gid": 46
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "level": 20,
-                "gid": 16
-            },
-            {
-                "type": "building",
-                "location": 30,
-                "level": 20,
-                "gid": 14
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "level": 20,
-                "gid": 42
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "level": 20,
-                "gid": 21
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "level": 5,
-                "gid": 5
-            },
-            {
-                "type": "building",
-                "location": 33,
-                "level": 5,
-                "gid": 6
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "level": 5,
-                "gid": 7
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "level": 5,
-                "gid": 8
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "level": 5,
-                "gid": 9
-            }
-        ],
-        "84434": [
-            {
-                "type": "building",
-                "location": 19,
-                "gid": 19,
-                "level": 3
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "gid": 22,
+                "gid": 23,
                 "level": 10
             },
             {
                 "type": "building",
                 "location": 21,
-                "gid": 24,
+                "gid": 10,
+                "level": 20
+            }
+        ],
+        "82028": [
+            {
+                "type": "building",
+                "location": 22,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 23,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 28,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 31,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 32,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 33,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 20
+            }
+        ],
+        "84031": [
+            {
+                "type": "building",
+                "location": 21,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 22,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 37,
+                "gid": 13,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 20
+            }
+        ],
+        "84434": [
+            {
+                "gid": 1,
+                "level": 1,
+                "location": 3,
+                "type": "building"
+            },
+            {
+                "type": "resource_plan",
                 "level": 10
             }
         ],
         "84433": [
             {
                 "type": "building",
-                "location": 19,
-                "level": 3,
-                "gid": 19
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "level": 10,
-                "gid": 22
-            },
-            {
-                "type": "building",
                 "location": 21,
-                "level": 10,
-                "gid": 24
+                "gid": 24,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 1,
+                "gid": 1,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 3,
+                "gid": 1,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 4,
+                "gid": 1,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 14,
+                "gid": 1,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 17,
+                "gid": 1,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 5,
+                "gid": 2,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 6,
+                "gid": 2,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 16,
+                "gid": 2,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 18,
+                "gid": 2,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 7,
+                "gid": 3,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 10,
+                "gid": 3,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 11,
+                "gid": 3,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 2,
+                "gid": 4,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 8,
+                "gid": 4,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 9,
+                "gid": 4,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 12,
+                "gid": 4,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 13,
+                "gid": 4,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 15,
+                "gid": 4,
+                "level": 1
             }
         ]
     }

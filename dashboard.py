@@ -2,13 +2,12 @@ from flask import Flask, render_template_string
 from flask_socketio import SocketIO
 
 from config import BOT_STATE, state_lock, save_config, log
-from bot import BotManager # Correctly import BotManager
+from bot import BotManager
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "8b8e2d43‐dashboard‐secret"
 socketio = SocketIO(app, async_mode="threading")
 
-# This will hold our main bot thread
 bot_manager_thread = None
 
 @app.route("/")
@@ -17,24 +16,23 @@ def index_route():
         with open("index.html", "r", encoding="utf-8") as f:
             return render_template_string(f.read())
     except FileNotFoundError:
-        return "Error: index.html not found. Please create this file for the dashboard.", 404
+        return "Error: index.html not found.", 404
 
 @socketio.on('connect')
 def on_connect():
     log.info("Dashboard connected.")
-    socketio.emit("state_update", BOT_STATE)
+    with state_lock:
+        socketio.emit("state_update", BOT_STATE)
 
 @socketio.on('start_bot')
 def handle_start_bot(data=None):
     global bot_manager_thread
     if bot_manager_thread is None or not bot_manager_thread.is_alive():
         log.info("Starting bot manager...")
-        # Pass the socketio instance to the bot manager constructor
         bot_manager_thread = BotManager(socketio)
         bot_manager_thread.start()
     else:
         log.info("Bot is already running.")
-        socketio.emit("log_message", {'data': "Bot is already running."})
 
 @socketio.on('stop_bot')
 def handle_stop_bot(data=None):
@@ -42,11 +40,10 @@ def handle_stop_bot(data=None):
     if bot_manager_thread and bot_manager_thread.is_alive():
         log.info("Stopping bot manager...")
         bot_manager_thread.stop()
-        bot_manager_thread.join() # Wait for the thread to fully stop
+        bot_manager_thread.join()
         bot_manager_thread = None
     else:
         log.info("Bot is not running.")
-        socketio.emit("log_message", {'data': "Bot is not running."})
 
 @socketio.on('add_account')
 def handle_add_account(data):
@@ -59,7 +56,23 @@ def handle_add_account(data):
             "username": data["username"],
             "password": data["password"],
             "server_url": data["server_url"],
+            "use_dual_queue": data.get("use_dual_queue", False) # Added this line
         })
+    save_config()
+    socketio.emit("state_update", BOT_STATE)
+
+@socketio.on('update_account_setting')
+def handle_update_account_setting(data):
+    """Updates a specific setting for an account."""
+    username = data.get('username')
+    key = data.get('key')
+    value = data.get('value')
+    log.info(f"Updating setting '{key}' for account {username} to {value}")
+    with state_lock:
+        for acc in BOT_STATE['accounts']:
+            if acc['username'] == username:
+                acc[key] = value
+                break
     save_config()
     socketio.emit("state_update", BOT_STATE)
 
@@ -74,19 +87,16 @@ def handle_remove_account(data):
     
 @socketio.on('add_build_task')
 def handle_add_build_task(data):
-    """Handles adding a single build task to a village's queue."""
     village_id = data.get('villageId')
     task = data.get('task')
     if village_id and task:
         log.info(f"Adding task to build queue for village {village_id}: {task}")
         with state_lock:
-            # Ensure the village has a build queue initialized
             if str(village_id) not in BOT_STATE['build_queues']:
                 BOT_STATE['build_queues'][str(village_id)] = []
             BOT_STATE['build_queues'][str(village_id)].append(task)
         save_config()
         socketio.emit("state_update", BOT_STATE)
-
 
 @socketio.on('update_build_queue')
 def handle_update_build_queue(data):

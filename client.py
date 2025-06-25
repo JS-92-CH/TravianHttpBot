@@ -76,7 +76,14 @@ class TravianClient:
                     if action_url: break
                     resp = self.sess.get(f"{build_page_url}&category={category}", timeout=15)
                     soup = BeautifulSoup(resp.text, 'html.parser')
-                    if wrapper := (soup.find('img', class_=f'g{gid}') or {}).find_parent('div', class_='buildingWrapper'):
+                    
+                    # --- Start of fix ---
+                    wrapper = None
+                    if img_tag := soup.find('img', class_=f'g{gid}'):
+                        wrapper = img_tag.find_parent('div', class_='buildingWrapper')
+                    
+                    if wrapper:
+                    # --- End of fix ---
                         if button := wrapper.find('button', class_='green', disabled=False):
                             if match := re.search(r"window\.location\.href\s*=\s*'([^']+)'", button.get('onclick', '')):
                                 action_url = urljoin(self.server_url, match.group(1).replace('&amp;', '&'))
@@ -103,14 +110,14 @@ class TravianClient:
             conf_soup = BeautifulSoup(confirmation_resp.text, 'html.parser')
             
             if conf_soup.select_one(".buildingList .timer"):
-                 log.info(f"[{self.username}] Successfully initiated build for {gid_name(gid)}.")
-                 return {'status': 'success'}
+                    log.info(f"[{self.username}] Successfully initiated build for {gid_name(gid)}.")
+                    return {'status': 'success'}
             else:
-                 log.warning(f"[{self.username}] Build command sent, but couldn't confirm in response page.")
-                 debug_filename = f"debug_fail_{village_id}_{gid_name(gid).replace(' ','')}.html"
-                 with open(debug_filename, "w", encoding="utf-8") as f: f.write(conf_soup.prettify())
-                 log.error(f"Saved failed confirmation page to '{debug_filename}' for inspection.")
-                 return {'status': 'error', 'reason': 'confirmation_failed_or_res_low'}
+                    log.warning(f"[{self.username}] Build command sent, but couldn't confirm in response page.")
+                    debug_filename = f"debug_fail_{village_id}_{gid_name(gid).replace(' ','')}.html"
+                    with open(debug_filename, "w", encoding="utf-8") as f: f.write(conf_soup.prettify())
+                    log.error(f"Saved failed confirmation page to '{debug_filename}' for inspection.")
+                    return {'status': 'error', 'reason': 'confirmation_failed_or_res_low'}
         except requests.RequestException as e:
             return {'status': 'error', 'reason': f'Network error: {e}'}
 
