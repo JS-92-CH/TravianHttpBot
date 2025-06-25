@@ -45,7 +45,7 @@ GID_MAPPING = {
     25: 'Residence', 26: 'Palace', 27: 'Treasury', 28: 'Trade Office', 29: 'Great Barracks',
     30: 'Great Stable', 31: 'City Wall', 32: 'Earth Wall', 33: 'Palisade', 34: 'Stonemason\'s Lodge',
     35: 'Brewery', 36: 'Trapper', 37: "Hero's Mansion", 38: 'Great Warehouse', 39: 'Great Granary',
-    40: 'Wonder of the World', 41: 'Horse Drinking Trough', 42: 'Great Workshop', 44: 'Command Center',
+    40: 'Wonder of the World', 41: 'Horse Drinking Trough', 42: 'Stone Wall', 43: 'Hun Wall', 44: 'Command Center',
     45: 'Waterworks', 46: 'Hospital'
 }
 

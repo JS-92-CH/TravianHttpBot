@@ -34,18 +34,32 @@ class Module(BaseModule):
 
             goal_gid, goal_level = task.get('gid'), task.get('level')
             is_complete = False
+            
+            WALL_GIDS = {31, 32, 33, 42, 43}
 
             if 'location' in task and task['location'] > 0:
                 building = next((b for b in all_buildings if b['id'] == task['location']), None)
-                if building and building.get('gid') == goal_gid and building.get('level', 0) >= goal_level:
-                    is_complete = True
-                    log.info(f"AGENT({agent.village_name}): Sanitizing. Goal '{gid_name(goal_gid)} Lvl {goal_level} at Loc {task['location']}' is complete. Purging.")
+                if building:
+                    actual_gid = building.get('gid')
+                    if goal_gid in WALL_GIDS and actual_gid in WALL_GIDS:
+                        if building.get('level', 0) >= goal_level:
+                            is_complete = True
+                    elif actual_gid == goal_gid and building.get('level', 0) >= goal_level:
+                        is_complete = True
+            
             elif not is_multi_instance(goal_gid):
-                if any(b.get('gid') == goal_gid and b.get('level', 0) >= goal_level for b in all_buildings):
-                    is_complete = True
-                    log.info(f"AGENT({agent.village_name}): Sanitizing. Generic goal '{gid_name(goal_gid)} Lvl {goal_level}' is complete. Purging.")
-
+                is_wall_task = goal_gid in WALL_GIDS
+                for b in all_buildings:
+                    actual_gid = b.get('gid')
+                    if is_wall_task and actual_gid in WALL_GIDS and b.get('level', 0) >= goal_level:
+                        is_complete = True
+                        break
+                    elif actual_gid == goal_gid and b.get('level', 0) >= goal_level:
+                        is_complete = True
+                        break
+            
             if is_complete:
+                log.info(f"AGENT({agent.village_name}): Sanitizing. Goal '{gid_name(goal_gid)} Lvl {goal_level}' is complete. Purging.")
                 needs_save = True
             else:
                 sanitized_queue.append(task)
@@ -154,10 +168,6 @@ class Module(BaseModule):
 
         if build_result.get('status') == 'success':
             log.info(f"AGENT({agent.village_name}): Successfully started task for '{gid_name(goal_gid)}'.")
-            if goal_task.get('type') != 'resource_plan':
-                with state_lock:
-                    BOT_STATE["build_queues"][str(agent.village_id)] = sanitized_queue[1:]
-                save_config()
             agent.stop_event.wait(1)
         elif build_result.get('status') != 'skipped':
             log.warning(f"AGENT({agent.village_name}): Failed to build '{gid_name(goal_gid)}'. Reason: {build_result.get('reason')}. Waiting 5 seconds.")

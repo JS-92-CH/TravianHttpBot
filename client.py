@@ -1,6 +1,7 @@
 import re
 import json
 import requests
+import time
 import logging
 from typing import Dict, Any, Optional, List
 from bs4 import BeautifulSoup
@@ -38,6 +39,61 @@ class TravianClient:
                 "https": proxy_url,
             }
             log.info(f"[{self.username}] Using proxy: {proxy_ip}:{proxy_port}")
+
+    def start_adventure(self, target_map_id: int) -> bool:
+        """Sends the hero on a specific adventure."""
+        try:
+            api_url = f"{self.server_url}/api/v1/troop/send"
+            payload = {
+                "action": "troopsSend",
+                "targetMapId": int(target_map_id),
+                "eventType": 50,
+                "troops": [{"t11": 1}]
+            }
+            headers = {
+                'X-Version': self.server_version,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json; charset=UTF-8'
+            }
+
+            self.sess.put(api_url, json=payload, headers=headers, timeout=15)
+            post_resp = self.sess.post(api_url, json=payload, headers=headers, timeout=15)
+
+            # A successful response will contain a 'dialog' object
+            return post_resp.status_code == 200 and 'dialog' in post_resp.json()
+
+        except requests.RequestException as e:
+            log.error(f"[{self.username}] Network error sending hero on adventure: {e}")
+            return False
+        except Exception as e:
+            log.error(f"[{self.username}] Unexpected error during start_adventure: {e}", exc_info=True)
+            return False
+        
+    def collect_task_reward(self, payload: Dict[str, Any], village_id: int, village_name: str) -> bool:
+        """Collects the reward for a completed task."""
+        try:
+            api_url = f"{self.server_url}/api/v1/progressive-tasks/collectReward?villageId={village_id}"
+            headers = {
+                'X-Version': self.server_version,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json; charset=UTF-8'
+            }
+
+            resp = self.sess.post(api_url, json=payload, headers=headers, timeout=15)
+            
+            if resp.status_code == 200 and (resp.json().get('rewards') or resp.json().get('success')):
+                log.info(f"[{self.username}] Successfully collected reward for task in {village_name}: {payload.get('questId')}")
+                return True
+            else:
+                log.warning(f"[{self.username}] Failed to collect reward for task in {village_name}: {payload.get('questId')}. Response: {resp.text}")
+                return False
+
+        except requests.RequestException as e:
+            log.error(f"[{self.username}] Network error collecting task reward for {village_name}: {e}")
+            return False
+        except Exception as e:
+            log.error(f"[{self.username}] Unexpected error during collect_task_reward for {village_name}: {e}", exc_info=True)
+            return False
 
     def login(self) -> bool:
         log.info("[%s] Attempting API login to Vardom server...", self.username)
@@ -90,18 +146,26 @@ class TravianClient:
         
         try:
             if is_new_build:
+                WALL_GIDS = {31, 32, 33, 42, 43}  # GIDs for Roman, Teutonic, Gaulish, Egyptian, and Hun walls
                 for category in [1, 2, 3]:
-                    if action_url: break
+                    if action_url:
+                        break
                     resp = self.sess.get(f"{build_page_url}&category={category}", timeout=15)
                     soup = BeautifulSoup(resp.text, 'html.parser')
-                    
-                    # --- Start of fix ---
+
                     wrapper = None
-                    if img_tag := soup.find('img', class_=f'g{gid}'):
-                        wrapper = img_tag.find_parent('div', class_='buildingWrapper')
+                    search_gids = [gid]
+                    if gid in WALL_GIDS:
+                        # If we are looking for a wall, search for any wall type
+                        search_gids.extend(g for g in WALL_GIDS if g != gid)
+
+                    for search_gid in search_gids:
+                        if img_tag := soup.find('img', class_=f'g{search_gid}'):
+                            wrapper = img_tag.find_parent('div', class_='buildingWrapper')
+                            if wrapper:
+                                break  # Found a wall, stop searching
                     
                     if wrapper:
-                    # --- End of fix ---
                         if button := wrapper.find('button', class_='green', disabled=False):
                             if match := re.search(r"window\.location\.href\s*=\s*'([^']+)'", button.get('onclick', '')):
                                 action_url = urljoin(self.server_url, match.group(1).replace('&amp;', '&'))

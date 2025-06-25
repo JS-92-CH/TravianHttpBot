@@ -26,116 +26,18 @@
         "84435": [],
         "82431": [],
         "84436": [],
-        "84437": [
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            }
-        ],
+        "84437": [],
         "82835": [],
-        "82434": [
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            }
-        ],
-        "82029": [
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            }
-        ],
-        "82028": [
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            }
-        ],
-        "84031": [
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "gid": 23,
-                "level": 10
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 13,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            }
-        ],
-        "84434": [
-            {
-                "type": "resource_plan",
-                "level": 10
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 21,
-                "gid": 24,
-                "level": 20
-            }
-        ],
+        "82434": [],
+        "82029": [],
+        "82028": [],
+        "84031": [],
+        "84434": [],
         "84433": [
             {
-                "type": "resource_plan",
-                "level": 10
-            },
-            {
                 "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 23,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 22,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
+                "location": 25,
+                "gid": 20,
                 "level": 20
             }
         ]

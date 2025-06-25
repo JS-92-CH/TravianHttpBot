@@ -9,7 +9,7 @@ def load_modules(agent):
     modules = []
     base_dir = os.path.dirname(__file__)
     for fname in sorted(os.listdir(base_dir)):
-        if fname.endswith('.py') and fname not in ('__init__.py', 'base.py'):
+        if fname.endswith('.py') and fname not in ('__init__.py', 'base.py', 'adventure.py'):
             mod_name = fname[:-3]
             mod = importlib.import_module(f'.{mod_name}', package=__name__)
             cls = getattr(mod, 'Module', None)

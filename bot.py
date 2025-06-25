@@ -1,7 +1,7 @@
 import time
 import threading
 from typing import Dict, Optional
-
+from modules.adventure import Module as AdventureModule
 from client import TravianClient
 from config import log, BOT_STATE, state_lock, save_config
 from modules import load_modules
@@ -50,6 +50,7 @@ class BotManager(threading.Thread):
         self.socketio = socketio_instance
         self.stop_event = threading.Event()
         self.village_agents: Dict[int, VillageAgent] = {}
+        self.adventure_module = AdventureModule(self)
         self.daemon = True
 
     def stop(self):
@@ -74,6 +75,8 @@ class BotManager(threading.Thread):
                     account.get("proxy")
                 )
                 if not client.login(): self.stop_event.wait(60); continue
+                self.adventure_module.tick(client)
+                time.sleep(2)
                 
                 try:
                     resp = client.sess.get(f"{client.server_url}/dorf1.php", timeout=15)
@@ -102,5 +105,5 @@ class BotManager(threading.Thread):
                 except Exception as exc:
                     log.error(f"Failed to manage agents for {account['username']}: {exc}", exc_info=True)
             
-            self.stop_event.wait(300)
+            self.stop_event.wait(30)
         log.info("Bot Manager stopped.")
