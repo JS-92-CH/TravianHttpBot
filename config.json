@@ -4,7 +4,8 @@
             "username": "zero",
             "password": "22222222",
             "server_url": "https://x500.vardom.net",
-            "use_dual_queue": true
+            "use_dual_queue": true,
+            "use_hero_resources": true
         }
     ],
     "build_queues": {
@@ -31,17 +32,7 @@
         "82029": [],
         "82028": [],
         "84031": [],
-        "84434": [
-            {
-                "type": "resource_plan",
-                "level": 10
-            }
-        ],
-        "84433": [
-            {
-                "type": "resource_plan",
-                "level": 10
-            }
-        ]
+        "84434": [],
+        "84433": []
     }
 }

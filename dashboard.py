@@ -57,7 +57,8 @@ def handle_add_account(data):
             "username": data["username"],
             "password": data["password"],
             "server_url": data["server_url"],
-            "use_dual_queue": data.get("use_dual_queue", False)
+            "use_dual_queue": data.get("use_dual_queue", False),
+            "use_hero_resources": data.get("use_hero_resources", False)
         }
         
         # Add proxy settings if they exist
