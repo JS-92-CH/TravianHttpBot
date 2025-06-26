@@ -40,6 +40,17 @@ class TravianClient:
             }
             log.info(f"[{self.username}] Using proxy: {proxy_ip}:{proxy_port}")
 
+    def fetch_building_page(self, village_id: int, building_slot_id: int) -> Optional[str]:
+        """Fetches the HTML content of a specific building page."""
+        try:
+            url = f"{self.server_url}/build.php?newdid={village_id}&id={building_slot_id}"
+            resp = self.sess.get(url, timeout=15)
+            resp.raise_for_status()
+            return resp.text
+        except requests.RequestException as e:
+            log.error(f"[{self.username}] Network error fetching building page for slot {building_slot_id}: {e}")
+            return None
+
     def start_adventure(self, target_map_id: int) -> bool:
         """Sends the hero on a specific adventure."""
         try:

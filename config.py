@@ -24,7 +24,12 @@ log = setup_logging()
 # ─────────────────────────────────────────
 # SHARED STATE
 # ─────────────────────────────────────────
-BOT_STATE: Dict[str, Any] = {"accounts": [], "village_data": {}, "build_queues": {}}
+BOT_STATE: Dict[str, Any] = {
+    "accounts": [],
+    "village_data": {},
+    "build_queues": {},
+    "training_data": {} # New state for troop info
+}
 state_lock = threading.Lock()
 build_lock = threading.Lock()
 
@@ -65,6 +70,9 @@ def load_config() -> None:
             BOT_STATE["build_queues"] = data.get("build_queues", {})
             if "village_data" not in BOT_STATE:
                 BOT_STATE["village_data"] = {}
+            if "training_data" not in BOT_STATE:
+                BOT_STATE["training_data"] = {}
+
         log.info("Configuration loaded ✔")
     except Exception as exc:
         log.warning("Could not read config.json → %s", exc)
