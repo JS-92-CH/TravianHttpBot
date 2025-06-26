@@ -45,6 +45,19 @@ def handle_stop_bot(data=None):
     else:
         log.info("Bot is not running.")
 
+@socketio.on('update_training_queues')
+def handle_update_training_queues(data):
+    village_id = data.get('villageId')
+    settings = data.get('settings')
+    if village_id and settings is not None:
+        log.info("Updating training queue settings for village %s", village_id)
+        with state_lock:
+            if "training_queues" not in BOT_STATE:
+                BOT_STATE["training_queues"] = {}
+            BOT_STATE['training_queues'][str(village_id)] = settings
+        save_config()
+        socketio.emit("state_update", BOT_STATE)
+
 @socketio.on('add_account')
 def handle_add_account(data):
     log.info("Adding account: %s", data['username'])

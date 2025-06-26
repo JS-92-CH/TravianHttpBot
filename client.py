@@ -277,3 +277,47 @@ class TravianClient:
             if link := v_entry.find("a",href=re.compile(r"newdid=")):
                 out["villages"].append({"id":int(re.search(r"newdid=(\d+)",link["href"]).group(1)),"name":v_entry.find("span",class_="name").text.strip(),"active":"active" in v_entry.get("class",[])})
         return out
+    
+    def initiate_training(self, village_id: int, slot_id: int, troops: Dict[str, int]) -> bool:
+        """Submits the form to train a specified number of troops."""
+        train_url = f"{self.server_url}/build.php?newdid={village_id}&id={slot_id}"
+        
+        try:
+            # First, we need to get the page to find the hidden form inputs
+            resp = self.sess.get(train_url, timeout=15)
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            
+            form = soup.find('form', {'name': 'snd'})
+            if not form:
+                log.error(f"[{self.username}] Could not find training form for slot {slot_id}.")
+                return False
+            
+            payload = {}
+            # Collect all hidden inputs from the form
+            for hidden_input in form.find_all('input', {'type': 'hidden'}):
+                if hidden_input.has_attr('name'):
+                    payload[hidden_input['name']] = hidden_input.get('value', '')
+            
+            # Add the troop amounts to the payload
+            for troop_input_name, amount in troops.items():
+                payload[troop_input_name] = amount
+            
+            # Submit the training request
+            submit_resp = self.sess.post(train_url, data=payload, timeout=15)
+            submit_resp.raise_for_status()
+
+            # Check if the response indicates success (e.g., by checking for the queue update)
+            new_soup = BeautifulSoup(submit_resp.text, 'html.parser')
+            if new_soup.find('table', class_='under_progress'):
+                log.info(f"[{self.username}] Successfully initiated training in village {village_id} for troops: {troops}")
+                return True
+            else:
+                log.warning(f"[{self.username}] Training submission for {troops} may have failed in village {village_id}.")
+                return False
+
+        except requests.RequestException as e:
+            log.error(f"[{self.username}] Network error initiating training: {e}")
+            return False
+        except Exception as e:
+            log.error(f"[{self.username}] Unexpected error during initiate_training: {e}", exc_info=True)
+            return False

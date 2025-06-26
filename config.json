@@ -16,36 +16,6 @@
         "83230": [
             {
                 "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 27,
-                "gid": 5,
-                "level": 5
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "gid": 6,
-                "level": 5
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "gid": 7,
-                "level": 5
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "gid": 8,
-                "level": 5
-            },
-            {
-                "type": "building",
                 "location": 35,
                 "gid": 9,
                 "level": 5
@@ -163,5 +133,6 @@
                 "level": 20
             }
         ]
-    }
+    },
+    "training_queues": {}
 }

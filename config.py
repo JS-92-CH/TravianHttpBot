@@ -28,7 +28,8 @@ BOT_STATE: Dict[str, Any] = {
     "accounts": [],
     "village_data": {},
     "build_queues": {},
-    "training_data": {} # New state for troop info
+    "training_data": {},
+     "training_queues": {}
 }
 state_lock = threading.Lock()
 build_lock = threading.Lock()
@@ -70,6 +71,7 @@ def load_config() -> None:
             BOT_STATE["build_queues"] = data.get("build_queues", {})
             if "village_data" not in BOT_STATE:
                 BOT_STATE["village_data"] = {}
+                BOT_STATE["training_queues"] = data.get("training_queues", {})
             if "training_data" not in BOT_STATE:
                 BOT_STATE["training_data"] = {}
 
@@ -79,7 +81,11 @@ def load_config() -> None:
 
 def save_config() -> None:
     with state_lock:
-        payload = {"accounts": BOT_STATE["accounts"], "build_queues": BOT_STATE["build_queues"]}
+        payload = {
+            "accounts": BOT_STATE["accounts"],
+            "build_queues": BOT_STATE["build_queues"],
+            "training_queues": BOT_STATE["training_queues"]
+        }
     with open("config.json", "w", encoding="utf‑8") as fh:
         json.dump(payload, fh, indent=4)
     log.info("Configuration saved ✔")
