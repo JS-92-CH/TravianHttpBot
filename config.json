@@ -54,12 +54,6 @@
         "84434": [
             {
                 "type": "building",
-                "location": 23,
-                "gid": 20,
-                "level": 20
-            },
-            {
-                "type": "building",
                 "location": 24,
                 "gid": 21,
                 "level": 20
@@ -116,12 +110,6 @@
         "84433": [
             {
                 "type": "building",
-                "location": 33,
-                "gid": 14,
-                "level": 20
-            },
-            {
-                "type": "building",
                 "location": 34,
                 "gid": 25,
                 "level": 20
@@ -130,6 +118,12 @@
                 "type": "building",
                 "location": 35,
                 "gid": 17,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 35,
+                "gid": 10,
                 "level": 20
             }
         ]

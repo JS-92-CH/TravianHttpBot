@@ -241,11 +241,17 @@
             return [10,11,23,36,38,39].includes(gid);
         }
 
-        socket.on('connect', () => document.querySelector('#log').innerHTML += '<p style="color:var(--accent-primary)">Dashboard connected.</p>');
+        socket.on('connect', () => {
+            const log = document.getElementById('log');
+            if(log) log.innerHTML += '<p style="color:var(--accent-primary)">Dashboard connected.</p>';
+        });
+
         socket.on('log_message', msg => {
             const log = document.getElementById('log');
-            log.innerHTML += msg.data.replace(/</g, "&lt;").replace(/>/g, "&gt;") + '<br>';
-            log.scrollTop = log.scrollHeight;
+            if(log) {
+                log.innerHTML += msg.data.replace(/</g, "&lt;").replace(/>/g, "&gt;") + '<br>';
+                log.scrollTop = log.scrollHeight;
+            }
         });
 
         socket.on('state_update', newState => {
@@ -298,7 +304,10 @@
         
         function getMaxLevel(gid) {
             gid = parseInt(gid);
-            if ([1,2,3,4].includes(gid)) return 10;
+            if ([1,2,3,4].includes(gid) && selectedVillageId > 0) { // Check if it's a resource field in a non-capital village
+                 // This is a simplified check. A more robust solution would check village type.
+                 return 10;
+            }
             if (gid === 40) return 100; // Wonder of the World
             if (gid === 23) return 10; // Cranny
             if ([5,6,7,8,9].includes(gid)) return 5; // Resource boosters
@@ -348,172 +357,164 @@
 
         function showVillageDetails(villageId) {
             selectedVillageId = villageId;
+            const detailsDiv = document.getElementById('village-details');
+            if (!detailsDiv) return;
+
             document.querySelectorAll('.village-list-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`village-item-${villageId}`)?.classList.add('active');
+            const villageItem = document.getElementById(`village-item-${villageId}`);
+            if(villageItem) villageItem.classList.add('active');
 
             const villageData = FULL_STATE.village_data[villageId];
-            const villageQueue = FULL_STATE.build_queues[villageId] || [];
-            const trainingDataForVillage = FULL_STATE.training_data ? FULL_STATE.training_data[villageId] : {};
-            const trainingSettingsForVillage = FULL_STATE.training_queues ? FULL_STATE.training_queues[villageId] : {};
-            const detailsDiv = document.getElementById('village-details');
-            
             if (!villageData || !villageData.resources || !villageData.buildings) {
                 detailsDiv.innerHTML = `<p>Waiting for data from agent...</p>`;
                 return;
             }
 
-            let html = `<h3>Resources</h3><table><thead><tr><th>Resource</th><th>Current</th><th>Storage</th><th>Production/hr</th></tr></thead><tbody>`;
-            html += `<tr><td>Wood</td><td>${villageData.resources.l1 || 0}</td><td>${villageData.storage.l1 || 0}</td><td>${villageData.production.l1 || 0}</td></tr>`;
-            html += `<tr><td>Clay</td><td>${villageData.resources.l2 || 0}</td><td>${villageData.storage.l2 || 0}</td><td>${villageData.production.l2 || 0}</td></tr>`;
-            html += `<tr><td>Iron</td><td>${villageData.resources.l3 || 0}</td><td>${villageData.storage.l3 || 0}</td><td>${villageData.production.l3 || 0}</td></tr>`;
-            html += `<tr><td>Crop</td><td>${villageData.resources.l4 || 0}</td><td>${villageData.storage.l4 || 0}</td><td>${villageData.production.l4 || 0}</td></tr></tbody></table>`;
+            const villageQueue = FULL_STATE.build_queues[villageId] || [];
+            const trainingDataForVillage = FULL_STATE.training_data ? FULL_STATE.training_data[villageId] : {};
+            const trainingSettingsForVillage = FULL_STATE.training_queues ? FULL_STATE.training_queues[villageId] : {};
+            
+            // --- SECTION 1: Resources ---
+            let resourcesHtml = `<h3>Resources</h3><table><thead><tr><th>Resource</th><th>Current</th><th>Storage</th><th>Production/hr</th></tr></thead><tbody>`;
+            resourcesHtml += `<tr><td>Wood</td><td>${Math.floor(villageData.resources.l1) || 0}</td><td>${villageData.storage.l1 || 0}</td><td>${villageData.production.l1 || 0}</td></tr>`;
+            resourcesHtml += `<tr><td>Clay</td><td>${Math.floor(villageData.resources.l2) || 0}</td><td>${villageData.storage.l2 || 0}</td><td>${villageData.production.l2 || 0}</td></tr>`;
+            resourcesHtml += `<tr><td>Iron</td><td>${Math.floor(villageData.resources.l3) || 0}</td><td>${villageData.storage.l3 || 0}</td><td>${villageData.production.l3 || 0}</td></tr>`;
+            resourcesHtml += `<tr><td>Crop</td><td>${Math.floor(villageData.resources.l4) || 0}</td><td>${villageData.storage.l4 || 0}</td><td>${villageData.production.l4 || 0}</td></tr></tbody></table>`;
 
-            html += '<div class="tabs">'
+            // --- SECTION 2: Tabs ---
+            let tabsHtml = '<div class="tabs">'
                  + '<div class="tab" id="tab-fields" onclick="openTab(event, \'fields\')">Resource Fields</div>'
                  + '<div class="tab" id="tab-buildings" onclick="openTab(event, \'buildings\')">City Buildings</div>'
                  + '<div class="tab" id="tab-training" onclick="openTab(event, \'training\')">Training</div>'
                  + '<div class="tab" id="tab-new" onclick="openTab(event, \'new\')">New Build</div>'
                  + '</div>';
-            
-            html += '<div id="fields" class="tab-content active"><table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
+
+            // --- SECTION 3: Tab Content ---
+            let fieldsContent = '<div id="fields" class="tab-content"><table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
             villageData.buildings.filter(b => b.id <= 18).sort((a,b) => a.id - b.id).forEach(b => {
                 const maxLvl = getMaxLevel(b.gid);
                 const isUpgradeable = b.level < maxLvl;
-                html += `<tr class="${isUpgradeable ? 'upgradeable' : ''}"><td>${b.id}</td><td>${GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td class="action-cell">
-                    <input type="number" id="level-input-${villageId}-${b.id}" class="form-control" style="width: 60px; display: inline-block; margin-right: 5px;" min="${b.level + 1}" max="${maxLvl}" value="${b.level + 1}" ${!isUpgradeable ? 'disabled' : ''}>
-                    <button onclick="addBuildTask('${villageId}', '${b.id}', '${b.gid}', document.getElementById('level-input-${villageId}-${b.id}').value)" class="btn" ${!isUpgradeable ? 'disabled' : ''}>+</button>
+                fieldsContent += `<tr><td>${b.id}</td><td>${GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td>
+                    <button onclick="addBuildTask('${villageId}', '${b.id}', '${b.gid}', ${b.level + 1})" class="btn" ${!isUpgradeable ? 'disabled' : ''}>+</button>
                     <button onclick="addBuildTask('${villageId}', '${b.id}', '${b.gid}', 0, true)" class="btn" ${!isUpgradeable ? 'disabled' : ''}>Max</button>
                 </td></tr>`;
             });
-            html += '</tbody></table></div>';
-
-            html += '<div id="buildings" class="tab-content"><table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
+            fieldsContent += '</tbody></table></div>';
+            
+            let buildingsContent = '<div id="buildings" class="tab-content"><table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
             villageData.buildings.filter(b => b.id > 18 && b.gid > 0).sort((a,b) => a.id - b.id).forEach(b => {
                 const maxLvl = getMaxLevel(b.gid);
                 const isUpgradeable = b.level < maxLvl;
-                html += `<tr class="${isUpgradeable ? 'upgradeable' : ''}"><td>${b.id}</td><td>${GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td class="action-cell">
-                     <input type="number" id="level-input-${villageId}-${b.id}" class="form-control" style="width: 60px; display: inline-block; margin-right: 5px;" min="${b.level + 1}" max="${maxLvl}" value="${b.level + 1}" ${!isUpgradeable ? 'disabled' : ''}>
-                    <button onclick="addBuildTask('${villageId}', '${b.id}', '${b.gid}', document.getElementById('level-input-${villageId}-${b.id}').value)" class="btn" ${!isUpgradeable ? 'disabled' : ''}>+</button>
-                    <button onclick="addBuildTask('${villageId}', '${b.id}', '${b.gid}', 0, true)" class="btn" ${!isUpgradeable ? 'disabled' : ''}>Max</button>
+                buildingsContent += `<tr><td>${b.id}</td><td>${GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td>
+                     <button onclick="addBuildTask('${villageId}', '${b.id}', '${b.gid}', ${b.level + 1})" class="btn" ${!isUpgradeable ? 'disabled' : ''}>+</button>
+                     <button onclick="addBuildTask('${villageId}', '${b.id}', '${b.gid}', 0, true)" class="btn" ${!isUpgradeable ? 'disabled' : ''}>Max</button>
                 </td></tr>`;
             });
-            html += '</tbody></table></div>';
-
-            let trainingHtml = '<h3>Troop Training Configuration</h3>';
+            buildingsContent += '</tbody></table></div>';
+            
+            let trainingContent = '<div id="training" class="tab-content"><h3>Troop Training Configuration</h3>';
             if (!trainingDataForVillage || Object.keys(trainingDataForVillage).length === 0) {
-                trainingHtml += '<p>Waiting for training data from the bot...</p>';
+                trainingContent += '<p>Waiting for training data from the bot...</p>';
             } else {
-                for (const buildingType in trainingDataForVillage) {
+                let hasAnyTrainableUnits = false;
+                Object.keys(trainingDataForVillage).forEach(buildingType => {
                     const buildingInfo = trainingDataForVillage[buildingType];
                     const trainableUnits = buildingInfo.trainable || [];
-                    const currentSettings = trainingSettingsForVillage[buildingType] || {};
-
-                    trainingHtml += `<div class="card" style="margin-top: 1rem; border: 1px solid var(--text-muted);">`;
-                    trainingHtml += `<div class="card-header" style="padding: 0.8rem 1.2rem;"><h4 class="card-title" style="font-size: 1.1rem; color: var(--text-primary);">${buildingType}</h4></div>`;
-                    trainingHtml += `<div class="card-content" style="padding: 1.2rem;">`;
-
                     if (trainableUnits.length > 0) {
-                        trainingHtml += `<div class="form-group">
-                            <label style="display:block; margin-bottom: 0.5rem;">Troop to Train:</label>
-                            <select id="train-select-${villageId}-${buildingType}" class="form-control">
-                                <option value="">-- Do Not Train --</option>`;
-
-                        trainableUnits.forEach(unit => {
-                            const isSelected = unit.name === currentSettings.troop_name ? 'selected' : '';
-                            trainingHtml += `<option value="${unit.name}" ${isSelected}>${unit.name}</option>`;
-                        });
-
-                        trainingHtml += `</select></div>`;
-                        trainingHtml += `<div class="form-group">
-                            <label style="display:block; margin-bottom: 0.5rem;">Queue for at least (minutes):</label>
-                            <input type="number" id="train-duration-${villageId}-${buildingType}" class="form-control" min="0" value="${currentSettings.queue_duration_minutes || 0}">
+                        hasAnyTrainableUnits = true;
+                        const currentSettings = trainingSettingsForVillage[buildingType] || {};
+                        trainingContent += `<div class="card" style="margin-top: 1rem; border: 1px solid var(--text-muted);">
+                            <div class="card-header" style="padding: 0.8rem 1.2rem;"><h4 class="card-title" style="font-size: 1.1rem; color: var(--text-primary);">${buildingType}</h4></div>
+                            <div class="card-content" style="padding: 1.2rem;">
+                                <div class="form-group">
+                                    <label style="display:block; margin-bottom: 0.5rem;">Troop to Train:</label>
+                                    <select id="train-select-${villageId}-${buildingType}" class="form-control">
+                                        <option value="">-- Do Not Train --</option>
+                                        ${trainableUnits.map(unit => `<option value="${unit.name}" ${unit.name === currentSettings.troop_name ? 'selected' : ''}>${unit.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label style="display:block; margin-bottom: 0.5rem;">Queue for at least (minutes):</label>
+                                    <input type="number" id="train-duration-${villageId}-${buildingType}" class="form-control" min="0" value="${currentSettings.queue_duration_minutes || 0}">
+                                </div>
+                            </div>
                         </div>`;
-                    } else {
-                        trainingHtml += '<p>No troops are available to be trained in this building.</p>';
                     }
-                    trainingHtml += `</div></div>`;
-                }
-                trainingHtml += `<button onclick="saveTrainingSettings('${villageId}')" class="btn btn-primary" style="margin-top: 1rem;">Save Training Settings</button>`;
-            }
-            html += `<div id="training" class="tab-content">${trainingHtml}</div>`;
-
-            const baseBuildable = [5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46];
-            const existingUnique = new Set(villageData.buildings.filter(b => b.gid > 0 && !isMultiInstance(b.gid)).map(b => b.gid));
-            const buildableGIDs = baseBuildable.filter(g => !existingUnique.has(g));
-
-            html += '<div id="new" class="tab-content"><h4>Build in Empty Slot</h4><table><thead><tr><th>Location</th><th>Action</th></tr></thead><tbody>';
-            villageData.buildings.filter(b => b.id > 18 && b.gid === 0).forEach(slot => {
-                const queuedTask = villageQueue.find(t => t.type === 'building' && t.location === slot.id);
-                html += `<tr><td>${slot.id}</td><td>`;
-
-                if (queuedTask) {
-                    html += `<em>Queued: ${GID_MAP[queuedTask.gid]} to Level ${queuedTask.level}</em>`;
+                });
+                if (hasAnyTrainableUnits) {
+                    trainingContent += `<button onclick="saveTrainingSettings('${villageId}')" class="btn btn-primary" style="margin-top: 1rem;">Save Training Settings</button>`;
                 } else {
-                    let allowed = buildableGIDs.slice();
-                    if (slot.id === 40) allowed = [getWallGid(villageData)];
-                    else if (slot.id === 39) allowed = [16]; // Rally Point
-                    
-                    let optionsHtml = '<option value="0">-- Select Building --</option>';
-                    allowed.forEach(gid => optionsHtml += `<option value="${gid}">${GID_MAP[gid]}</option>`);
-
-                    html += `<div style="display:flex; align-items:center; gap: 10px;">
-                        <select id="gid-select-${villageId}-${slot.id}" class="form-control" style="width: auto;">${optionsHtml}</select>
-                        <input type="number" id="level-input-new-${villageId}-${slot.id}" class="form-control" min="1" max="20" value="1" style="width: 80px;">
-                        <button onclick="addNewBuildingTask('${villageId}', '${slot.id}', 'gid-select-${villageId}-${slot.id}', 'level-input-new-${villageId}-${slot.id}')" class="btn">Queue</button>
-                    </div>`;
+                    trainingContent += '<p>No troops have been researched in this village yet.</p>';
                 }
-                html += '</td></tr>';
-            });
-            html += '</tbody></table></div>';
-            
-            html += `<h3 style="margin-top: 2rem;">Build Queue (${villageQueue.length})</h3>`;
-            html += `<div><button onclick="exportQueue('${villageId}')" class="btn">Export</button><button onclick="importQueue('${villageId}')" class="btn">Import</button></div>`;
-            html += `<ol id="build-queue-list" style="list-style-type: none; padding: 0;">`;
-            villageQueue.forEach((job, index) => {
-                let jobName = (job.type === 'resource_plan') 
-                    ? `ALL RESOURCES PLAN` 
-                    : `${GID_MAP[job.gid] || 'Unknown'} (Loc: ${job.location})`;
-                let levelText = `to Level ${job.level}`;
+            }
+            trainingContent += '</div>';
 
-                html += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 4px; background-color: var(--bg-tertiary); margin-bottom: 0.5rem;">
-                            <span>${index + 1}. ${jobName} ${levelText}</span> 
+            let newBuildContent = '<div id="new" class="tab-content"><h4>Build in Empty Slot</h4><table><thead><tr><th>Location</th><th>Action</th></tr></thead><tbody>';
+            const baseBuildable = [5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46];
+            const existingUniqueGids = new Set(villageData.buildings.filter(b => b.gid > 0 && !isMultiInstance(b.gid)).map(b => b.gid));
+            const buildableGIDs = baseBuildable.filter(g => !existingUniqueGids.has(g));
+            villageData.buildings.filter(b => b.id > 18 && b.gid === 0).forEach(slot => {
+                newBuildContent += `<tr><td>${slot.id}</td><td>`;
+                let allowedGIDs = buildableGIDs.slice();
+                if (slot.id === 40) allowedGIDs = [getWallGid(villageData)];
+                else if (slot.id === 39) allowedGIDs = [16];
+                
+                let optionsHtml = '<option value="0">-- Select Building --</option>' + allowedGIDs.map(gid => `<option value="${gid}">${GID_MAP[gid]}</option>`).join('');
+                newBuildContent += `<div style="display:flex; align-items:center; gap: 10px;">
+                    <select id="gid-select-${villageId}-${slot.id}" class="form-control" style="width: auto;">${optionsHtml}</select>
+                    <input type="number" id="level-input-new-${villageId}-${slot.id}" class="form-control" min="1" max="20" value="1" style="width: 80px;">
+                    <button onclick="addNewBuildingTask('${villageId}', '${slot.id}', 'gid-select-${villageId}-${slot.id}', 'level-input-new-${villageId}-${slot.id}')" class="btn">Queue</button>
+                </div>`;
+                newBuildContent += '</td></tr>';
+            });
+            newBuildContent += '</tbody></table></div>';
+            
+            // --- SECTION 4: Build Queue ---
+            let queueHtml = `<h3 style="margin-top: 2rem;">Build Queue (${villageQueue.length})</h3><div><button onclick="exportQueue('${villageId}')" class="btn">Export</button><button onclick="importQueue('${villageId}')" class="btn">Import</button></div>`;
+            queueHtml += `<ol id="build-queue-list" style="list-style-type: none; padding: 0;">`;
+            villageQueue.forEach((job, index) => {
+                let jobName = (job.type === 'resource_plan') ? `ALL RESOURCES PLAN` : `${GID_MAP[job.gid] || 'Unknown'} (Loc: ${job.location})`;
+                queueHtml += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 4px; background-color: var(--bg-tertiary); margin-bottom: 0.5rem;">
+                            <span>${index + 1}. ${jobName} to Level ${job.level}</span> 
                             <button class="btn" style="background-color: var(--accent-secondary); color: var(--bg-primary); padding: 0.2rem 0.5rem;" onclick="removeQueueItem('${villageId}', ${index})">X</button>
                          </li>`;
             });
-            html += '</ol>';
+            queueHtml += '</ol>';
 
-            detailsDiv.innerHTML = html;
-            let tabElem = detailsDiv.querySelector(`#tab-${currentTab}`) || detailsDiv.querySelector('.tab');
-            let tabName = tabElem.id.replace('tab-','');
-            openTab({currentTarget: tabElem}, tabName);
+            // --- Assemble and Render ---
+            detailsDiv.innerHTML = resourcesHtml + tabsHtml + fieldsContent + buildingsContent + trainingContent + newBuildContent + queueHtml;
+            
+            // --- Set Active Tab ---
+            const tabElem = detailsDiv.querySelector(`#tab-${currentTab}`) || detailsDiv.querySelector('.tab');
+            if (tabElem) {
+                let tabName = tabElem.id.replace('tab-','');
+                openTab({currentTarget: tabElem}, tabName);
+            }
         }
 
         function openTab(event, tabName) {
             document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(tabName).style.display = 'block';
-            event.currentTarget.classList.add('active');
+            const tabContent = document.getElementById(tabName);
+            if (tabContent) tabContent.style.display = 'block';
+            if (event.currentTarget) event.currentTarget.classList.add('active');
             currentTab = tabName;
         }
 
         function saveTrainingSettings(villageId) {
             const settings = {};
             const trainingDataForVillage = FULL_STATE.training_data[villageId] || {};
-
             for (const buildingType in trainingDataForVillage) {
                 const troopSelect = document.getElementById(`train-select-${villageId}-${buildingType}`);
                 const durationInput = document.getElementById(`train-duration-${villageId}-${buildingType}`);
-                
                 if (troopSelect && durationInput) {
                     const troop_name = troopSelect.value;
                     const queue_duration_minutes = parseInt(durationInput.value, 10);
-
                     if (troop_name && queue_duration_minutes > 0) {
                         settings[buildingType] = { troop_name, queue_duration_minutes };
                     }
                 }
             }
-            
             socket.emit('update_training_queues', { villageId: villageId, settings: settings });
             alert('Training settings saved!');
         }
@@ -551,42 +552,25 @@
            socket.emit('update_build_queue', { villageId: villageId, queue: currentQueue });
         }
 
-        function parseCSharpBuildOrder(raw) {
-            let out = [];
-            try {
-                const items = JSON.parse(raw);
-                items.forEach(node => {
-                    const content = JSON.parse(node.Content);
-                    if (node.Type === 0) {
-                        out.push({type:'building', location: content.Location, level: content.Level, gid: content.Type});
-                    } else if (node.Type === 1) {
-                        out.push({type:'resource', level: content.Level, plan: content.Plan || 0});
-                    }
-                });
-            } catch(e) { alert('Failed to parse build order: ' + e); }
-            return out;
-        }
-        function exportCSharpBuildOrder(queue, rememberSlots) {
-            return JSON.stringify(queue.map((task, idx) => {
-                if (task.type === 'resource') {
-                    return {Id:{Value:0}, Position:idx, Type:1, Content:JSON.stringify({Level:task.level, Plan:task.plan||0})};
-                }
-                return {Id:{Value:0}, Position:idx, Type:0, Content:JSON.stringify({Location: rememberSlots ? task.location : 0, Level:task.level, Type:task.gid})};
-            }));
-        }
         function exportQueue(villageId) {
             const queue = FULL_STATE.build_queues[villageId] || [];
-            const remember = true; 
-            const data = exportCSharpBuildOrder(queue, remember);
-            navigator.clipboard.writeText(data).then(()=>alert('Exported to clipboard')); 
+            const data = JSON.stringify(queue, null, 2);
+            navigator.clipboard.writeText(data).then(()=>alert('Queue exported to clipboard.')); 
         }
+
         function importQueue(villageId) {
-            const remember = true; 
-            const text = prompt('Paste build order JSON:');
+            const text = prompt('Paste build queue JSON:');
             if(!text) return;
-            const parsed = parseCSharpBuildOrder(text);
-            if(!remember) parsed.forEach(t => { if(t.type==='building') t.location = 0; });
-            socket.emit('update_build_queue', { villageId:villageId, queue: parsed });
+            try {
+                const parsed = JSON.parse(text);
+                if(Array.isArray(parsed)) {
+                    socket.emit('update_build_queue', { villageId:villageId, queue: parsed });
+                } else {
+                    alert('Invalid format. Please paste a valid JSON array.');
+                }
+            } catch(e) {
+                alert('Failed to parse JSON: ' + e);
+            }
         }
 
     </script>
