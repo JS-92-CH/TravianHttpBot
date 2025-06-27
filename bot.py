@@ -1,13 +1,14 @@
 import time
 import threading
 from typing import Dict, Optional
+from threading import Semaphore # Import Semaphore
 from modules.adventure import Module as AdventureModule
 from client import TravianClient
 from config import log, BOT_STATE, state_lock, save_config
 from modules import load_modules
 
 class VillageAgent(threading.Thread):
-    def __init__(self, client: TravianClient, village_info: Dict, socketio_instance, use_dual_queue: bool = False, use_hero_resources: bool = False):
+    def __init__(self, client: TravianClient, village_info: Dict, socketio_instance, use_dual_queue: bool = False, use_hero_resources: bool = False, build_semaphore: Semaphore = None):
         super().__init__()
         self.client = client
         self.village_id = village_info['id']
@@ -18,6 +19,7 @@ class VillageAgent(threading.Thread):
         self.stop_event = threading.Event()
         self.daemon = True
         self.modules = load_modules(self)
+        self.build_semaphore = build_semaphore # Add this line
 
     def stop(self):
         self.stop_event.set()
@@ -35,7 +37,13 @@ class VillageAgent(threading.Thread):
                 self.socketio.emit("state_update", BOT_STATE)
 
                 for module in self.modules:
-                    module.tick(village_data)
+                    # Pass the semaphore to the tick method
+                    if hasattr(module, 'tick'):
+                        # Check if the tick method of the module is the building module
+                        if "building" in str(module.__class__):
+                             module.tick(village_data, self.build_semaphore)
+                        else:
+                             module.tick(village_data)
                     
             except Exception as e:
                 log.error(f"Agent for village {self.village_name} CRITICAL ERROR: {e}", exc_info=True)
@@ -51,6 +59,8 @@ class BotManager(threading.Thread):
         self.stop_event = threading.Event()
         self.village_agents: Dict[int, VillageAgent] = {}
         self.adventure_module = AdventureModule(self)
+        # Create a dictionary to hold a semaphore for each account
+        self.account_semaphores: Dict[str, Semaphore] = {}
         self.daemon = True
 
     def stop(self):
@@ -68,6 +78,16 @@ class BotManager(threading.Thread):
             
             for account in accounts:
                 if self.stop_event.is_set(): break
+                
+                # Create a semaphore for the account if it doesn't exist
+                if account['username'] not in self.account_semaphores:
+                    use_dual_queue = account.get("use_dual_queue", False)
+                    max_concurrent_builds = 2 if use_dual_queue else 1
+                    self.account_semaphores[account['username']] = Semaphore(max_concurrent_builds)
+                    log.info(f"Created a build semaphore for {account['username']} with a capacity of {max_concurrent_builds}.")
+
+                build_semaphore = self.account_semaphores[account['username']]
+
                 client = TravianClient(
                     account["username"],
                     account["password"],
@@ -98,7 +118,8 @@ class BotManager(threading.Thread):
                             agent.use_hero_resources = use_hero_resources
                         else:
                             log.info(f"Creating new agent for {village['name']}")
-                            agent = VillageAgent(client, village, self.socketio, use_dual_queue, use_hero_resources)
+                            # Pass the semaphore to the agent
+                            agent = VillageAgent(client, village, self.socketio, use_dual_queue, use_hero_resources, build_semaphore)
                             self.village_agents[village['id']] = agent
                             agent.start()
 

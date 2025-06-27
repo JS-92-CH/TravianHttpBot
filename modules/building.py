@@ -1,29 +1,51 @@
-from .base import BaseModule
-from config import BOT_STATE, state_lock, save_config, gid_name, is_multi_instance, log, build_lock
+import os
 import json
 from collections import deque
+from .base import BaseModule
+from config import BOT_STATE, state_lock, save_config, gid_name, log
+from threading import Semaphore
 
 class Module(BaseModule):
     """Handles building queue management for a village."""
 
     def __init__(self, agent):
         super().__init__(agent)
+        # --- Start of Changes ---
+        # Construct an absolute path to the prerequisites file
         try:
-            with open("prerequisites.json", "r") as f:
+            # Get the directory where this script is located
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            # Go one level up to the project root
+            project_root = os.path.dirname(script_dir)
+            # Construct the full path to prerequisites.json
+            prereq_path = os.path.join(project_root, "prerequisites.json")
+            
+            with open(prereq_path, "r") as f:
                 self.prerequisites_data = json.load(f)
+            if not self.prerequisites_data:
+                 log.warning("prerequisites.json is empty.")
         except FileNotFoundError:
-            log.error("prerequisites.json not found. Please create it.")
+            log.error(f"FATAL: prerequisites.json not found at expected path: {prereq_path}")
             self.prerequisites_data = {}
+        except json.JSONDecodeError:
+            log.error("FATAL: prerequisites.json is not a valid JSON file.")
+            self.prerequisites_data = {}
+        # --- End of Changes ---
 
     def get_prerequisites(self, gid):
         """Gets prerequisites from the loaded JSON data."""
         return self.prerequisites_data.get(str(gid), {}).get("prerequisites", [])
 
-    def _resolve_dependencies(self, goal_gid, goal_level, all_buildings):
-        """Recursively resolves all dependencies for a given building goal."""
+    def _resolve_dependencies(self, goal_gid, goal_level, all_buildings, current_queue):
+        """
+        Recursively resolves all dependencies for a given building goal,
+        considering both existing buildings and items already in the queue.
+        """
         tasks_to_add = []
         q = deque([(goal_gid, goal_level)])
         visited = set()
+        
+        queued_set = set((t['gid'], t['level']) for t in current_queue if t.get('type') == 'building')
 
         while q:
             current_gid, current_level = q.popleft()
@@ -32,23 +54,28 @@ class Module(BaseModule):
                 continue
             visited.add((current_gid, current_level))
 
-            # Check if this goal is already met
             building = next((b for b in all_buildings if b.get('gid') == current_gid), None)
             actual_level = building.get('level', 0) if building else 0
             
-            if actual_level >= current_level:
+            is_satisfied = actual_level >= current_level or any(
+                q_gid == current_gid and q_level >= current_level for q_gid, q_level in queued_set
+            )
+            
+            if is_satisfied:
                 continue
 
-            # If not met, add tasks for the required levels
-            for level in range(actual_level + 1, current_level + 1):
+            highest_known_level = actual_level
+            for q_gid, q_level in queued_set:
+                 if q_gid == current_gid:
+                      highest_known_level = max(highest_known_level, q_level)
+
+            for level in range(highest_known_level + 1, current_level + 1):
                 tasks_to_add.append({'type': 'building', 'gid': current_gid, 'level': level})
 
-            # Add prerequisites to the queue to be checked
             prereqs = self.get_prerequisites(current_gid)
             for prereq in prereqs:
                 q.append((prereq['gid'], prereq['level']))
         
-        # Remove duplicates while preserving order
         unique_tasks = []
         seen = set()
         for task in reversed(tasks_to_add):
@@ -57,13 +84,12 @@ class Module(BaseModule):
                 unique_tasks.insert(0, task)
                 seen.add(task_tuple)
         
-        # Prioritize Main Building (gid 15)
         unique_tasks.sort(key=lambda x: (x['gid'] != 15, x['level']))
 
         return unique_tasks
 
 
-    def tick(self, village_data):
+    def tick(self, village_data, build_semaphore: Semaphore):
         agent = self.agent
         max_queue_length = 2 if agent.use_dual_queue else 1
         active_builds = village_data.get("queue", [])
@@ -83,36 +109,36 @@ class Module(BaseModule):
 
         all_buildings = village_data.get("buildings", [])
 
-        # Sanitize queue (remove completed tasks)
         sanitized_queue = []
         needs_save = False
         for task in build_queue:
-            # ... (sanitization logic remains the same)
+            if task.get('type') == 'building':
+                building = next((b for b in all_buildings if b.get('gid') == task['gid']), None)
+                if building and building.get('level', 0) >= task['level']:
+                    log.info(f"AGENT({agent.village_name}): Task '{gid_name(task['gid'])}' Lvl {task['level']} already completed. Removing from queue.")
+                    needs_save = True
+                    continue
             sanitized_queue.append(task)
 
         if needs_save:
             with state_lock:
                 BOT_STATE["build_queues"][str(agent.village_id)] = sanitized_queue
             save_config()
+        
         if not sanitized_queue:
             return
 
         goal_task = sanitized_queue[0]
         
-        # New Dependency Resolution Step
         if goal_task.get('type') == 'building':
-            missing_prereqs = self._resolve_dependencies(goal_task['gid'], goal_task['level'], all_buildings)
+            missing_prereqs = self._resolve_dependencies(goal_task['gid'], goal_task['level'], all_buildings, sanitized_queue)
             
-            # Filter out tasks that are already in the main queue
-            current_queue_set = set((t['gid'], t['level']) for t in sanitized_queue if t.get('type') == 'building')
-            new_tasks = [t for t in missing_prereqs if (t['gid'], t['level']) not in current_queue_set]
-
-            if new_tasks:
-                log.info(f"AGENT({agent.village_name}): Found {len(new_tasks)} missing prerequisites for {gid_name(goal_task['gid'])} Lvl {goal_task['level']}. Prepending to queue.")
+            if missing_prereqs:
+                log.info(f"AGENT({agent.village_name}): Found {len(missing_prereqs)} missing prerequisites for {gid_name(goal_task['gid'])} Lvl {goal_task['level']}. Prepending to queue.")
                 with state_lock:
-                    BOT_STATE["build_queues"][str(agent.village_id)] = new_tasks + sanitized_queue
+                    original_queue = BOT_STATE["build_queues"].get(str(agent.village_id), [])
+                    BOT_STATE["build_queues"][str(agent.village_id)] = missing_prereqs + original_queue
                 save_config()
-                # Restart the tick to process the new first item in the queue
                 return
 
         action_plan = None
@@ -131,18 +157,16 @@ class Module(BaseModule):
                     BOT_STATE["build_queues"][str(agent.village_id)] = sanitized_queue[1:]
                 save_config()
                 return
+        
         else: # 'building' type
             goal_gid, goal_level = goal_task.get('gid'), goal_task.get('level')
             log.info(f"AGENT({agent.village_name}): Next goal is '{gid_name(goal_gid)}' to Lvl {goal_level}.")
 
-            # Find where to build or upgrade
-            # This logic now assumes prerequisites are already met and queued
             building_at_loc = next((b for b in all_buildings if b.get('gid') == goal_gid), None)
 
             if building_at_loc and building_at_loc.get('level', 0) < goal_level:
                 action_plan = {'type': 'upgrade', 'location': building_at_loc['id'], 'gid': goal_gid}
             elif not building_at_loc:
-                 # Find an empty slot
                 WALL_GIDS = [31, 32, 33, 42, 43]
                 forced_location = None
                 if goal_gid == 16: forced_location = 39
@@ -156,7 +180,7 @@ class Module(BaseModule):
                         action_plan = {'type': 'new', 'location': empty_slot['id'], 'gid': goal_gid}
 
         if not action_plan:
-            log.error(f"AGENT({agent.village_name}): Could not determine action plan for goal {goal_task}. This might mean the goal is complete or no slot is available. Removing from queue.")
+            log.error(f"AGENT({agent.village_name}): Could not determine action plan for goal {goal_task}. Goal might be complete or no slot is available. Removing from queue.")
             with state_lock:
                 BOT_STATE["build_queues"][str(agent.village_id)] = sanitized_queue[1:]
             save_config()
@@ -168,11 +192,11 @@ class Module(BaseModule):
             except Exception as exc:
                 log.error(f"AGENT({agent.village_name}): Hero resource step failed: {exc}")
 
-        with build_lock:
-            log.info(f"AGENT({agent.village_name}): Build lock acquired.")
+        with build_semaphore:
+            log.info(f"AGENT({agent.village_name}): Build semaphore acquired.")
             quick_check_data = agent.client.fetch_and_parse_village(agent.village_id)
             if len(quick_check_data.get("queue", [])) >= max_queue_length:
-                log.warning(f"AGENT({agent.village_name}): Another build started while waiting for lock. Releasing lock.")
+                log.warning(f"AGENT({agent.village_name}): Another build started while waiting for semaphore. Releasing.")
                 build_result = {'status': 'skipped'}
             else:
                 is_new = action_plan['type'] == 'new'
@@ -181,7 +205,6 @@ class Module(BaseModule):
 
         if build_result.get('status') == 'success':
             log.info(f"AGENT({agent.village_name}): Successfully started task for '{gid_name(action_plan['gid'])}'.")
-            # Task is not removed here, it will be sanitized on the next tick
             agent.stop_event.wait(1)
         elif build_result.get('status') != 'skipped':
             log.warning(f"AGENT({agent.village_name}): Failed to build '{gid_name(action_plan['gid'])}'. Reason: {build_result.get('reason')}. Waiting 5 seconds.")
