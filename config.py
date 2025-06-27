@@ -80,6 +80,16 @@ BOT_STATE: Dict[str, Any] = {
             {"type": "building", "location": 35, "gid": 11, "level": 20},
             {"type": "building", "location": 36, "gid": 10, "level": 20},
             {"type": "building", "location": 37, "gid": 11, "level": 20}
+        ],
+        "Roman": [
+            {"type": "resource_plan", "level": 10},
+            {"type": "building", "gid": 15, "level": 20},
+            {"type": "building", "gid": 17, "level": 20},
+            {"type": "building", "gid": 16, "level": 20},
+            {"type": "building", "gid": 19, "level": 20},
+            {"type": "building", "gid": 20, "level": 20},
+            {"type": "building", "gid": 21, "level": 20},
+            {"type": "building", "gid": 22, "level": 20},
         ]
     }
 }
@@ -102,7 +112,7 @@ GID_MAPPING = {
     25: 'Residence', 26: 'Palace', 27: 'Treasury', 28: 'Trade Office', 29: 'Great Barracks',
     30: 'Great Stable', 31: 'City Wall', 32: 'Earth Wall', 33: 'Palisade', 34: 'Stonemason\'s Lodge',
     35: 'Brewery', 36: 'Trapper', 37: "Hero's Mansion", 38: 'Great Warehouse', 39: 'Great Granary',
-    40: 'Wonder of the World', 41: 'Horse Drinking Trough', 42: 'Stone Wall', 43: 'Hun Wall', 44: 'Command Center',
+    40: 'Wonder of the World', 41: 'Horse Drinking Trough', 42: 'Stone Wall', 43: 'Makeshift Wall', 44: 'Command Center',
     45: 'Waterworks', 46: 'Hospital'
 }
 

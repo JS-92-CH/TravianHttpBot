@@ -20,6 +20,8 @@ class VillageAgent(threading.Thread):
         self.village_name = village_info['name']
         self.socketio = socketio_instance
         # Settings are now passed via account_info
+        self.tribe = account_info.get("tribe", "roman")
+        self.building_logic = account_info.get("building_logic", "default")
         self.use_dual_queue = account_info.get("use_dual_queue", False)
         self.use_hero_resources = account_info.get("use_hero_resources", False)
         self.stop_event = threading.Event()
@@ -72,29 +74,7 @@ class VillageAgent(threading.Thread):
 
                 # If there's a building module, attempt to fill the build queue
                 if self.building_module:
-                    max_queue_length = 2 if self.use_dual_queue else 1
-                    
-                    while not self.stop_event.is_set():
-                        # Fetch fresh data before each build attempt in the loop
-                        current_data = self.client.fetch_and_parse_village(self.village_id)
-                        if not current_data:
-                            log.warning(f"[{self.village_name}] Could not refresh data for build check.")
-                            break
-                        
-                        active_builds = current_data.get("queue", [])
-                        if len(active_builds) >= max_queue_length:
-                            log.info(f"[{self.village_name}] Build queue is full ({len(active_builds)}/{max_queue_length}).")
-                            break
-
-                        # The building module performs one build check
-                        build_eta = self.building_module.tick(current_data)
-                        
-                        if build_eta <= 0:
-                            # No more tasks could be started (queue empty, resources low, etc.)
-                            break
-                        
-                        log.info(f"[{self.village_name}] Build action performed. Waiting 250ms before checking for another free slot.")
-                        self.stop_event.wait(0.25) # Brief pause for server state to update
+                    build_eta = self.building_module.tick(village_data)
 
                 # After the build loop, schedule the next full check
                 final_data = self.client.fetch_and_parse_village(self.village_id)
@@ -103,8 +83,8 @@ class VillageAgent(threading.Thread):
                     self.next_check_time = time.time() + server_eta + 5
                     log.info(f"[{self.village_name}] Construction active. Next check in {server_eta + 5:.0f}s.")
                 else:
-                    self.next_check_time = time.time() + 30
-                    log.info(f"[{self.village_name}] No construction active. Checking again in 30s.")
+                    self.next_check_time = time.time() + 0.25
+                    log.info(f"[{self.village_name}] No construction active. Checking again in 0.25s.")
 
             except Exception as e:
                 log.error(f"Agent for {self.village_name} encountered a CRITICAL ERROR: {e}", exc_info=True)
@@ -175,8 +155,11 @@ class BotManager(threading.Thread):
                             agent.start()
                         else:
                             # Update existing agent settings without creating a new one
-                            self.village_agents[village['id']].use_dual_queue = account.get("use_dual_queue", False)
-                            self.village_agents[village['id']].use_hero_resources = account.get("use_hero_resources", False)
+                            existing_agent = self.village_agents[village['id']]
+                            existing_agent.tribe = account.get("tribe", "roman")
+                            existing_agent.building_logic = account.get("building_logic", "default")
+                            existing_agent.use_dual_queue = account.get("use_dual_queue", False)
+                            existing_agent.use_hero_resources = account.get("use_hero_resources", False)
 
                 except Exception as exc:
                     log.error(f"Failed to manage agents for {account['username']}: {exc}", exc_info=True)

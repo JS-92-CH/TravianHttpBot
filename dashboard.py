@@ -57,8 +57,10 @@ def handle_add_account(data):
             "username": data["username"],
             "password": data["password"],
             "server_url": data["server_url"],
+            "tribe": data.get("tribe", "roman"),
             "use_dual_queue": data.get("use_dual_queue", False),
-            "use_hero_resources": data.get("use_hero_resources", False)
+            "use_hero_resources": data.get("use_hero_resources", False),
+            "building_logic": data.get("building_logic", "default")
         }
         
         # Add proxy settings if they exist
