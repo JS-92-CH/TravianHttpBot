@@ -1,3 +1,5 @@
+# bot.py
+
 import time
 import threading
 from typing import Dict, Optional
@@ -9,7 +11,6 @@ from modules import load_modules
 class VillageAgent(threading.Thread):
     def __init__(self, account_info: Dict, village_info: Dict, socketio_instance):
         super().__init__()
-        # Each agent now gets its own client and session
         self.client = TravianClient(
             account_info["username"],
             account_info["password"],
@@ -19,7 +20,6 @@ class VillageAgent(threading.Thread):
         self.village_id = village_info['id']
         self.village_name = village_info['name']
         self.socketio = socketio_instance
-        # Settings are now passed via account_info
         self.tribe = account_info.get("tribe", "roman")
         self.building_logic = account_info.get("building_logic", "default")
         self.use_dual_queue = account_info.get("use_dual_queue", False)
@@ -36,14 +36,12 @@ class VillageAgent(threading.Thread):
     def run(self):
         log.info(f"Agent started for village: {self.village_name} ({self.village_id})")
 
-        # Each agent must log in independently to establish its own session.
         if not self.client.login():
             log.error(f"Agent for {self.village_name} ({self.village_id}) failed to log in and will be stopped.")
             return
 
         while not self.stop_event.is_set():
             try:
-                # Respect the scheduled check time
                 if time.time() < self.next_check_time:
                     self.stop_event.wait(1)
                     continue
@@ -51,20 +49,16 @@ class VillageAgent(threading.Thread):
                 log.info(f"[{self.village_name}] Refreshing village data...")
                 village_data = self.client.fetch_and_parse_village(self.village_id)
 
-                # CRITICAL FIX: Do not proceed without valid and complete village data.
                 if not village_data or not village_data.get("buildings"):
                     log.warning(f"[{self.village_name}] Data fetch was incomplete. Retrying in 60 seconds.")
                     self.next_check_time = time.time() + 60
                     continue
 
-                # Update the global state for the dashboard
                 with state_lock:
                     BOT_STATE["village_data"][str(self.village_id)] = village_data
                 self.socketio.emit("state_update", BOT_STATE)
 
-                # --- Run all other modules (Tasks, etc.) ---
                 for module in self.modules:
-                    # The building module is handled separately in the build loop
                     if module == self.building_module:
                         continue
                     try:
@@ -72,23 +66,56 @@ class VillageAgent(threading.Thread):
                     except Exception as e:
                         log.error(f"[{self.village_name}] Error in module {type(module).__name__}: {e}", exc_info=True)
 
-                # If there's a building module, attempt to fill the build queue
+                # --- Start of Changes ---
+                # This is the new, more aggressive building loop
                 if self.building_module:
-                    build_eta = self.building_module.tick(village_data)
+                    while not self.stop_event.is_set():
+                        # Fetch the latest village data before each build attempt
+                        current_village_data = self.client.fetch_and_parse_village(self.village_id)
+                        if not current_village_data:
+                            log.warning(f"[{self.village_name}] Could not fetch village data for building loop. Waiting a moment.")
+                            time.sleep(15)
+                            continue
 
-                # After the build loop, schedule the next full check
+                        # Determine the max queue length
+                        max_queue_length = 2 if self.use_dual_queue else 1
+                        current_queue_length = len(current_village_data.get("queue", []))
+
+                        # If the server's build queue is full, break the loop and wait
+                        if current_queue_length >= max_queue_length:
+                            log.info(f"[{self.village_name}] Server build queue is full ({current_queue_length}/{max_queue_length}).")
+                            break
+
+                        # If there's an open slot, try to build
+                        log.info(f"[{self.village_name}] Queue has open slot ({current_queue_length}/{max_queue_length}). Attempting to build.")
+                        build_eta = self.building_module.tick(current_village_data)
+
+                        # If a build was successful (eta > 0), loop again immediately to try and fill the next slot.
+                        # If it failed or there was nothing to do (eta == 0), break the loop.
+                        if build_eta <= 0:
+                            log.info(f"[{self.village_name}] No more buildings to queue or an error occurred. Exiting build loop.")
+                            break
+                        
+                        # Short pause to prevent spamming the server too aggressively
+                        time.sleep(0.25)
+                # --- End of Changes ---
+
+                # After the build loop, schedule the next full check based on the final state
                 final_data = self.client.fetch_and_parse_village(self.village_id)
                 if final_data and final_data.get("queue"):
-                    server_eta = min([b.get('eta', 300) for b in final_data["queue"]])
-                    self.next_check_time = time.time() + server_eta + 5
-                    log.info(f"[{self.village_name}] Construction active. Next check in {server_eta + 5:.0f}s.")
+                    # Wait for the shortest construction to finish
+                    server_eta = min([b.get('eta', 3600) for b in final_data["queue"]])
+                    wait_time = max(5, server_eta + 0.5) # Wait at least 5 seconds
+                    self.next_check_time = time.time() + wait_time
+                    log.info(f"[{self.village_name}] Construction active. Next main check in {wait_time:.0f}s.")
                 else:
-                    self.next_check_time = time.time() + 0.25
-                    log.info(f"[{self.village_name}] No construction active. Checking again in 0.25s.")
+                    # If nothing is building, check again in a short while
+                    self.next_check_time = time.time() + 3
+                    log.info(f"[{self.village_name}] No construction active. Next main check in 30s.")
 
             except Exception as e:
                 log.error(f"Agent for {self.village_name} encountered a CRITICAL ERROR: {e}", exc_info=True)
-                self.next_check_time = time.time() + 300
+                self.next_check_time = time.time() + 10 # Wait 5 minutes after a major error
 
         log.info(f"Agent stopped for village: {self.village_name} ({self.village_id})")
 
@@ -114,11 +141,10 @@ class BotManager(threading.Thread):
         while not self.stop_event.is_set():
             with state_lock: accounts = BOT_STATE["accounts"][:]
             if not accounts: self.stop_event.wait(15); continue
-            
+
             for account in accounts:
                 if self.stop_event.is_set(): break
 
-                # The BotManager only needs a temporary client for login and listing villages
                 temp_client = TravianClient(
                     account["username"],
                     account["password"],
@@ -126,11 +152,10 @@ class BotManager(threading.Thread):
                     account.get("proxy")
                 )
 
-                if not temp_client.login(): 
+                if not temp_client.login():
                     self.stop_event.wait(60)
                     continue
 
-                # The adventure module can use the temporary client
                 self.adventure_module.tick(temp_client)
                 time.sleep(2)
 
@@ -149,12 +174,10 @@ class BotManager(threading.Thread):
                     for village in villages:
                         if village['id'] not in self.village_agents:
                             log.info(f"Creating new agent for {village['name']}")
-                            # Pass the full account dictionary to the agent
                             agent = VillageAgent(account, village, self.socketio)
                             self.village_agents[village['id']] = agent
                             agent.start()
                         else:
-                            # Update existing agent settings without creating a new one
                             existing_agent = self.village_agents[village['id']]
                             existing_agent.tribe = account.get("tribe", "roman")
                             existing_agent.building_logic = account.get("building_logic", "default")
@@ -163,6 +186,6 @@ class BotManager(threading.Thread):
 
                 except Exception as exc:
                     log.error(f"Failed to manage agents for {account['username']}: {exc}", exc_info=True)
-            
+
             self.stop_event.wait(30)
         log.info("Bot Manager stopped.")
