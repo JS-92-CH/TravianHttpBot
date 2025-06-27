@@ -1,15 +1,21 @@
+# modules/resources.py
+
 from .base import BaseModule
 from config import log
 from bs4 import BeautifulSoup
 import re
 import json
+import time
 
 class Module(BaseModule):
     """Provides helper routines for using hero resources."""
 
     def __init__(self, agent):
         super().__init__(agent)
-        agent.hero_module = self
+        # --- Start of Changes ---
+        # Correctly assign the module to the agent
+        agent.resources_module = self
+        # --- End of Changes ---
 
     def tick(self, village_data):
         pass

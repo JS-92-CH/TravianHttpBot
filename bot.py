@@ -3,10 +3,8 @@
 import time
 import threading
 from typing import Dict, Optional
-# --- Start of Changes ---
 from modules.adventure import Module as AdventureModule
 from modules.hero import Module as HeroModule # Import the hero module
-# --- End of Changes ---
 from client import TravianClient
 from config import log, BOT_STATE, state_lock, save_config
 from modules import load_modules
@@ -30,7 +28,8 @@ class VillageAgent(threading.Thread):
         self.stop_event = threading.Event()
         self.daemon = True
         self.modules = load_modules(self)
-        self.building_module = next((m for m in self.modules if type(m).__name__ == 'Module' and 'building' in type(m).__module__), None)
+        self.building_module = next((m for m in self.modules if 'building' in type(m).__module__), None)
+        self.resources_module = next((m for m in self.modules if 'resources' in type(m).__module__), None)
         self.next_check_time = time.time()
 
     def stop(self):
@@ -61,6 +60,7 @@ class VillageAgent(threading.Thread):
                     BOT_STATE["village_data"][str(self.village_id)] = village_data
                 self.socketio.emit("state_update", BOT_STATE)
 
+                # Run village-specific modules
                 for module in self.modules:
                     if module == self.building_module:
                         continue
@@ -69,6 +69,7 @@ class VillageAgent(threading.Thread):
                     except Exception as e:
                         log.error(f"[{self.village_name}] Error in module {type(module).__name__}: {e}", exc_info=True)
                 
+                # Aggressive building loop
                 if self.building_module:
                     while not self.stop_event.is_set():
                         current_village_data = self.client.fetch_and_parse_village(self.village_id)
@@ -93,6 +94,7 @@ class VillageAgent(threading.Thread):
                         
                         time.sleep(0.25)
 
+                # Schedule next check
                 final_data = self.client.fetch_and_parse_village(self.village_id)
                 if final_data and final_data.get("queue"):
                     server_eta = min([b.get('eta', 3600) for b in final_data["queue"]])
@@ -100,12 +102,13 @@ class VillageAgent(threading.Thread):
                     self.next_check_time = time.time() + wait_time
                     log.info(f"[{self.village_name}] Construction active. Next main check in {wait_time:.0f}s.")
                 else:
-                    self.next_check_time = time.time() + 3
-                    log.info(f"[{self.village_name}] No construction active. Next main check in 30s.")
+                    self.next_check_time = time.time() + 60
+                    log.info(f"[{self.village_name}] No construction active. Next main check in 60s.")
+
 
             except Exception as e:
                 log.error(f"Agent for {self.village_name} encountered a CRITICAL ERROR: {e}", exc_info=True)
-                self.next_check_time = time.time() + 300
+                self.next_check_time = time.time() + 300 
 
         log.info(f"Agent stopped for village: {self.village_name} ({self.village_id})")
 
@@ -116,10 +119,8 @@ class BotManager(threading.Thread):
         self.socketio = socketio_instance
         self.stop_event = threading.Event()
         self.village_agents: Dict[int, VillageAgent] = {}
-        # --- Start of Changes ---
         self.adventure_module = AdventureModule(self)
-        self.hero_module = HeroModule(self) # Instantiate the hero module
-        # --- End of Changes ---
+        self.hero_module = HeroModule(self)
         self.daemon = True
 
     def stop(self):
@@ -150,11 +151,11 @@ class BotManager(threading.Thread):
                     continue
                 
                 # --- Start of Changes ---
-                # Tick account-level modules
+                # Run account-level modules here, passing the client
                 self.adventure_module.tick(temp_client)
-                time.sleep(1) # Small delay
+                time.sleep(1) 
                 self.hero_module.tick(temp_client)
-                time.sleep(1) # Small delay
+                time.sleep(1)
                 # --- End of Changes ---
 
                 try:

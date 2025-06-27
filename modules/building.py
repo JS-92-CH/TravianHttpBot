@@ -1,6 +1,7 @@
 from .base import BaseModule
 from config import BOT_STATE, state_lock, save_config, gid_name, log
 import json
+import time
 from collections import deque
 
 class Module(BaseModule):
@@ -56,6 +57,7 @@ class Module(BaseModule):
 
         all_buildings = village_data.get("buildings", [])
         goal_task = build_queue[0]
+        action_plan = None
         
         # --- HANDLE RESOURCE PLAN ---
         if goal_task.get('type') == 'resource_plan':
@@ -129,7 +131,24 @@ class Module(BaseModule):
             with state_lock: BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
             save_config()
             return 0
-            
+        
+        # --- Start of Changes ---
+        # If an action is planned, check for resources and use hero items if necessary and enabled.
+        if action_plan:
+            if agent.use_hero_resources and hasattr(agent, 'resources_module') and agent.resources_module:
+                log.info(f"AGENT({agent.village_name}): Checking resources for {gid_name(action_plan['gid'])} with hero resource usage enabled.")
+                
+                used_items = agent.resources_module.ensure_resources_for_build(
+                    village_id=agent.village_id, 
+                    slot_id=action_plan['location'], 
+                    gid=action_plan['gid']
+                )
+                
+                if used_items:
+                    log.info(f"AGENT({agent.village_name}): Used hero resources. Pausing for 2 seconds before re-attempting build.")
+                    time.sleep(2)
+        # --- End of Changes ---
+
         # --- EXECUTE BUILD ---
         quick_check_data = agent.client.fetch_and_parse_village(agent.village_id)
         if len(quick_check_data.get("queue", [])) >= max_queue_length:
