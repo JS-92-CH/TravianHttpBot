@@ -44,8 +44,8 @@
         }
 
         #left-column { flex: 1; min-width: 300px; }
-        #middle-column { flex: 1; min-width: 300px; }
-        #right-column { flex: 2; min-width: 450px; }
+        #middle-column { flex: 2; min-width: 450px; }
+        #right-column { flex: 3; min-width: 550px; }
 
         .card {
             background-color: var(--bg-secondary);
@@ -54,6 +54,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            height: 100%;
         }
         
         #village-details-card, #log-card {
@@ -66,7 +67,6 @@
             align-items: center;
             padding: 1rem 1.5rem;
             border-bottom: 1px solid var(--border-color);
-            cursor: pointer;
         }
 
         .card-title {
@@ -80,6 +80,7 @@
             padding: 1.5rem;
             overflow-y: auto;
             transition: all 0.3s ease-in-out;
+            flex-grow: 1;
         }
         
         .card-content.collapsed {
@@ -137,13 +138,6 @@
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
         th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
         th { font-weight: 700; color: var(--text-secondary); }
-        
-        .upgradeable {
-             background-color: rgba(241, 250, 140, 0.1);
-        }
-        .upgradeable:hover {
-            background-color: rgba(241, 250, 140, 0.2);
-        }
 
         .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem; }
         .tab { padding: 1rem; cursor: pointer; border-bottom: 3px solid transparent; }
@@ -173,35 +167,37 @@
             line-height: 20px;
             text-align: center;
             color: var(--bg-primary);
-            background-color: var(--accent-primary);
-            transition: width 0.3s;
+            transition: width 0.3s, background-color 0.3s;
         }
 
-        .progress-bar-inner.full {
-            background-color: var(--accent-secondary);
-        }
+        .progress-bar-inner.green { background-color: var(--accent-primary); }
+        .progress-bar-inner.yellow { background-color: var(--accent-highlight); }
+        .progress-bar-inner.red { background-color: var(--accent-secondary); }
+
     </style>
 </head>
 <body>
     <div class="container">
         <div id="left-column" class="column">
             <div class="card">
-                <div class="card-header" onclick="toggleCollapse('controls-content')">
-                    <h2 class="card-title">Controls</h2>
+                <div class="card-header" style="padding: 0 1.5rem;">
+                    <div class="tabs" style="width: 100%; margin-bottom: 0; border-bottom: none;">
+                        <div class="tab active" onclick="openLeftTab(event, 'controls-tab')">Controls</div>
+                        <div class="tab" onclick="openLeftTab(event, 'accounts-tab')">Accounts</div>
+                        <div class="tab" onclick="openLeftTab(event, 'log-tab')">Log</div>
+                    </div>
                 </div>
-                <div id="controls-content" class="card-content">
+                
+                <div id="controls-tab" class="card-content left-tab-content active">
+                    <h2 class="card-title" style="margin-bottom: 1rem;">Bot Controls</h2>
                     <div style="display: flex; gap: 1rem;">
                         <button id="startBtn" class="btn btn-primary">Start Bot</button>
                         <button id="stopBtn" class="btn btn-danger">Stop Bot</button>
                     </div>
                 </div>
-            </div>
 
-            <div class="card">
-                <div class="card-header" onclick="toggleCollapse('accounts-content')">
-                    <h2 class="card-title">Accounts</h2>
-                </div>
-                <div id="accounts-content" class="card-content">
+                <div id="accounts-tab" class="card-content left-tab-content" style="display: none;">
+                    <h2 class="card-title" style="margin-bottom: 1rem;">Accounts</h2>
                     <div id="account-list"></div>
                     <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
                     <h3 style="color: var(--text-secondary);">Add New Account</h3>
@@ -220,12 +216,9 @@
                         <button type="submit" class="btn" style="width: 100%;">Add Account</button>
                     </form>
                 </div>
-            </div>
-             <div class="card" id="log-card">
-                <div class="card-header" onclick="toggleCollapse('log-content')">
-                    <h2 class="card-title">Live Log</h2>
-                </div>
-                <div id="log-content" class="card-content">
+                
+                <div id="log-tab" class="card-content left-tab-content" style="display: none; flex-direction: column;">
+                     <h2 class="card-title" style="margin-bottom: 1rem;">Live Log</h2>
                     <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
                         <select id="log-level-filter" class="form-control">
                             <option value="">All Levels</option>
@@ -235,14 +228,14 @@
                         </select>
                         <input type="text" id="log-search-filter" class="form-control" placeholder="Search logs...">
                     </div>
-                    <div id="log"></div>
+                    <div id="log" style="flex-grow: 1;"></div>
                 </div>
             </div>
         </div>
 
         <div id="middle-column" class="column">
             <div class="card">
-                 <div class="card-header" style="cursor: default;">
+                 <div class="card-header" style="cursor: default; padding: 0 1.5rem;">
                     <div class="tabs" style="width: 100%; margin-bottom: 0; border-bottom: none;">
                         <div class="tab active" onclick="openMainTab(event, 'villages-tab')">Villages</div>
                         <div class="tab" onclick="openMainTab(event, 'resources-tab')">Resources</div>
@@ -276,11 +269,10 @@
         <div id="right-column" class="column">
             <div class="card" id="village-details-card">
                 <div class="card-header">
-                    <h2 class="card-title">Village Details</h2>
+                    <h2 class="card-title" id="village-details-title">Dashboard</h2>
                 </div>
                 <div id="village-details" class="card-content">
-                    <p>Select a village to see details.</p>
-                </div>
+                    </div>
             </div>
         </div>
     </div>
@@ -290,10 +282,18 @@
         let FULL_STATE = {};
         const GID_MAP = {1:"Woodcutter",2:"Clay Pit",3:"Iron Mine",4:"Cropland",5:"Sawmill",6:"Brickyard",7:"Iron Foundry",8:"Grain Mill",9:"Bakery",10:"Warehouse",11:"Granary",13:"Smithy",14:"Tournament Square",15:"Main Building",16:"Rally Point",17:"Marketplace",18:"Embassy",19:"Barracks",20:"Stable",21:"Workshop",22:"Academy",23:"Cranny",24:"Town Hall",25:"Residence",26:"Palace",27:"Treasury",28:"Trade Office",29:"Great Barracks",30:"Great Stable",31:"City Wall",32:"Earth Wall",33:"Palisade",34:"Stonemason's Lodge",35:"Brewery",36:"Trapper",37:"Hero's Mansion",38:"Great Warehouse",39:"Great Granary",40:"Wonder of the World",41:"Horse Drinking Trough",42:"Stone Wall",43:"Makeshift Wall",44:"Command Center",45:"Waterworks",46:"Hospital"};
         let selectedVillageId = null;
+        let currentVillageName = '';
         let currentTab = 'fields';
 
-        function toggleCollapse(contentId) {
-            document.getElementById(contentId).classList.toggle('collapsed');
+        function openLeftTab(event, tabId) {
+            document.querySelectorAll('.left-tab-content').forEach(tab => tab.style.display = 'none');
+            document.querySelectorAll('#left-column .tab').forEach(tab => tab.classList.remove('active'));
+            const tabEl = document.getElementById(tabId);
+            if(tabEl) {
+                tabEl.style.display = 'flex';
+                tabEl.style.flexDirection = 'column';
+            }
+            event.currentTarget.classList.add('active');
         }
 
         function isMultiInstance(gid) {
@@ -320,6 +320,7 @@
         socket.on('connect', () => {
             const log = document.getElementById('log');
             if(log) log.innerHTML += '<div data-log-level="INFO" style="color:var(--accent-primary)">Dashboard connected.</div>';
+            renderGlobalSummary();
         });
 
         socket.on('log_message', msg => {
@@ -346,6 +347,8 @@
             renderResourceFlow();
             if(selectedVillageId) {
                 showVillageDetails(selectedVillageId);
+            } else {
+                renderGlobalSummary();
             }
         });
         
@@ -377,11 +380,15 @@
                                     const current = Math.floor(v_details.resources?.[l] || 0);
                                     const max = v_details.storage?.[l] || 1;
                                     const percent = Math.min(100, (current / max) * 100);
+                                    let colorClass = 'green';
+                                    if (percent >= 90) colorClass = 'red';
+                                    else if (percent >= 70) colorClass = 'yellow';
+
                                     rowHtml += `
                                         <td>
                                             <div>${current.toLocaleString()} / ${max.toLocaleString()} (+${v_details.production?.[l] || 0}/hr)</div>
                                             <div class="progress-bar">
-                                                <div class="progress-bar-inner ${percent >= 100 ? 'full' : ''}" style="width: ${percent}%;">${percent.toFixed(0)}%</div>
+                                                <div class="progress-bar-inner ${colorClass}" style="width: ${percent}%;">${percent.toFixed(0)}%</div>
                                             </div>
                                         </td>
                                     `;
@@ -426,14 +433,51 @@
                         if (Array.isArray(villageData)) {
                             villageData.forEach(village => {
                                 const activeClass = village.id == selectedVillageId ? 'active' : '';
-                                if(village.id == selectedVillageId) activeVillageFound = true;
+                                if(village.id == selectedVillageId) {
+                                    activeVillageFound = true;
+                                    currentVillageName = village.name;
+                                }
                                 villageList.innerHTML += `<li class="village-list-item ${activeClass}" id="village-item-${village.id}" onclick="showVillageDetails('${village.id}')">${village.name}</li>`;
                             });
                         }
                     }
                 }
-                if (!activeVillageFound) selectedVillageId = null;
+                if (!activeVillageFound) {
+                    selectedVillageId = null;
+                    currentVillageName = '';
+                }
             }
+        }
+
+        function renderGlobalSummary() {
+            const detailsDiv = document.getElementById('village-details');
+            const titleEl = document.getElementById('village-details-title');
+            if (!detailsDiv || !titleEl) return;
+            
+            titleEl.textContent = 'Dashboard';
+
+            const numAccounts = (FULL_STATE.accounts || []).length;
+            let numVillages = 0;
+            for (const key in FULL_STATE.village_data) {
+                if (isNaN(parseInt(key))) {
+                    numVillages += (FULL_STATE.village_data[key] || []).length;
+                }
+            }
+
+            detailsDiv.innerHTML = `
+                <div style="text-align: center; padding-top: 5rem;">
+                    <h2 style="color: var(--text-secondary);">Welcome to the Travian Bot!</h2>
+                    <p style="color: var(--text-muted); font-size: 1.1rem;">Select a village from the list to view its details and manage its build queue.</p>
+                    <div style="display: flex; justify-content: center; gap: 2rem; margin-top: 3rem; font-size: 1.2rem;">
+                        <div style="background-color: var(--bg-tertiary); padding: 1rem 2rem; border-radius: 8px;">
+                            <strong>Accounts:</strong> <span style="color: var(--accent-primary);">${numAccounts}</span>
+                        </div>
+                        <div style="background-color: var(--bg-tertiary); padding: 1rem 2rem; border-radius: 8px;">
+                            <strong>Villages:</strong> <span style="color: var(--accent-primary);">${numVillages}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         function renderHeroSettings() {
@@ -444,7 +488,7 @@
             (FULL_STATE.accounts || []).forEach(acc => {
                 const heroSettings = acc.hero_settings || { auto_distribute_points: false, point_distribution: { fightingStrength: 0, offBonus: 0, defBonus: 0, resourceProduction: 0 } };
                 html += `
-                    <div class="card" style="margin-bottom: 1.5rem;">
+                    <div class="card" style="margin-bottom: 1.5rem; background-color: var(--bg-tertiary);">
                         <div class="card-header">
                             <h3 class="card-title">${acc.username}</h3>
                         </div>
@@ -568,9 +612,17 @@
         }
 
         function showVillageDetails(villageId) {
+            if (!villageId) {
+                renderGlobalSummary();
+                return;
+            }
             selectedVillageId = villageId;
             const detailsDiv = document.getElementById('village-details');
-            if (!detailsDiv) return;
+            const titleEl = document.getElementById('village-details-title');
+            if (!detailsDiv || !titleEl) return;
+
+            renderAccountsAndVillages(); // This will set currentVillageName
+            titleEl.textContent = `Village: ${currentVillageName}`;
 
             document.querySelectorAll('.village-list-item').forEach(el => el.classList.remove('active'));
             const villageItem = document.getElementById(`village-item-${villageId}`);
@@ -637,15 +689,13 @@
                                </div>`;
             fieldsContent += '<table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
             projectedBuildings.filter(b => b.id <= 18).sort((a,b) => a.id - b.id).forEach(b => {
-                const rowClass = villageQueue.some(q => q.location === b.id) ? '' : 'upgradeable';
-                fieldsContent += `<tr class="${rowClass}"><td>${b.id}</td><td>${GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td>${getActionControls(villageId, b)}</td></tr>`;
+                fieldsContent += `<tr><td>${b.id}</td><td>${GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td>${getActionControls(villageId, b)}</td></tr>`;
             });
             fieldsContent += '</tbody></table></div>';
             
             let buildingsContent = '<div id="buildings" class="tab-content"><table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
             projectedBuildings.filter(b => b.id > 18 && b.gid > 0).sort((a,b) => a.id - b.id).forEach(b => {
-                const rowClass = villageQueue.some(q => q.location === b.id) ? '' : 'upgradeable';
-                buildingsContent += `<tr class="${rowClass}"><td>${b.id}</td><td>${b.name || GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td>${getActionControls(villageId, b)}</td></tr>`;
+                buildingsContent += `<tr><td>${b.id}</td><td>${b.name || GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td>${getActionControls(villageId, b)}</td></tr>`;
             });
             buildingsContent += '</tbody></table></div>';
             
