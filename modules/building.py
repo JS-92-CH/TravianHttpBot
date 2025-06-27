@@ -68,7 +68,10 @@ class Module(BaseModule):
                 log.info(f"AGENT({agent.village_name}): Resource plan to level {target_level} is complete. Removing task.")
                 with state_lock: BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
                 save_config()
-                return 0
+                refreshed_data = agent.client.fetch_and_parse_village(agent.village_id)
+                if refreshed_data:
+                    return self.tick(refreshed_data)
+                return 10
 
             action_plan = {'type': 'upgrade', 'location': field_to_upgrade['id'], 'gid': field_to_upgrade['gid'], 'is_new': False}
             log.info(f"AGENT({agent.village_name}): Resource plan: Upgrading {gid_name(action_plan['gid'])} at Loc {action_plan['location']} to Lvl {field_to_upgrade['level']+1}.")
@@ -90,7 +93,10 @@ class Module(BaseModule):
                 log.info(f"AGENT({agent.village_name}): Goal '{gid_name(goal_gid)}' Lvl {goal_level} is complete. Removing from queue.")
                 with state_lock: BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
                 save_config()
-                return 0
+                refreshed_data = agent.client.fetch_and_parse_village(agent.village_id)
+                if refreshed_data:
+                    return self.tick(refreshed_data)
+                return 10
 
             if not existing_building:
                 missing_prereqs = self._resolve_dependencies(goal_gid, all_buildings)

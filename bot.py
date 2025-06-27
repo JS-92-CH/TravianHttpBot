@@ -37,33 +37,55 @@ class VillageAgent(threading.Thread):
                 village_data = self.client.fetch_and_parse_village(self.village_id)
                 if not village_data:
                     log.warning(f"[{self.village_name}] Failed to fetch main data. Retrying in 5 minutes.")
-                    self.next_check_time = time.time() + 300
+                    self.next_check_time = time.time() + 10
                     continue
 
                 with state_lock:
                     BOT_STATE["village_data"][str(self.village_id)] = village_data
                 self.socketio.emit("state_update", BOT_STATE)
 
-                build_eta = 0
                 if self.building_module:
-                    build_eta = self.building_module.tick(village_data)
+                    max_queue_length = 2 if self.use_dual_queue else 1
+                    # Loop to try and fill the build queue
+                    while True:
+                        current_village_data = self.client.fetch_and_parse_village(self.village_id)
+                        if not current_village_data:
+                            log.warning(f"[{self.village_name}] Failed to refresh data before building. Aborting build checks for this cycle.")
+                            break
+                        
+                        active_builds = current_village_data.get("queue", [])
+                        if len(active_builds) >= max_queue_length:
+                            log.info(f"[{self.village_name}] Build queue is full ({len(active_builds)}/{max_queue_length}).")
+                            break # Build queue is full
 
-                if build_eta > 0:
-                    self.next_check_time = time.time() + build_eta + 5
-                    log.info(f"[{self.village_name}] Build action performed. Next check scheduled in {build_eta + 5:.0f} seconds.")
-                else:
-                    active_builds = village_data.get("queue", [])
+                        # Try to queue one item
+                        build_eta = self.building_module.tick(current_village_data)
+                        
+                        if build_eta <= 0:
+                            # The building module decided not to or failed to build.
+                            log.info(f"[{self.village_name}] No further build tasks could be queued.")
+                            break
+                        
+                        log.info(f"[{self.village_name}] Successfully queued a build. Next check in {build_eta + 1:.0f} seconds. Checking for another available slot...")
+                        self.stop_event.wait(1) # Wait a few seconds for server state to update before trying again
+
+                # After attempting to fill the queue, set the next check time based on the final state.
+                final_village_data = self.client.fetch_and_parse_village(self.village_id)
+                if final_village_data:
+                    active_builds = final_village_data.get("queue", [])
                     if active_builds:
                         server_eta = min([b.get('eta', 300) for b in active_builds])
-                        self.next_check_time = time.time() + server_eta + 5
-                        log.info(f"[{self.village_name}] Construction active on server. Next check in {server_eta + 5:.0f} seconds.")
+                        self.next_check_time = time.time() + server_eta + 1
+                        log.info(f"[{self.village_name}] Construction is active. Next check in {server_eta + 1:.0f} seconds.")
                     else:
-                        self.next_check_time = time.time() + 30
-                        log.info(f"[{self.village_name}] No construction. Checking for new tasks in 30 seconds.")
+                        self.next_check_time = time.time() + 3
+                        log.info(f"[{self.village_name}] No construction queued. Checking for new tasks in 3 seconds.")
+                else:
+                    self.next_check_time = time.time() + 5
                 
             except Exception as e:
                 log.error(f"Agent for village {self.village_name} encountered a CRITICAL ERROR: {e}", exc_info=True)
-                self.next_check_time = time.time() + 600
+                self.next_check_time = time.time() + 10
 
         log.info(f"Agent stopped for village: {self.village_name} ({self.village_id})")
 
@@ -98,7 +120,7 @@ class BotManager(threading.Thread):
                     account["server_url"],
                     account.get("proxy")
                 )
-                if not client.login(): self.stop_event.wait(60); continue
+                if not client.login(): self.stop_event.wait(10); continue
                 self.adventure_module.tick(client)
                 time.sleep(2)
                 
