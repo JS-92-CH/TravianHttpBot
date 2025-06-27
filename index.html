@@ -636,7 +636,6 @@
             });
             newBuildContent += '</tbody></table></div>';
             
-            // --- START: MODIFIED QUEUE CONTROLS ---
             let queueHtml = `<h3 style="margin-top: 2rem;">Build Queue (${villageQueue.length})</h3>
                             <div style="background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
                                 <h4>Queue Templates</h4>
@@ -651,11 +650,20 @@
                                     </div>
                              </div>`;
 
-            // --- END: MODIFIED QUEUE CONTROLS ---
-
             queueHtml += `<ol id="build-queue-list" style="list-style-type: none; padding: 0;">`;
             villageQueue.forEach((job, index) => {
-                let jobName = (job.type === 'resource_plan') ? `ALL RESOURCES PLAN` : `${GID_MAP[job.gid] || 'Unknown'} (Loc: ${job.location})`;
+                let jobLocation = job.location;
+                if (!jobLocation && job.type === 'building' && villageData.buildings) {
+                    const existingBuilding = villageData.buildings.find(b => b.gid === job.gid);
+                    if (existingBuilding) {
+                        jobLocation = existingBuilding.id;
+                    }
+                }
+                
+                let jobName = (job.type === 'resource_plan') 
+                    ? `ALL RESOURCES PLAN` 
+                    : `${GID_MAP[job.gid] || 'Unknown'} (Loc: ${jobLocation || '??'})`;
+
                 queueHtml += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 4px; background-color: var(--bg-tertiary); margin-bottom: 0.5rem;">
                             <span>${index + 1}. ${jobName} to Level ${job.level}</span>
                             <div>

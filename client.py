@@ -59,7 +59,6 @@ class TravianClient:
             self.sess.put(api_url, json=payload, headers=headers, timeout=15)
             post_resp = self.sess.post(api_url, json=payload, headers=headers, timeout=15)
 
-            # A successful response will contain a 'dialog' object
             return post_resp.status_code == 200 and 'dialog' in post_resp.json()
 
         except requests.RequestException as e:
@@ -72,7 +71,6 @@ class TravianClient:
     def collect_task_reward(self, payload: Dict[str, Any], village_id: int, village_name: str) -> bool:
         """Collects the reward for a completed task."""
         try:
-            # The URL should be correct as is, with the villageId parameter
             api_url = f"{self.server_url}/api/v1/progressive-tasks/collectReward?villageId={village_id}"
             headers = {
                 'X-Version': self.server_version,
@@ -83,16 +81,10 @@ class TravianClient:
             resp = self.sess.post(api_url, json=payload, headers=headers, timeout=15)
             
             if resp.status_code == 200 and (resp.json().get('rewards') or resp.json().get('success')):
-                # --- Start of Change ---
-                # Updated log message for better debugging
                 log.info(f"[{self.username}] Successfully collected reward for task in {village_name}: {payload.get('questType')} - Level {payload.get('targetLevel')}")
-                # --- End of Change ---
                 return True
             else:
-                # --- Start of Change ---
-                # Updated log message for better debugging
                 log.warning(f"[{self.username}] Failed to collect reward for task in {village_name}: {payload.get('questType')}. Response: {resp.text}")
-                # --- End of Change ---
                 return False
 
         except requests.RequestException as e:
@@ -129,63 +121,50 @@ class TravianClient:
         
         try:
             if is_new_build:
-                WALL_GIDS = {31, 32, 33, 42, 43}  # GIDs for Roman, Teutonic, Gaulish, Egyptian, and Hun walls
+                WALL_GIDS = {31, 32, 33, 42, 43}
                 for category in [1, 2, 3]:
-                    if action_url:
-                        break
+                    if action_url: break
                     resp = self.sess.get(f"{build_page_url}&category={category}", timeout=15)
                     soup = BeautifulSoup(resp.text, 'html.parser')
-
-                    wrapper = None
                     search_gids = [gid]
-                    if gid in WALL_GIDS:
-                        # If we are looking for a wall, search for any wall type
-                        search_gids.extend(g for g in WALL_GIDS if g != gid)
-
+                    if gid in WALL_GIDS: search_gids.extend(g for g in WALL_GIDS if g != gid)
                     for search_gid in search_gids:
                         if img_tag := soup.find('img', class_=f'g{search_gid}'):
                             wrapper = img_tag.find_parent('div', class_='buildingWrapper')
-                            if wrapper:
-                                break  # Found a wall, stop searching
-                    
-                    if wrapper:
-                        if button := wrapper.find('button', class_='green', disabled=False):
-                            if match := re.search(r"window\.location\.href\s*=\s*'([^']+)'", button.get('onclick', '')):
-                                action_url = urljoin(self.server_url, match.group(1).replace('&amp;', '&'))
-                                if 'newdid=' not in action_url:
-                                    sep = '&' if '?' in action_url else '?'
-                                    action_url = f"{action_url}{sep}newdid={village_id}"
+                            if wrapper and (button := wrapper.find('button', class_='green', disabled=False)):
+                                if match := re.search(r"window\.location\.href\s*=\s*'([^']+)'", button.get('onclick', '')):
+                                    action_url = urljoin(self.server_url, match.group(1).replace('&amp;', '&'))
+                                    if 'newdid=' not in action_url:
+                                        action_url = f"{action_url}{'&' if '?' in action_url else '?'}{village_id}"
+                                    break
                 if not action_url: return {'status': 'error', 'reason': f'Could not find build button for GID {gid}'}
             else: # Upgrade
                 resp = self.sess.get(build_page_url, timeout=15)
                 soup = BeautifulSoup(resp.text, 'html.parser')
                 if err_msg := soup.select_one(".upgradeBlocked .errorMessage"):
-                    log.warning(f"Build blocked by message: {err_msg.text.strip()}")
-                    return {'status': 'error', 'reason': 'prerequisites_not_met_or_res_low'}
+                    return {'status': 'error', 'reason': err_msg.text.strip()}
                 if button := soup.find('button', class_=re.compile(r'\b(green|build)\b'), disabled=False):
                     if match := re.search(r"window\.location\.href\s*=\s*'([^']+)'", button.get('onclick', '')):
                         action_url = urljoin(self.server_url, match.group(1).replace('&amp;', '&'))
                         if 'newdid=' not in action_url:
-                            sep = '&' if '?' in action_url else '?'
-                            action_url = f"{action_url}{sep}newdid={village_id}"
+                           action_url = f"{action_url}{'&' if '?' in action_url else '?'}{village_id}"
                 if not action_url: return {'status': 'error', 'reason': 'Could not find upgrade button'}
 
-            log.info(f"[{self.username}] Executing build action URL: {action_url}")
             confirmation_resp = self.sess.get(action_url, timeout=15)
             conf_soup = BeautifulSoup(confirmation_resp.text, 'html.parser')
             
-            if conf_soup.select_one(".buildingList .timer"):
-                    log.info(f"[{self.username}] Successfully initiated build for {gid_name(gid)}.")
-                    return {'status': 'success'}
+            # Find the timer for the *last* item in the queue
+            timers = conf_soup.select(".buildingList .timer")
+            if timers:
+                last_timer = timers[-1]
+                eta = int(last_timer.get('value', 0))
+                log.info(f"[{self.username}] Successfully initiated build for {gid_name(gid)}. ETA: {eta}s")
+                return {'status': 'success', 'eta': eta}
             else:
-                    log.warning(f"[{self.username}] Build command sent, but couldn't confirm in response page.")
-                    debug_filename = f"debug_fail_{village_id}_{gid_name(gid).replace(' ','')}.html"
-                    with open(debug_filename, "w", encoding="utf-8") as f: f.write(conf_soup.prettify())
-                    log.error(f"Saved failed confirmation page to '{debug_filename}' for inspection.")
-                    return {'status': 'error', 'reason': 'confirmation_failed_or_res_low'}
+                log.warning(f"[{self.username}] Build command sent, but couldn't confirm in response page.")
+                return {'status': 'error', 'reason': 'confirmation_failed_or_res_low'}
         except requests.RequestException as e:
             return {'status': 'error', 'reason': f'Network error: {e}'}
-        
 
     def fetch_and_parse_village(self, village_id: int) -> Optional[Dict[str, Any]]:
         log.info("[%s] Fetching data for village %d", self.username, village_id)
@@ -201,7 +180,6 @@ class TravianClient:
                 final_buildings[building['id']] = building
             village_data["buildings"] = list(final_buildings.values())
             village_data["queue"] = parsed_d2.get("queue", [])
-            # Add merchant capacity parsing
             village_data["merchants"] = self.parse_merchants(resp_d1.text)
             return village_data
         except requests.RequestException as e:

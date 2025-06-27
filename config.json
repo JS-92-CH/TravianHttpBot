@@ -14,36 +14,6 @@
             {
                 "type": "building",
                 "gid": 46,
-                "level": 8
-            },
-            {
-                "type": "building",
-                "gid": 46,
-                "level": 9
-            },
-            {
-                "type": "building",
-                "gid": 46,
-                "level": 10
-            },
-            {
-                "type": "building",
-                "gid": 46,
-                "level": 11
-            },
-            {
-                "type": "building",
-                "gid": 46,
-                "level": 12
-            },
-            {
-                "type": "building",
-                "gid": 46,
-                "level": 13
-            },
-            {
-                "type": "building",
-                "gid": 46,
                 "level": 14
             },
             {
@@ -86,6 +56,16 @@
         ],
         "83234": [],
         "83632": [
+            {
+                "type": "building",
+                "gid": 25,
+                "level": 18
+            },
+            {
+                "type": "building",
+                "gid": 25,
+                "level": 19
+            },
             {
                 "type": "building",
                 "location": 19,
@@ -192,6 +172,11 @@
         "83230": [
             {
                 "type": "building",
+                "gid": 25,
+                "level": 19
+            },
+            {
+                "type": "building",
                 "location": 19,
                 "gid": 25,
                 "level": 20
@@ -294,31 +279,6 @@
             }
         ],
         "84032": [
-            {
-                "type": "building",
-                "gid": 20,
-                "level": 15
-            },
-            {
-                "type": "building",
-                "gid": 20,
-                "level": 16
-            },
-            {
-                "type": "building",
-                "gid": 20,
-                "level": 17
-            },
-            {
-                "type": "building",
-                "gid": 20,
-                "level": 18
-            },
-            {
-                "type": "building",
-                "gid": 20,
-                "level": 19
-            },
             {
                 "type": "building",
                 "location": 27,
@@ -531,22 +491,6 @@
         "83235": [],
         "83231": [
             {
-                "type": "resource_plan",
-                "level": 10
-            },
-            {
-                "type": "building",
-                "location": 25,
-                "gid": 17,
-                "level": 1
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "gid": 21,
-                "level": 10
-            },
-            {
                 "type": "building",
                 "location": 40,
                 "gid": 31,
@@ -668,17 +612,6 @@
             }
         ],
         "84034": [
-            {
-                "type": "building",
-                "gid": 21,
-                "level": 9
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "gid": 21,
-                "level": 10
-            },
             {
                 "type": "building",
                 "location": 40,
@@ -1378,10 +1311,6 @@
         "82431": [],
         "84436": [
             {
-                "type": "resource_plan",
-                "level": 5
-            },
-            {
                 "type": "building",
                 "location": 20,
                 "gid": 19,
@@ -1556,6 +1485,51 @@
         "84031": [
             {
                 "type": "building",
+                "gid": 19,
+                "level": 11
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 12
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 13
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 14
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 15
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 16
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 17
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 18
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 19
+            },
+            {
+                "type": "building",
                 "location": 20,
                 "gid": 19,
                 "level": 20
@@ -1652,6 +1626,16 @@
             }
         ],
         "84434": [
+            {
+                "type": "building",
+                "gid": 25,
+                "level": 18
+            },
+            {
+                "type": "building",
+                "gid": 25,
+                "level": 19
+            },
             {
                 "type": "building",
                 "location": 19,
@@ -1770,6 +1754,46 @@
         "84433": [
             {
                 "type": "building",
+                "gid": 19,
+                "level": 12
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 13
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 14
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 15
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 16
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 17
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 18
+            },
+            {
+                "type": "building",
+                "gid": 19,
+                "level": 19
+            },
+            {
+                "type": "building",
                 "location": 20,
                 "gid": 19,
                 "level": 20
@@ -1866,6 +1890,16 @@
             }
         ],
         "84432": [
+            {
+                "type": "building",
+                "gid": 25,
+                "level": 18
+            },
+            {
+                "type": "building",
+                "gid": 25,
+                "level": 19
+            },
             {
                 "type": "building",
                 "location": 19,
