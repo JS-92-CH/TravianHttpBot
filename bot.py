@@ -30,7 +30,10 @@ class VillageAgent(threading.Thread):
         self.modules = load_modules(self)
         self.building_module = next((m for m in self.modules if 'building' in type(m).__module__), None)
         self.resources_module = next((m for m in self.modules if 'resources' in type(m).__module__), None)
+        self.training_module = next((m for m in self.modules if 'training' in type(m).__module__), None)
         self.next_check_time = time.time()
+        self.next_training_check_time = time.time()
+
 
     def stop(self):
         self.stop_event.set()
@@ -64,11 +67,16 @@ class VillageAgent(threading.Thread):
                 for module in self.modules:
                     if module == self.building_module:
                         continue
+                    if module == self.training_module and time.time() < self.next_training_check_time:
+                        continue
                     try:
                         module.tick(village_data)
+                        if module == self.training_module:
+                            training_interval = BOT_STATE.get("training_interval_minutes", 5)
+                            self.next_training_check_time = time.time() + (training_interval * 60)
                     except Exception as e:
                         log.error(f"[{self.village_name}] Error in module {type(module).__name__}: {e}", exc_info=True)
-                
+
                 # Aggressive building loop
                 if self.building_module:
                     while not self.stop_event.is_set():

@@ -1,3 +1,5 @@
+# client.py
+
 import re
 import json
 import requests
@@ -39,6 +41,48 @@ class TravianClient:
                 "https": proxy_url,
             }
             log.info(f"[{self.username}] Using proxy: {proxy_ip}:{proxy_port}")
+
+    def fetch_training_page(self, village_id: int, gid: int) -> Optional[BeautifulSoup]:
+        """Fetches the training page for a given GID."""
+        try:
+            url = f"{self.server_url}/build.php?newdid={village_id}&gid={gid}"
+            resp = self.sess.get(url, timeout=15)
+            resp.raise_for_status()
+            return BeautifulSoup(resp.text, 'html.parser')
+        except requests.RequestException as e:
+            log.error(f"[{self.username}] Network error fetching training page for GID {gid} in village {village_id}: {e}")
+            return None
+
+    def train_troops(self, location_id: int, troops_to_train: Dict[str, int]) -> bool:
+        """Trains troops in a given building."""
+        try:
+            url = f"{self.server_url}/build.php?id={location_id}"
+            
+            # First, get the form page to find the hidden 'z' value
+            form_page_resp = self.sess.get(url, timeout=15)
+            form_page_soup = BeautifulSoup(form_page_resp.text, 'html.parser')
+            
+            z_input = form_page_soup.find('input', {'name': 'z'})
+            if not z_input:
+                log.error(f"[{self.username}] Could not find the 'z' value for training in location {location_id}.")
+                return False
+            
+            payload = {
+                'id': location_id,
+                'z': z_input['value'],
+                'a': 2,  # Action for training
+                's1': 'ok'
+            }
+            
+            for troop_name, amount in troops_to_train.items():
+                payload[f't{troop_name.split("u")[1]}'] = amount
+
+            resp = self.sess.post(url, data=payload, timeout=15)
+            return resp.status_code == 200
+
+        except requests.RequestException as e:
+            log.error(f"[{self.username}] Network error training troops in location {location_id}: {e}")
+            return False
 
     def start_adventure(self, target_map_id: int) -> bool:
         """Sends the hero on a specific adventure."""

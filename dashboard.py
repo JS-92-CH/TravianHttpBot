@@ -1,3 +1,5 @@
+# dashboard.py
+
 from flask import Flask, render_template_string
 from flask_socketio import SocketIO
 
@@ -173,6 +175,19 @@ def handle_update_hero_settings(data):
                     acc['hero_settings'] = {}
                 acc['hero_settings'].update(settings)
                 break
+    save_config()
+    socketio.emit("state_update", BOT_STATE)
+
+@socketio.on('update_training_queues')
+def handle_update_training_queues(data):
+    """Updates the training queues for a village."""
+    village_id = data.get('villageId')
+    settings = data.get('settings')
+    log.info(f"Updating training queues for village {village_id}")
+    with state_lock:
+        if str(village_id) not in BOT_STATE['training_queues']:
+            BOT_STATE['training_queues'][str(village_id)] = {}
+        BOT_STATE['training_queues'][str(village_id)] = settings
     save_config()
     socketio.emit("state_update", BOT_STATE)
 

@@ -435,7 +435,6 @@
                                 const activeClass = village.id == selectedVillageId ? 'active' : '';
                                 if(village.id == selectedVillageId) {
                                     activeVillageFound = true;
-                                    currentVillageName = village.name;
                                 }
                                 villageList.innerHTML += `<li class="village-list-item ${activeClass}" id="village-item-${village.id}" onclick="showVillageDetails('${village.id}')">${village.name}</li>`;
                             });
@@ -444,9 +443,23 @@
                 }
                 if (!activeVillageFound) {
                     selectedVillageId = null;
-                    currentVillageName = '';
                 }
             }
+        }
+
+        function getVillageNameById(villageId) {
+            for (const username in FULL_STATE.village_data) {
+                if (isNaN(parseInt(username))) {
+                    const villageList = FULL_STATE.village_data[username];
+                    if (Array.isArray(villageList)) {
+                        const village = villageList.find(v => v.id == villageId);
+                        if (village) {
+                            return village.name;
+                        }
+                    }
+                }
+            }
+            return '';
         }
 
         function renderGlobalSummary() {
@@ -621,7 +634,7 @@
             const titleEl = document.getElementById('village-details-title');
             if (!detailsDiv || !titleEl) return;
 
-            renderAccountsAndVillages(); // This will set currentVillageName
+            currentVillageName = getVillageNameById(villageId);
             titleEl.textContent = `Village: ${currentVillageName}`;
 
             document.querySelectorAll('.village-list-item').forEach(el => el.classList.remove('active'));
@@ -715,14 +728,14 @@
                             <div class="card-content" style="padding: 1.2rem;">
                                 <div class="form-group">
                                     <label style="display:block; margin-bottom: 0.5rem;">Troop to Train:</label>
-                                    <select id="train-select-${villageId}-${buildingType}" class="form-control">
+                                    <select id="train-select-${villageId}-${buildingType.replace(/\s/g, '-')}" class="form-control">
                                         <option value="">-- Do Not Train --</option>
                                         ${trainableUnits.map(unit => `<option value="${unit.name}" ${unit.name === currentSettings.troop_name ? 'selected' : ''}>${unit.name}</option>`).join('')}
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label style="display:block; margin-bottom: 0.5rem;">Queue for at least (minutes):</label>
-                                    <input type="number" id="train-duration-${villageId}-${buildingType}" class="form-control" min="0" value="${currentSettings.queue_duration_minutes || 0}">
+                                    <input type="number" id="train-duration-${villageId}-${buildingType.replace(/\s/g, '-')}" class="form-control" min="0" value="${currentSettings.queue_duration_minutes || 0}">
                                 </div>
                             </div>
                         </div>`;
@@ -908,8 +921,8 @@
             const settings = {};
             const trainingDataForVillage = FULL_STATE.training_data[villageId] || {};
             for (const buildingType in trainingDataForVillage) {
-                const troopSelect = document.getElementById(`train-select-${villageId}-${buildingType}`);
-                const durationInput = document.getElementById(`train-duration-${villageId}-${buildingType}`);
+                const troopSelect = document.getElementById(`train-select-${villageId}-${buildingType.replace(/\s/g, '-')}`);
+                const durationInput = document.getElementById(`train-duration-${villageId}-${buildingType.replace(/\s/g, '-')}`);
                 if (troopSelect && durationInput) {
                     const troop_name = troopSelect.value;
                     const queue_duration_minutes = parseInt(durationInput.value, 10);

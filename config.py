@@ -1,3 +1,5 @@
+# config.py
+
 import os
 import re
 import json
@@ -44,6 +46,7 @@ BOT_STATE: Dict[str, Any] = {
     "build_queues": {},
     "training_data": {},
     "training_queues": {},
+    "training_interval_minutes": 5, # New configurable training interval
     "build_templates": {
         "Off Village": [
             {"type": "building", "location": 26, "gid": 15, "level": 20},
@@ -166,6 +169,7 @@ def load_config() -> None:
             BOT_STATE["build_templates"].update(data.get("build_templates", {})) # Update instead of overwrite
             if "village_data" not in BOT_STATE:
                 BOT_STATE["village_data"] = {}
+            if "training_queues" not in BOT_STATE:
                 BOT_STATE["training_queues"] = data.get("training_queues", {})
             if "training_data" not in BOT_STATE:
                 BOT_STATE["training_data"] = {}
