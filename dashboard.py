@@ -157,3 +157,33 @@ def handle_move_build_queue_item(data):
     
     save_config()
     socketio.emit("state_update", BOT_STATE)
+
+@socketio.on('save_build_template')
+def handle_save_build_template(data):
+    template_name = data.get('templateName')
+    village_id = data.get('villageId')
+    with state_lock:
+        if 'build_templates' not in BOT_STATE:
+            BOT_STATE['build_templates'] = {}
+        BOT_STATE['build_templates'][template_name] = BOT_STATE['build_queues'].get(str(village_id), [])
+    save_config()
+    socketio.emit("state_update", BOT_STATE)
+
+@socketio.on('load_build_template')
+def handle_load_build_template(data):
+    template_name = data.get('templateName')
+    village_id = data.get('villageId')
+    with state_lock:
+        if 'build_templates' in BOT_STATE and template_name in BOT_STATE['build_templates']:
+            BOT_STATE['build_queues'][str(village_id)] = BOT_STATE['build_templates'][template_name]
+    save_config()
+    socketio.emit("state_update", BOT_STATE)
+
+@socketio.on('delete_build_template')
+def handle_delete_build_template(data):
+    template_name = data.get('templateName')
+    with state_lock:
+        if 'build_templates' in BOT_STATE and template_name in BOT_STATE['build_templates']:
+            del BOT_STATE['build_templates'][template_name]
+    save_config()
+    socketio.emit("state_update", BOT_STATE)

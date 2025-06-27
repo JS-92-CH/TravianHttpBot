@@ -43,7 +43,45 @@ BOT_STATE: Dict[str, Any] = {
     "village_data": {},
     "build_queues": {},
     "training_data": {},
-     "training_queues": {}
+    "training_queues": {},
+    "build_templates": {
+        "Off Village": [
+            {"type": "building", "location": 26, "gid": 15, "level": 20},
+            {"type": "building", "location": 39, "gid": 16, "level": 1},
+            {"type": "building", "location": 19, "gid": 25, "level": 10},
+            {"type": "resource_plan", "level": 5},
+            {"type": "building", "location": 23, "gid": 10, "level": 5},
+            {"type": "building", "location": 24, "gid": 11, "level": 5},
+            {"type": "building", "location": 20, "gid": 19, "level": 3},
+            {"type": "building", "location": 21, "gid": 22, "level": 10},
+            {"type": "building", "location": 22, "gid": 24, "level": 10},
+            {"type": "resource_plan", "level": 10},
+            {"type": "building", "location": 25, "gid": 17, "level": 1},
+            {"type": "building", "location": 27, "gid": 13, "level": 3},
+            {"type": "building", "location": 28, "gid": 20, "level": 15},
+            {"type": "building", "location": 29, "gid": 21, "level": 10},
+            {"type": "building", "location": 30, "gid": 46, "level": 20},
+            {"type": "building", "location": 40, "gid": 31, "level": 20},
+            {"type": "building", "location": 19, "gid": 25, "level": 20},
+            {"type": "building", "location": 20, "gid": 19, "level": 20},
+            {"type": "building", "location": 21, "gid": 22, "level": 20},
+            {"type": "building", "location": 22, "gid": 24, "level": 20},
+            {"type": "building", "location": 23, "gid": 10, "level": 20},
+            {"type": "building", "location": 24, "gid": 11, "level": 20},
+            {"type": "building", "location": 25, "gid": 17, "level": 20},
+            {"type": "building", "location": 27, "gid": 13, "level": 20},
+            {"type": "building", "location": 28, "gid": 20, "level": 20},
+            {"type": "building", "location": 29, "gid": 21, "level": 20},
+            {"type": "building", "location": 39, "gid": 16, "level": 20},
+            {"type": "building", "location": 31, "gid": 14, "level": 20},
+            {"type": "building", "location": 32, "gid": 29, "level": 20},
+            {"type": "building", "location": 33, "gid": 30, "level": 20},
+            {"type": "building", "location": 34, "gid": 10, "level": 20},
+            {"type": "building", "location": 35, "gid": 11, "level": 20},
+            {"type": "building", "location": 36, "gid": 10, "level": 20},
+            {"type": "building", "location": 37, "gid": 11, "level": 20}
+        ]
+    }
 }
 state_lock = threading.Lock()
 build_lock = threading.Lock()
@@ -86,6 +124,7 @@ def load_config() -> None:
         with state_lock:
             BOT_STATE["accounts"] = data.get("accounts", [])
             BOT_STATE["build_queues"] = data.get("build_queues", {})
+            BOT_STATE["build_templates"].update(data.get("build_templates", {})) # Update instead of overwrite
             if "village_data" not in BOT_STATE:
                 BOT_STATE["village_data"] = {}
                 BOT_STATE["training_queues"] = data.get("training_queues", {})
@@ -101,7 +140,8 @@ def save_config() -> None:
         payload = {
             "accounts": BOT_STATE["accounts"],
             "build_queues": BOT_STATE["build_queues"],
-            "training_queues": BOT_STATE["training_queues"]
+            "training_queues": BOT_STATE["training_queues"],
+            "build_templates": BOT_STATE.get("build_templates", {})
         }
     with open("config.json", "w", encoding="utf‑8") as fh:
         json.dump(payload, fh, indent=4)

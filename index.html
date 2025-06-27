@@ -161,6 +161,26 @@
             margin-top:1rem;
         }
 
+        .progress-bar {
+            width: 100%;
+            background-color: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-inner {
+            height: 20px;
+            line-height: 20px;
+            text-align: center;
+            color: var(--bg-primary);
+            background-color: var(--accent-primary);
+            transition: width 0.3s;
+        }
+
+        .progress-bar-inner.full {
+            background-color: var(--accent-secondary);
+        }
+
     </style>
 </head>
 <body>
@@ -207,6 +227,15 @@
                     <h2 class="card-title">Live Log</h2>
                 </div>
                 <div id="log-content" class="card-content">
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                        <select id="log-level-filter" class="form-control">
+                            <option value="">All Levels</option>
+                            <option value="INFO">INFO</option>
+                            <option value="WARNING">WARNING</option>
+                            <option value="ERROR">ERROR</option>
+                        </select>
+                        <input type="text" id="log-search-filter" class="form-control" placeholder="Search logs...">
+                    </div>
                     <div id="log"></div>
                 </div>
             </div>
@@ -214,11 +243,29 @@
 
         <div id="middle-column" class="column">
             <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Villages</h2>
+                 <div class="card-header" style="cursor: default;">
+                    <div class="tabs" style="width: 100%; margin-bottom: 0; border-bottom: none;">
+                        <div class="tab active" onclick="openMainTab(event, 'villages-tab')">Villages</div>
+                        <div class="tab" onclick="openMainTab(event, 'resources-tab')">Resources</div>
+                    </div>
                 </div>
-                <div class="card-content">
+                <div class="card-content main-tab-content active" id="villages-tab">
                     <ul id="village-list" class="village-list"></ul>
+                </div>
+                <div class="card-content main-tab-content" id="resources-tab" style="display: none;">
+                    <table id="resource-flow-table">
+                        <thead>
+                            <tr>
+                                <th>Village</th>
+                                <th>Wood</th>
+                                <th>Clay</th>
+                                <th>Iron</th>
+                                <th>Crop</th>
+                                <th>Merchants</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -250,27 +297,97 @@
             gid = parseInt(gid);
             return [10,11,23,36,38,39].includes(gid);
         }
+        
+        function filterLogs() {
+            const levelFilter = document.getElementById('log-level-filter').value;
+            const searchFilter = document.getElementById('log-search-filter').value.toLowerCase();
+            const logContainer = document.getElementById('log');
+            const entries = logContainer.getElementsByTagName('div');
+
+            for (const entry of entries) {
+                const levelMatch = !levelFilter || entry.dataset.logLevel === levelFilter;
+                const searchMatch = !searchFilter || entry.textContent.toLowerCase().includes(searchFilter);
+                entry.style.display = (levelMatch && searchMatch) ? '' : 'none';
+            }
+        }
+
+        document.getElementById('log-level-filter').onchange = filterLogs;
+        document.getElementById('log-search-filter').onkeyup = filterLogs;
 
         socket.on('connect', () => {
             const log = document.getElementById('log');
-            if(log) log.innerHTML += '<p style="color:var(--accent-primary)">Dashboard connected.</p>';
+            if(log) log.innerHTML += '<div data-log-level="INFO" style="color:var(--accent-primary)">Dashboard connected.</div>';
         });
 
         socket.on('log_message', msg => {
             const log = document.getElementById('log');
-            if(log) {
-                log.innerHTML += msg.data.replace(/</g, "&lt;").replace(/>/g, "&gt;") + '<br>';
+            if (log) {
+                const logLevelMatch = msg.data.match(/^\[(INFO|WARNING|ERROR)\]/);
+                const logLevel = logLevelMatch ? logLevelMatch[1] : 'INFO';
+                const logEntry = document.createElement('div');
+                logEntry.dataset.logLevel = logLevel;
+                let color = 'var(--text-primary)';
+                if (logLevel === 'WARNING') color = 'var(--accent-highlight)';
+                if (logLevel === 'ERROR') color = 'var(--accent-secondary)';
+                logEntry.style.color = color;
+                logEntry.innerHTML = msg.data.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                log.appendChild(logEntry);
                 log.scrollTop = log.scrollHeight;
+                filterLogs(); 
             }
         });
 
         socket.on('state_update', newState => {
             FULL_STATE = newState;
             renderAccountsAndVillages();
+            renderResourceFlow();
             if(selectedVillageId) {
                 showVillageDetails(selectedVillageId);
             }
         });
+        
+        function openMainTab(event, tabId) {
+            document.querySelectorAll('.main-tab-content').forEach(tab => tab.style.display = 'none');
+            document.querySelectorAll('#middle-column .tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block';
+            event.currentTarget.classList.add('active');
+        }
+        
+        function renderResourceFlow() {
+            const tableBody = document.querySelector('#resource-flow-table tbody');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+            
+            for (const username in FULL_STATE.village_data) {
+                if (isNaN(parseInt(username))) {
+                    const villageData = FULL_STATE.village_data[username];
+                    if (Array.isArray(villageData)) {
+                        villageData.forEach(v_summary => {
+                            const v_details = FULL_STATE.village_data[String(v_summary.id)];
+                            if (v_details) {
+                                const merchants = v_details.merchants || {total: 0, capacity: 0};
+                                let rowHtml = `<tr><td>${v_summary.name}</td>`;
+                                ['l1', 'l2', 'l3', 'l4'].forEach(l => {
+                                    const current = Math.floor(v_details.resources?.[l] || 0);
+                                    const max = v_details.storage?.[l] || 1;
+                                    const percent = Math.min(100, (current / max) * 100);
+                                    rowHtml += `
+                                        <td>
+                                            <div>${current.toLocaleString()} / ${max.toLocaleString()} (+${v_details.production?.[l] || 0}/hr)</div>
+                                            <div class="progress-bar">
+                                                <div class="progress-bar-inner ${percent >= 100 ? 'full' : ''}" style="width: ${percent}%;">${percent.toFixed(0)}%</div>
+                                            </div>
+                                        </td>
+                                    `;
+                                });
+                                rowHtml += `<td>${merchants.total} x ${merchants.capacity}</td></tr>`;
+                                tableBody.innerHTML += rowHtml;
+                            }
+                        });
+                    }
+                }
+            }
+        }
 
         function renderAccountsAndVillages() {
             const accList = document.getElementById('account-list');
@@ -521,11 +638,19 @@
             
             // --- START: MODIFIED QUEUE CONTROLS ---
             let queueHtml = `<h3 style="margin-top: 2rem;">Build Queue (${villageQueue.length})</h3>
-                             <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-                                 <button onclick="exportQueue('${villageId}')" class="btn">Export</button>
-                                 <button onclick="importQueue('${villageId}')" class="btn">Import</button>
-                                 <button onclick="importOffVillageQueue('${villageId}')" class="btn btn-primary">Load Off Village</button>
+                            <div style="background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                                <h4>Queue Templates</h4>
+                                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                                    <button onclick="importOffVillageQueue('${villageId}')" class="btn btn-primary">Load Off Village</button>
+                                </div>
+                                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                                    <input type="text" id="template-name-input" class="form-control" placeholder="Template Name">
+                                    <button onclick="saveTemplate('${villageId}')" class="btn btn-primary">Save</button>
+                                </div>
+                                <div id="template-list-container" style="display: flex; gap: 1rem; align-items: center;">
+                                    </div>
                              </div>`;
+
             // --- END: MODIFIED QUEUE CONTROLS ---
 
             queueHtml += `<ol id="build-queue-list" style="list-style-type: none; padding: 0;">`;
@@ -545,11 +670,68 @@
             queueHtml += '</ol>';
 
             detailsDiv.innerHTML = resourcesHtml + tabsHtml + fieldsContent + buildingsContent + trainingContent + newBuildContent + queueHtml;
+            renderTemplateList(villageId);
             
             const tabElem = detailsDiv.querySelector(`#tab-${currentTab}`) || detailsDiv.querySelector('.tab');
             if (tabElem) {
                 let tabName = tabElem.id.replace('tab-','');
                 openTab({currentTarget: tabElem}, tabName);
+            }
+        }
+        
+        function renderTemplateList(villageId) {
+            const container = document.getElementById('template-list-container');
+            if (!container) return;
+            const templates = FULL_STATE.build_templates || {};
+            let html = `<select id="template-select" class="form-control" style="flex-grow: 1;">
+                            <option value="">-- Load a Template --</option>`;
+            for (const name in templates) {
+                html += `<option value="${name}">${name}</option>`;
+            }
+            html += `</select>
+                     <button onclick="loadTemplate('${villageId}')" class="btn">Load</button>
+                     <button onclick="deleteTemplate()" class="btn btn-danger">Delete</button>`;
+            container.innerHTML = html;
+        }
+
+        function saveTemplate(villageId) {
+            const nameInput = document.getElementById('template-name-input');
+            const templateName = nameInput.value.trim();
+            if (!templateName) {
+                alert('Please enter a name for the template.');
+                return;
+            }
+            socket.emit('save_build_template', { villageId, templateName });
+            nameInput.value = '';
+        }
+        
+        function loadTemplate(villageId) {
+            const select = document.getElementById('template-select');
+            const templateName = select.value;
+            if (!templateName) {
+                alert('Please select a template to load.');
+                return;
+            }
+            if (confirm(`This will overwrite the current build queue for this village. Are you sure?`)) {
+                socket.emit('load_build_template', { villageId, templateName });
+            }
+        }
+        
+        function deleteTemplate() {
+            const select = document.getElementById('template-select');
+            const templateName = select.value;
+            if (!templateName) {
+                alert('Please select a template to delete.');
+                return;
+            }
+            if (confirm(`Are you sure you want to delete the template "${templateName}"?`)) {
+                socket.emit('delete_build_template', { templateName });
+            }
+        }
+
+        function importOffVillageQueue(villageId) {
+            if (confirm('This will replace the current build queue with the standard Off Village template. Are you sure?')) {
+                socket.emit('load_build_template', { villageId, templateName: 'Off Village' });
             }
         }
 
@@ -583,8 +765,8 @@
         }
         
         function openTab(event, tabName) {
-            document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#right-column .tab-content').forEach(tc => tc.style.display = 'none');
+            document.querySelectorAll('#right-column .tab').forEach(t => t.classList.remove('active'));
             const tabContent = document.getElementById(tabName);
             if (tabContent) tabContent.style.display = 'block';
             if (event.currentTarget) event.currentTarget.classList.add('active');
@@ -650,75 +832,6 @@
                 direction: direction
             });
         }
-
-        function exportQueue(villageId) {
-            const queue = FULL_STATE.build_queues[villageId] || [];
-            const data = JSON.stringify(queue, null, 2);
-            navigator.clipboard.writeText(data).then(()=>alert('Queue exported to clipboard.')); 
-        }
-
-        function importQueue(villageId) {
-            const text = prompt('Paste build queue JSON:');
-            if(!text) return;
-            try {
-                const parsed = JSON.parse(text);
-                if(Array.isArray(parsed)) {
-                    socket.emit('update_build_queue', { villageId:villageId, queue: parsed });
-                } else {
-                    alert('Invalid format. Please paste a valid JSON array.');
-                }
-            } catch(e) {
-                alert('Failed to parse JSON: ' + e);
-            }
-        }
-
-        // --- START: NEW importOffVillageQueue FUNCTION ---
-        function importOffVillageQueue(villageId) {
-            if (!confirm('This will replace the current build queue with the standard Off Village template. Are you sure?')) {
-                return;
-            }
-
-            const offVillageQueue = [
-                {"type": "building", "location": 26, "gid": 15, "level": 20},
-                {"type": "building", "location": 39, "gid": 16, "level": 1},
-                {"type": "building", "location": 19, "gid": 25, "level": 10},
-                {"type": "resource_plan", "level": 5},
-                {"type": "building", "location": 23, "gid": 10, "level": 5},
-                {"type": "building", "location": 24, "gid": 11, "level": 5},
-                {"type": "building", "location": 20, "gid": 19, "level": 3},
-                {"type": "building", "location": 21, "gid": 22, "level": 10},
-                {"type": "building", "location": 22, "gid": 24, "level": 10},
-                {"type": "resource_plan", "level": 10},
-                {"type": "building", "location": 25, "gid": 17, "level": 1},
-                {"type": "building", "location": 27, "gid": 13, "level": 3},
-                {"type": "building", "location": 28, "gid": 20, "level": 15},
-                {"type": "building", "location": 29, "gid": 21, "level": 10},
-                {"type": "building", "location": 30, "gid": 46, "level": 20},
-                {"type": "building", "location": 40, "gid": 31, "level": 20},
-                {"type": "building", "location": 19, "gid": 25, "level": 20},
-                {"type": "building", "location": 20, "gid": 19, "level": 20},
-                {"type": "building", "location": 21, "gid": 22, "level": 20},
-                {"type": "building", "location": 22, "gid": 24, "level": 20},
-                {"type": "building", "location": 23, "gid": 10, "level": 20},
-                {"type": "building", "location": 24, "gid": 11, "level": 20},
-                {"type": "building", "location": 25, "gid": 17, "level": 20},
-                {"type": "building", "location": 27, "gid": 13, "level": 20},
-                {"type": "building", "location": 28, "gid": 20, "level": 20},
-                {"type": "building", "location": 29, "gid": 21, "level": 20},
-                {"type": "building", "location": 39, "gid": 16, "level": 20},
-                {"type": "building", "location": 31, "gid": 14, "level": 20},
-                {"type": "building", "location": 32, "gid": 29, "level": 20},
-                {"type": "building", "location": 33, "gid": 30, "level": 20},
-                {"type": "building", "location": 34, "gid": 10, "level": 20},
-                {"type": "building", "location": 35, "gid": 11, "level": 20},
-                {"type": "building", "location": 36, "gid": 10, "level": 20},
-                {"type": "building", "location": 37, "gid": 11, "level": 20}
-            ];
-
-            socket.emit('update_build_queue', { villageId: villageId, queue: offVillageQueue });
-            alert('Standard Off Village build queue has been loaded.');
-        }
-        // --- END: NEW importOffVillageQueue FUNCTION ---
 
     </script>
 </body>

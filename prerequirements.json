@@ -1,0 +1,23 @@
+{
+    "5": { "name": "Sawmill", "prerequisites": [{ "gid": 1, "level": 10 }, { "gid": 15, "level": 5 }] },
+    "6": { "name": "Brickyard", "prerequisites": [{ "gid": 2, "level": 10 }, { "gid": 15, "level": 5 }] },
+    "7": { "name": "Iron Foundry", "prerequisites": [{ "gid": 3, "level": 10 }, { "gid": 15, "level": 5 }] },
+    "8": { "name": "Grain Mill", "prerequisites": [{ "gid": 4, "level": 5 }, { "gid": 15, "level": 5 }] },
+    "9": { "name": "Bakery", "prerequisites": [{ "gid": 4, "level": 10 }, { "gid": 8, "level": 5 }, { "gid": 15, "level": 5 }] },
+    "13": { "name": "Smithy", "prerequisites": [{ "gid": 15, "level": 3 }, { "gid": 22, "level": 1 }] },
+    "14": { "name": "Tournament Square", "prerequisites": [{ "gid": 16, "level": 15 }] },
+    "17": { "name": "Marketplace", "prerequisites": [{ "gid": 10, "level": 1 }, { "gid": 11, "level": 1 }, { "gid": 15, "level": 3 }] },
+    "19": { "name": "Barracks", "prerequisites": [{ "gid": 15, "level": 3 }, { "gid": 16, "level": 1 }] },
+    "20": { "name": "Stable", "prerequisites": [{ "gid": 13, "level": 3 }, { "gid": 22, "level": 5 }] },
+    "21": { "name": "Workshop", "prerequisites": [{ "gid": 15, "level": 5 }, { "gid": 22, "level": 10 }] },
+    "22": { "name": "Academy", "prerequisites": [{ "gid": 15, "level": 3 }, { "gid": 19, "level": 3 }] },
+    "24": { "name": "Town Hall", "prerequisites": [{ "gid": 15, "level": 10 }, { "gid": 22, "level": 10 }] },
+    "25": { "name": "Residence", "prerequisites": [{ "gid": 15, "level": 5 }] },
+    "27": { "name": "Treasury", "prerequisites": [{ "gid": 15, "level": 10 }] },
+    "28": { "name": "Trade Office", "prerequisites": [{ "gid": 17, "level": 20 }, { "gid": 20, "level": 10 }] },
+    "29": { "name": "Great Barracks", "prerequisites": [{ "gid": 19, "level": 20 }] },
+    "30": { "name": "Great Stable", "prerequisites": [{ "gid": 20, "level": 20 }] },
+    "37": { "name": "Hero's Mansion", "prerequisites": [{ "gid": 16, "level": 1 }] },
+    "45": { "name": "Waterworks", "prerequisites": [{ "gid": 37, "level": 10 }] },
+    "46": { "name": "Hospital", "prerequisites": [{ "gid": 15, "level": 10 }, { "gid": 22, "level": 15 }] }
+}

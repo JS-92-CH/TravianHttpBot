@@ -123,30 +123,6 @@ class TravianClient:
             log.error("[%s] Login process failed with an exception: %s", self.username, exc)
         return False
 
-    def get_prerequisites(self, village_id: int, slot_id: int, target_gid: int) -> List[Dict[str, Any]]:
-        prereqs = []
-        build_page_url = f"{self.server_url}/build.php?newdid={village_id}&id={slot_id}"
-        try:
-            resp = self.sess.get(build_page_url, timeout=15)
-            soup = BeautifulSoup(resp.text, 'html.parser')
-            
-            contract_div = soup.find('div', id=f'contract_building{target_gid}') or soup.find('div', class_='upgradeBuilding')
-            if contract_div:
-                error_spans = contract_div.select('.contractLink span.error, .upgradeBlocked span.error')
-                for span in error_spans:
-                    text = span.get_text(separator=' ', strip=True).lower()
-                    level_match = re.search(r'(?:level|stufe)\s(\d+)', text)
-                    if not level_match: continue
-                    
-                    required_level = int(level_match.group(1))
-                    building_name = re.sub(r'(?:level|stufe)\s\d+', '', text).strip()
-                    required_gid = NAME_TO_GID.get(building_name)
-                    
-                    if required_gid:
-                        prereqs.append({'gid': required_gid, 'level': required_level})
-        except requests.RequestException: pass
-        return prereqs
-
     def initiate_build(self, village_id: int, slot_id: int, gid: int, is_new_build: bool) -> Dict[str, Any]:
         log.info(f"[{self.username}] Attempting to build GID {gid_name(gid)} ({gid}) at slot {slot_id} (New Build: {is_new_build})")
         action_url, build_page_url = None, f"{self.server_url}/build.php?newdid={village_id}&id={slot_id}"
@@ -225,12 +201,30 @@ class TravianClient:
                 final_buildings[building['id']] = building
             village_data["buildings"] = list(final_buildings.values())
             village_data["queue"] = parsed_d2.get("queue", [])
+            # Add merchant capacity parsing
+            village_data["merchants"] = self.parse_merchants(resp_d1.text)
             return village_data
         except requests.RequestException as e:
             log.error(f"Network error fetching village data for {village_id}: {e}")
         except Exception as e:
             log.error(f"An unexpected error occurred in fetch_and_parse_village for {village_id}: {e}", exc_info=True)
         return None
+
+    def parse_merchants(self, html: str) -> Dict[str, Any]:
+        """Parses merchant information from dorf1."""
+        soup = BeautifulSoup(html, "html.parser")
+        merchants_data = {"total": 0, "capacity": 0}
+        merchants_info = soup.find(id="merchants")
+        if merchants_info:
+            try:
+                text = merchants_info.get_text(strip=True)
+                match = re.search(r"(\d+)\s*x\s*(\d+)", text)
+                if match:
+                    merchants_data["total"] = int(match.group(1))
+                    merchants_data["capacity"] = int(match.group(2))
+            except (ValueError, AttributeError):
+                pass
+        return merchants_data
 
     def parse_village_page(self, html: str, page_type: str) -> Dict[str, Any]:
         soup = BeautifulSoup(html, "html.parser")
