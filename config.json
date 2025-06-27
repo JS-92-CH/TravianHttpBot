@@ -5,7 +5,7 @@
             "password": "22222222",
             "server_url": "https://x500.vardom.net",
             "use_dual_queue": false,
-            "use_hero_resources": true
+            "use_hero_resources": false
         }
     ],
     "build_queues": {
