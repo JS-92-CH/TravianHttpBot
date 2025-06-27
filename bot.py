@@ -60,6 +60,16 @@ class VillageAgent(threading.Thread):
                     BOT_STATE["village_data"][str(self.village_id)] = village_data
                 self.socketio.emit("state_update", BOT_STATE)
 
+                # --- Run all other modules (Tasks, etc.) ---
+                for module in self.modules:
+                    # The building module is handled separately in the build loop
+                    if module == self.building_module:
+                        continue
+                    try:
+                        module.tick(village_data)
+                    except Exception as e:
+                        log.error(f"[{self.village_name}] Error in module {type(module).__name__}: {e}", exc_info=True)
+
                 # If there's a building module, attempt to fill the build queue
                 if self.building_module:
                     max_queue_length = 2 if self.use_dual_queue else 1
