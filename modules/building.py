@@ -1,5 +1,5 @@
 from .base import BaseModule
-from config import BOT_STATE, state_lock, save_config, gid_name, log, build_lock
+from config import BOT_STATE, state_lock, save_config, gid_name, log
 import json
 from collections import deque
 
@@ -131,12 +131,11 @@ class Module(BaseModule):
             return 0
             
         # --- EXECUTE BUILD ---
-        with build_lock:
-            quick_check_data = agent.client.fetch_and_parse_village(agent.village_id)
-            if len(quick_check_data.get("queue", [])) >= max_queue_length:
-                return 0
+        quick_check_data = agent.client.fetch_and_parse_village(agent.village_id)
+        if len(quick_check_data.get("queue", [])) >= max_queue_length:
+            return 0
 
-            build_result = agent.client.initiate_build(agent.village_id, action_plan['location'], action_plan['gid'], is_new_build=action_plan['is_new'])
+        build_result = agent.client.initiate_build(agent.village_id, action_plan['location'], action_plan['gid'], is_new_build=action_plan['is_new'])
 
         if build_result.get('status') == 'success':
             return build_result.get('eta', 300)

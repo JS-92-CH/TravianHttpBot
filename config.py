@@ -84,7 +84,6 @@ BOT_STATE: Dict[str, Any] = {
     }
 }
 state_lock = threading.Lock()
-build_lock = threading.Lock()
 
 # ─────────────────────────────────────────
 # CONFIG & DEFAULTS

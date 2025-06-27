@@ -433,7 +433,7 @@
         function getMaxLevel(gid) {
             gid = parseInt(gid);
             if ([1,2,3,4].includes(gid)) {
-                 return 10;
+                 return 50;
             }
             if (gid === 40) return 100; // Wonder of the World
             if (gid === 23) return 10; // Cranny
@@ -468,8 +468,8 @@
         function upgradeAllResources(villageId) {
             const targetLevelInput = document.getElementById(`resource-target-level-${villageId}`);
             const targetLevel = parseInt(targetLevelInput.value);
-            if (isNaN(targetLevel) || targetLevel < 1 || targetLevel > 10) {
-                alert('Please enter a valid target level (1-10).');
+            if (isNaN(targetLevel) || targetLevel < 1 || targetLevel > 45) {
+                alert('Please enter a valid target level (1-45).');
                 return;
             }
 
@@ -559,7 +559,7 @@
             let fieldsContent = '<div id="fields" class="tab-content">';
             fieldsContent += `<div class="resource-upgrade-form">
                                  <label for="resource-target-level-${villageId}">Set Resource Plan Target Level:</label>
-                                 <input type="number" id="resource-target-level-${villageId}" value="10" min="1" max="10" style="width: 80px;">
+                                 <input type="number" id="resource-target-level-${villageId}" value="10" min="1" max="50" style="width: 80px;">
                                  <button onclick="upgradeAllResources('${villageId}')">Set Plan</button>
                                </div>`;
             fieldsContent += '<table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
