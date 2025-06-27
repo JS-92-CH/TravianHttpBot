@@ -75,7 +75,10 @@ NAME_TO_GID["hero's mansion"] = 37 # Handle apostrophe case
 
 def load_config() -> None:
     if not os.path.exists("config.json"):
-        log.info("No config.json found – starting fresh ✨")
+        # --- Start of Changes ---
+        log.warning("config.json not found!")
+        log.info("Please copy 'config.example.json' to 'config.json' and fill in your account details.")
+        # --- End of Changes ---
         return
     try:
         with open("config.json", "r", encoding="utf‑8") as fh:

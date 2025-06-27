@@ -72,6 +72,7 @@ class TravianClient:
     def collect_task_reward(self, payload: Dict[str, Any], village_id: int, village_name: str) -> bool:
         """Collects the reward for a completed task."""
         try:
+            # The URL should be correct as is, with the villageId parameter
             api_url = f"{self.server_url}/api/v1/progressive-tasks/collectReward?villageId={village_id}"
             headers = {
                 'X-Version': self.server_version,
@@ -82,10 +83,16 @@ class TravianClient:
             resp = self.sess.post(api_url, json=payload, headers=headers, timeout=15)
             
             if resp.status_code == 200 and (resp.json().get('rewards') or resp.json().get('success')):
-                log.info(f"[{self.username}] Successfully collected reward for task in {village_name}: {payload.get('questId')}")
+                # --- Start of Change ---
+                # Updated log message for better debugging
+                log.info(f"[{self.username}] Successfully collected reward for task in {village_name}: {payload.get('questType')} - Level {payload.get('targetLevel')}")
+                # --- End of Change ---
                 return True
             else:
-                log.warning(f"[{self.username}] Failed to collect reward for task in {village_name}: {payload.get('questId')}. Response: {resp.text}")
+                # --- Start of Change ---
+                # Updated log message for better debugging
+                log.warning(f"[{self.username}] Failed to collect reward for task in {village_name}: {payload.get('questType')}. Response: {resp.text}")
+                # --- End of Change ---
                 return False
 
         except requests.RequestException as e:

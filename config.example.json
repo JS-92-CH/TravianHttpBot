@@ -1,8 +1,8 @@
 {
     "accounts": [
         {
-            "username": "zero",
-            "password": "22222222",
+            "username": "",
+            "password": "",
             "server_url": "https://x500.vardom.net",
             "use_dual_queue": true,
             "use_hero_resources": false

@@ -63,18 +63,40 @@ class Module(BaseModule):
 
             json_str = script_content[json_start:json_end]
             tasks_data = json.loads(json_str)
-            
+
+            # --- Start of Changes ---
+
+            # Extract hero level and all tasks
+            hero_level = tasks_data.get("rewardBonus", {}).get("heroLevel", 0)
             all_tasks = tasks_data.get('generalTasks', []) + tasks_data.get('activeVillageTasks', [])
 
             for task in all_tasks:
                 for level in task.get('levels', []):
                     if level.get('readyToBeCollected'):
-                        log.info(f"[{agent.client.username}] Found claimable task in {agent.village_name}: {task.get('name')} - {level.get('title')}")
+                        # --- Start of Changes ---
                         
-                        payload = { "questId": level.get('questId') }
+                        quest_type = task.get('type')
+                        scope = task.get('scope')
+                        target_level = level.get('level')
+                        metadata = task.get('metadata') # Get the metadata object
 
-                        agent.client.collect_task_reward(payload, agent.village_id, agent.village_name)
-                        time.sleep(1)
+                        log.info(f"[{agent.client.username}] Found claimable task in {agent.village_name}: {task.get('name')} - Level {target_level}")
+                        
+                        # Base payload
+                        payload = {
+                            "questType": quest_type,
+                            "scope": scope,
+                            "targetLevel": target_level,
+                            "heroLevel": hero_level
+                        }
+
+                        # If metadata exists (like for buildingProgress), add it to the payload.
+                        if metadata:
+                            payload.update(metadata)
+
+                        if agent.client.collect_task_reward(payload, agent.village_id, agent.village_name):
+                            time.sleep(2)
+                        # --- End of Changes ---
 
         except Exception as e:
             log.error(f"[{agent.client.username}] An error occurred while collecting tasks for {agent.village_name}: {e}", exc_info=True)
