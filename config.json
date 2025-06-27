@@ -4,17 +4,69 @@
             "username": "zero",
             "password": "22222222",
             "server_url": "https://x500.vardom.net",
-            "use_dual_queue": false,
+            "use_dual_queue": true,
             "use_hero_resources": false
         }
     ],
     "build_queues": {
         "71995": [],
-        "83631": [],
+        "83631": [
+            {
+                "type": "resource_plan",
+                "level": 10
+            },
+            {
+                "type": "building",
+                "location": 19,
+                "gid": 18,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 23,
+                "gid": 22,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 24,
+                "gid": 13,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 27,
+                "gid": 29,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 28,
+                "gid": 30,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 31,
+                "gid": 26,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 20
+            }
+        ],
         "83234": [],
         "83632": [],
         "83230": [],
-        "84032": [],
+        "84032": [
+            {
+                "type": "resource_plan",
+                "level": 10
+            }
+        ],
         "83635": [],
         "83235": [],
         "83231": [],
@@ -41,5 +93,6 @@
                 "level": 20
             }
         ]
-    }
+    },
+    "training_queues": {}
 }

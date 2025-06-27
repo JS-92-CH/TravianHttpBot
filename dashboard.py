@@ -130,3 +130,30 @@ def handle_update_build_queue(data):
             BOT_STATE['build_queues'][str(village_id)] = queue
         save_config()
         socketio.emit("state_update", BOT_STATE)
+
+@socketio.on('move_build_queue_item')
+def handle_move_build_queue_item(data):
+    village_id = str(data.get('villageId'))
+    index = int(data.get('index'))
+    direction = data.get('direction')
+
+    with state_lock:
+        queue = BOT_STATE['build_queues'].get(village_id, [])
+        if not queue or not (0 <= index < len(queue)):
+            return
+
+        item = queue.pop(index)
+
+        if direction == 'top':
+            queue.insert(0, item)
+        elif direction == 'bottom':
+            queue.append(item)
+        elif direction == 'up':
+            queue.insert(max(0, index - 1), item)
+        elif direction == 'down':
+            queue.insert(min(len(queue), index + 1), item)
+
+        BOT_STATE['build_queues'][village_id] = queue
+    
+    save_config()
+    socketio.emit("state_update", BOT_STATE)
