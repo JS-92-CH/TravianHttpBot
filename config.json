@@ -10,15 +10,14 @@
     ],
     "build_queues": {
         "71995": [],
-        "83631": [],
+        "83631": [
+            {
+                "type": "resource_plan",
+                "level": 20
+            }
+        ],
         "83234": [],
         "83632": [
-            {
-                "type": "building",
-                "location": 22,
-                "gid": 24,
-                "level": 20
-            },
             {
                 "type": "building",
                 "location": 23,
@@ -358,12 +357,6 @@
         ],
         "83235": [],
         "83231": [
-            {
-                "type": "building",
-                "location": 21,
-                "gid": 22,
-                "level": 20
-            },
             {
                 "type": "building",
                 "location": 30,
@@ -1497,12 +1490,6 @@
             }
         ],
         "84832": [
-            {
-                "type": "building",
-                "location": 20,
-                "gid": 19,
-                "level": 20
-            },
             {
                 "type": "building",
                 "location": 21,
