@@ -160,6 +160,22 @@ def handle_move_build_queue_item(data):
     save_config()
     socketio.emit("state_update", BOT_STATE)
 
+@socketio.on('update_hero_settings')
+def handle_update_hero_settings(data):
+    """Updates the hero settings for an account."""
+    username = data.get('username')
+    settings = data.get('settings')
+    log.info(f"Updating hero settings for account {username}")
+    with state_lock:
+        for acc in BOT_STATE['accounts']:
+            if acc['username'] == username:
+                if 'hero_settings' not in acc:
+                    acc['hero_settings'] = {}
+                acc['hero_settings'].update(settings)
+                break
+    save_config()
+    socketio.emit("state_update", BOT_STATE)
+
 @socketio.on('save_build_template')
 def handle_save_build_template(data):
     template_name = data.get('templateName')

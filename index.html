@@ -180,7 +180,6 @@
         .progress-bar-inner.full {
             background-color: var(--accent-secondary);
         }
-
     </style>
 </head>
 <body>
@@ -247,6 +246,7 @@
                     <div class="tabs" style="width: 100%; margin-bottom: 0; border-bottom: none;">
                         <div class="tab active" onclick="openMainTab(event, 'villages-tab')">Villages</div>
                         <div class="tab" onclick="openMainTab(event, 'resources-tab')">Resources</div>
+                        <div class="tab" onclick="openMainTab(event, 'hero-tab')">Hero</div>
                     </div>
                 </div>
                 <div class="card-content main-tab-content active" id="villages-tab">
@@ -266,6 +266,9 @@
                         </thead>
                         <tbody></tbody>
                     </table>
+                </div>
+                <div class="card-content main-tab-content" id="hero-tab" style="display: none;">
+                    <div id="hero-settings-list"></div>
                 </div>
             </div>
         </div>
@@ -351,6 +354,9 @@
             document.querySelectorAll('#middle-column .tab').forEach(tab => tab.classList.remove('active'));
             document.getElementById(tabId).style.display = 'block';
             event.currentTarget.classList.add('active');
+            if (tabId === 'hero-tab') {
+                renderHeroSettings();
+            }
         }
         
         function renderResourceFlow() {
@@ -428,6 +434,73 @@
                 }
                 if (!activeVillageFound) selectedVillageId = null;
             }
+        }
+
+        function renderHeroSettings() {
+            const heroSettingsList = document.getElementById('hero-settings-list');
+            if (!heroSettingsList) return;
+
+            let html = '';
+            (FULL_STATE.accounts || []).forEach(acc => {
+                const heroSettings = acc.hero_settings || { auto_distribute_points: false, point_distribution: { fightingStrength: 0, offBonus: 0, defBonus: 0, resourceProduction: 0 } };
+                html += `
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header">
+                            <h3 class="card-title">${acc.username}</h3>
+                        </div>
+                        <div class="card-content">
+                            <form class="hero-settings-form" onsubmit="return false;">
+                                <div class="form-group">
+                                    <label for="auto-distribute-${acc.username}">Auto Distribute Points:</label>
+                                    <input type="checkbox" id="auto-distribute-${acc.username}" onchange="updateHeroSettings('${acc.username}')" ${heroSettings.auto_distribute_points ? 'checked' : ''}>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fightingStrength-${acc.username}">Fighting Strength:</label>
+                                    <input type="number" id="fightingStrength-${acc.username}" class="form-control" min="0" max="4" value="${heroSettings.point_distribution.fightingStrength}" onchange="updateHeroSettings('${acc.username}')">
+                                </div>
+                                <div class="form-group">
+                                    <label for="offBonus-${acc.username}">Offense Bonus:</label>
+                                    <input type="number" id="offBonus-${acc.username}" class="form-control" min="0" max="4" value="${heroSettings.point_distribution.offBonus}" onchange="updateHeroSettings('${acc.username}')">
+                                </div>
+                                <div class="form-group">
+                                    <label for="defBonus-${acc.username}">Defense Bonus:</label>
+                                    <input type="number" id="defBonus-${acc.username}" class="form-control" min="0" max="4" value="${heroSettings.point_distribution.defBonus}" onchange="updateHeroSettings('${acc.username}')">
+                                </div>
+                                <div class="form-group">
+                                    <label for="resourceProduction-${acc.username}">Resource Production:</label>
+                                    <input type="number" id="resourceProduction-${acc.username}" class="form-control" min="0" max="4" value="${heroSettings.point_distribution.resourceProduction}" onchange="updateHeroSettings('${acc.username}')">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            });
+            heroSettingsList.innerHTML = html;
+        }
+
+        function updateHeroSettings(username) {
+            const autoDistribute = document.getElementById(`auto-distribute-${username}`).checked;
+            const fightingStrength = parseInt(document.getElementById(`fightingStrength-${username}`).value, 10);
+            const offBonus = parseInt(document.getElementById(`offBonus-${username}`).value, 10);
+            const defBonus = parseInt(document.getElementById(`defBonus-${username}`).value, 10);
+            const resourceProduction = parseInt(document.getElementById(`resourceProduction-${username}`).value, 10);
+
+            if (fightingStrength + offBonus + defBonus + resourceProduction !== 4) {
+                alert("The total points must sum to 4.");
+                return;
+            }
+
+            const settings = {
+                auto_distribute_points: autoDistribute,
+                point_distribution: {
+                    fightingStrength,
+                    offBonus,
+                    defBonus,
+                    resourceProduction
+                }
+            };
+
+            socket.emit('update_hero_settings', { username, settings });
         }
         
         function getMaxLevel(gid) {
