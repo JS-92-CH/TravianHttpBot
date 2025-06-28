@@ -104,6 +104,3 @@ class Module(BaseModule):
                 if amount_to_train > 0:
                     log.info(f"[{agent.village_name}] Training {amount_to_train} of {troop_to_train} in {building_name}")
                     agent.client.train_troops(building.get('id'), {troop_info['id']: amount_to_train})
-
-        with state_lock:
-            agent.socketio.emit("state_update", BOT_STATE)

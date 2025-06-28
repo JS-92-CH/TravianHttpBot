@@ -1619,11 +1619,6 @@
         "53559": [
             {
                 "type": "building",
-                "gid": 24,
-                "level": 20
-            },
-            {
-                "type": "building",
                 "gid": 17,
                 "level": 20
             },
@@ -1644,28 +1639,6 @@
             }
         ],
         "53978": [
-            {
-                "type": "resource_plan",
-                "level": 10
-            },
-            {
-                "type": "building",
-                "location": 25,
-                "gid": 17,
-                "level": 1
-            },
-            {
-                "type": "building",
-                "location": 27,
-                "gid": 13,
-                "level": 3
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "gid": 20,
-                "level": 15
-            },
             {
                 "type": "building",
                 "location": 29,
