@@ -12,8 +12,8 @@
             "hero_settings": {
                 "auto_distribute_points": true,
                 "point_distribution": {
-                    "fightingStrength": 4,
-                    "offBonus": 0,
+                    "fightingStrength": 0,
+                    "offBonus": 4,
                     "defBonus": 0,
                     "resourceProduction": 0
                 }
@@ -1565,491 +1565,15 @@
         "54374": [],
         "53958": [],
         "54375": [],
-        "54358": [
-            {
-                "type": "building",
-                "location": 33,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
-        "54357": [
-            {
-                "type": "building",
-                "location": 33,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
-        "54376": [
-            {
-                "type": "building",
-                "location": 33,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
-        "54356": [
-            {
-                "type": "building",
-                "location": 31,
-                "gid": 14,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "gid": 29,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 33,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
-        "53976": [
-            {
-                "type": "building",
-                "location": 33,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
-        "54355": [
-            {
-                "type": "building",
-                "location": 32,
-                "gid": 29,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 33,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
-        "54755": [
-            {
-                "type": "building",
-                "location": 29,
-                "gid": 21,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "gid": 14,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "gid": 29,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 33,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
-        "53977": [
-            {
-                "type": "building",
-                "location": 25,
-                "gid": 17,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 27,
-                "gid": 13,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "gid": 20,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "gid": 21,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "gid": 14,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "gid": 29,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 33,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
+        "54358": [],
+        "54357": [],
+        "54376": [],
+        "54356": [],
+        "53976": [],
+        "54355": [],
+        "54755": [],
+        "53977": [],
         "53559": [
-            {
-                "type": "resource_plan",
-                "level": 10
-            },
-            {
-                "type": "building",
-                "gid": 10,
-                "level": 10
-            },
-            {
-                "type": "building",
-                "gid": 11,
-                "level": 10
-            },
-            {
-                "type": "building",
-                "gid": 24,
-                "level": 10
-            },
-            {
-                "type": "building",
-                "gid": 17,
-                "level": 10
-            },
-            {
-                "type": "building",
-                "gid": 25,
-                "level": 10
-            },
-            {
-                "type": "building",
-                "gid": 31,
-                "level": 10
-            },
-            {
-                "type": "building",
-                "gid": 16,
-                "level": 10
-            },
-            {
-                "type": "building",
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "gid": 24,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "gid": 17,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "gid": 25,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "gid": 31,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "gid": 16,
-                "level": 20
-            }
-        ],
-        "53978": [
-            {
-                "type": "building",
-                "location": 20,
-                "gid": 19,
-                "level": 3
-            },
-            {
-                "type": "building",
-                "location": 21,
-                "gid": 22,
-                "level": 10
-            },
-            {
-                "type": "building",
-                "location": 22,
-                "gid": 24,
-                "level": 10
-            },
-            {
-                "type": "resource_plan",
-                "level": 5
-            },
-            {
-                "type": "resource_plan",
-                "level": 10
-            },
-            {
-                "type": "building",
-                "location": 25,
-                "gid": 17,
-                "level": 1
-            },
-            {
-                "type": "building",
-                "location": 27,
-                "gid": 13,
-                "level": 3
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "gid": 20,
-                "level": 15
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "gid": 21,
-                "level": 10
-            },
-            {
-                "type": "building",
-                "location": 30,
-                "gid": 46,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "gid": 25,
-                "level": 20
-            },
             {
                 "type": "building",
                 "location": 20,
@@ -2152,7 +1676,49 @@
                 "gid": 11,
                 "level": 20
             }
-        ]
+        ],
+        "53978": [],
+        "54756": [],
+        "53575": [],
+        "53955": [],
+        "53972": [],
+        "54772": [],
+        "54774": [],
+        "53558": [
+            {
+                "type": "building",
+                "location": 33,
+                "gid": 30,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 34,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 35,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 36,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 37,
+                "gid": 11,
+                "level": 20
+            }
+        ],
+        "53560": [],
+        "54363": [],
+        "53970": []
     },
     "training_queues": {},
     "build_templates": {

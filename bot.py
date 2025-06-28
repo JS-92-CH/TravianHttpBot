@@ -186,5 +186,5 @@ class BotManager(threading.Thread):
                 except Exception as exc:
                     log.error(f"Failed to manage agents for {account['username']}: {exc}", exc_info=True)
 
-            self.stop_event.wait(30)
+            self.stop_event.wait(15)
         log.info("Bot Manager stopped.")
