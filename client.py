@@ -350,7 +350,7 @@ class TravianClient:
             soup = BeautifulSoup(resp.text, 'html.parser')
 
             if "no troops for this building have been researched yet" in resp.text.lower():
-                return {'trainable': []} # Return empty but valid dict
+                return {'trainable': [], 'training_queue': [], 'queue_duration_seconds': 0}
 
             form = soup.find('form', {'name': 'snd'})
             if not form: return None
@@ -358,8 +358,31 @@ class TravianClient:
             build_id_match = re.search(r'build\.php\?id=(\d+)', form['action'])
             build_id = int(build_id_match.group(1)) if build_id_match else 0
             form_data = {i['name']: i['value'] for i in form.find_all('input') if i.has_attr('name')}
-            total_queue_duration = sum(int(timer.get('value',0)) for timer in soup.select("table.under_progress .timer"))
+            
+            # Parse the "in training" queue
+            training_queue = []
+            queue_duration_seconds = 0
+            if queue_table := soup.find('table', class_='under_progress'):
+                for row in queue_table.select('tbody tr'):
+                    if 'next' in row.get('class', []): continue # Skip the "next soldier" row
+                    desc_cell = row.find('td', class_='desc')
+                    dur_cell = row.find('td', class_='dur')
+                    if desc_cell and dur_cell:
+                        unit_img = desc_cell.find('img', class_='unit')
+                        if not unit_img: continue
+                        
+                        desc_text = desc_cell.get_text(separator=' ', strip=True)
+                        amount_match = re.search(r'(\d{1,3}(?:,\d{3})*)', desc_text)
+                        amount = int(amount_match.group(1).replace(',', '')) if amount_match else 0
+                        
+                        unit_name = desc_text.replace(amount_match.group(1), '').strip() if amount_match else 'Unknown'
 
+                        timer = dur_cell.find('span', class_='timer')
+                        duration = int(timer.get('value', 0)) if timer else 0
+                        queue_duration_seconds += duration
+                        training_queue.append({'name': unit_name, 'amount': amount, 'duration': duration})
+            
+            # Parse trainable units
             trainable_units = []
             for action_div in soup.select(".buildActionOverview .action"):
                 details = action_div.find('div', class_='details')
@@ -371,27 +394,35 @@ class TravianClient:
 
                 input_tag = details.find('input', {'type': 'text'})
                 if not input_tag: continue
-                unit_id = int(re.sub(r'\D', '', input_tag['name']))
+                unit_id_match = re.search(r't(\d+)', input_tag.get('name', ''))
+                if not unit_id_match: continue
+                unit_id = int(unit_id_match.group(1))
 
-                max_link = details.select_one('.cta a')
-                max_amount = int(re.sub(r'\D', '', max_link.text)) if max_link else 0
-
+                max_amount = 0
+                if max_link := details.select_one('.cta a'):
+                    if max_match := re.search(r'(\d{1,3}(?:,?\d{3})*)', max_link.text):
+                         max_amount = int(max_match.group(1).replace(',', ''))
+                
                 time_str = "0:0:0"
-                if (dur_span := details.find('div', class_='duration')):
-                     if (val_span := dur_span.find('span', class_='value')):
-                         time_str = val_span.text.split('(')[0].strip()
+                if dur_span := details.find('div', class_='duration'):
+                    if val_span := dur_span.find('span', class_='value'):
+                        time_str = val_span.text.split('(')[0].strip()
                 h,m,s = map(int, time_str.split(':'))
                 time_per_unit = h*3600 + m*60 + s
 
                 trainable_units.append({'id': unit_id, 'name': unit_name, 'max_trainable': max_amount, 'time_per_unit': time_per_unit})
 
             return {
-                'build_id': build_id, 'form_data': form_data,
-                'queue_duration_seconds': total_queue_duration, 'trainable': trainable_units
+                'build_id': build_id, 
+                'form_data': form_data,
+                'queue_duration_seconds': queue_duration_seconds, 
+                'trainable': trainable_units,
+                'training_queue': training_queue
             }
         except Exception as e:
             log.error(f"[{self.username}] Failed to get/parse GID {gid}: {e}", exc_info=True)
             return None
+
 
     def train_troops(self, village_id: int, build_id: int, form_data: Dict, troops_to_train: Dict[int, int]) -> bool:
         """Submits the form to train troops."""

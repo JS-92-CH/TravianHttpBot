@@ -5,6 +5,7 @@ import threading
 from typing import Dict, Optional
 from modules.adventure import Module as AdventureModule
 from modules.hero import Module as HeroModule
+# Correctly import the TrainingModule
 from modules.training import Module as TrainingModule
 from client import TravianClient
 from config import log, BOT_STATE, state_lock, save_config
@@ -56,12 +57,24 @@ class VillageAgent(threading.Thread):
                     log.warning(f"[{self.village_name}] Data fetch was incomplete. Retrying in 60 seconds.")
                     self.next_check_time = time.time() + 60
                     continue
-
+                
+                # Fetch training data for each relevant building
+                with state_lock:
+                    if str(self.village_id) not in BOT_STATE['training_data']:
+                        BOT_STATE['training_data'][str(self.village_id)] = {}
+                    
+                    training_gids = [19, 20, 21, 29, 30] # Barracks, Stable, etc.
+                    for gid in training_gids:
+                        if any(b['gid'] == gid for b in village_data.get('buildings', [])):
+                            training_page_data = self.client.get_training_page(self.village_id, gid)
+                            if training_page_data:
+                                BOT_STATE['training_data'][str(self.village_id)][str(gid)] = training_page_data
+                
                 with state_lock:
                     BOT_STATE["village_data"][str(self.village_id)] = village_data
                 self.socketio.emit("state_update", BOT_STATE)
 
-                # Run village-specific modules
+                # Run village-specific modules (excluding building)
                 for module in self.modules:
                     if module == self.building_module:
                         continue
@@ -95,7 +108,7 @@ class VillageAgent(threading.Thread):
                         
                         time.sleep(0.25)
 
-                # Schedule next check
+                # Schedule next check based on server queue
                 final_data = self.client.fetch_and_parse_village(self.village_id)
                 if final_data and final_data.get("queue"):
                     server_eta = min([b.get('eta', 3600) for b in final_data["queue"]])
@@ -120,21 +133,32 @@ class BotManager(threading.Thread):
         self.socketio = socketio_instance
         self.stop_event = threading.Event()
         self.village_agents: Dict[int, VillageAgent] = {}
-        # Account-level modules
+        # Account-level modules that run on a tick
         self.adventure_module = AdventureModule(self)
         self.hero_module = HeroModule(self)
+        # Independent training agent thread
         self.training_module = TrainingModule(self)
         self.daemon = True
 
     def stop(self):
         log.info("Stopping all village agents...")
-        for agent in self.village_agents.values(): agent.stop()
-        for agent in self.village_agents.values(): agent.join()
+        for agent in self.village_agents.values():
+            agent.stop()
+        for agent in self.village_agents.values():
+            agent.join()
+        
+        log.info("Stopping training agent...")
+        self.training_module.stop()
+        self.training_module.join()
+
         self.stop_event.set()
         log.info("All agents stopped.")
 
     def run(self):
         log.info("Bot Manager started.")
+        log.info("Starting independent training agent...")
+        self.training_module.start()
+
         while not self.stop_event.is_set():
             with state_lock:
                 accounts = BOT_STATE["accounts"][:]
@@ -155,12 +179,13 @@ class BotManager(threading.Thread):
                     account.get("proxy")
                 )
 
+                log.info(f"[{account['username']}] Attempting API login to Vardom server...")
                 if not temp_client.login():
+                    log.error(f"[{account['username']}] Login failed, skipping account for this cycle.")
                     self.stop_event.wait(60)
                     continue
+                log.info(f"[{account['username']}] Logged in successfully ✔")
                 
-                # --- CORRECTED LOGIC ---
-                # 1. Fetch villages and manage agents
                 try:
                     resp = temp_client.sess.get(f"{temp_client.server_url}/dorf1.php", timeout=15)
                     sidebar_data = temp_client.parse_village_page(resp.text, "dorf1")
@@ -168,7 +193,8 @@ class BotManager(threading.Thread):
 
                     with state_lock:
                         BOT_STATE["village_data"][account['username']] = villages
-                        if 'training_queues' not in BOT_STATE: BOT_STATE['training_queues'] = {}
+                        if 'training_queues' not in BOT_STATE:
+                            BOT_STATE['training_queues'] = {}
                         
                         config_updated = False
                         for v in villages:
@@ -188,7 +214,6 @@ class BotManager(threading.Thread):
                         if config_updated:
                             save_config()
 
-                    # Manage village agent threads
                     current_village_ids = {v['id'] for v in villages}
                     for vid in list(self.village_agents.keys()):
                         if vid not in current_village_ids:
@@ -202,27 +227,21 @@ class BotManager(threading.Thread):
                             self.village_agents[village['id']] = agent
                             agent.start()
                         else:
-                            # Update settings for existing agents
                             existing_agent = self.village_agents[village['id']]
                             existing_agent.use_dual_queue = account.get("use_dual_queue", False)
                             existing_agent.use_hero_resources = account.get("use_hero_resources", False)
 
                 except Exception as exc:
-                    log.error(f"Failed to manage agents for {account['username']}: {exc}", exc_info=True)
-                    continue # Skip to next account on failure
+                    log.error(f"Failed to manage village agents for {account['username']}: {exc}", exc_info=True)
+                    continue
 
-                # 2. Run account-level modules AFTER agents are running
                 try:
                     self.adventure_module.tick(temp_client)
-                    time.sleep(1)
+                    time.sleep(1) 
                     self.hero_module.tick(temp_client)
-                    time.sleep(1)
-                    self.training_module.tick(temp_client)
                 except Exception as e:
                     log.error(f"Error in an account-level module for {account['username']}: {e}", exc_info=True)
-            # --- END OF CORRECTED LOGIC ---
 
-            # Wait before the next full cycle through all accounts
             self.stop_event.wait(30)
             
         log.info("Bot Manager stopped.")

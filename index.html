@@ -479,6 +479,14 @@
                 </div>
             `;
         }
+        
+        function formatDuration(seconds) {
+            if (seconds <= 0) return "0:00:00";
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
+        }
 
         function saveTrainingSettings(villageId) {
             const settings = {
@@ -490,13 +498,16 @@
             const gids = [19, 20, 21, 29, 30];
 
             buildingTypes.forEach((key, index) => {
-                const isEnabled = document.getElementById(`train-enabled-${villageId}-${key}`).checked;
-                const troopName = document.getElementById(`train-select-${villageId}-${key}`).value;
-                settings.buildings[key] = {
-                    gid: gids[index],
-                    enabled: isEnabled,
-                    troop_name: troopName
-                };
+                const enableCheckbox = document.getElementById(`train-enabled-${villageId}-${key}`);
+                const troopSelect = document.getElementById(`train-select-${villageId}-${key}`);
+                
+                if(enableCheckbox && troopSelect){
+                    settings.buildings[key] = {
+                        gid: gids[index],
+                        enabled: enableCheckbox.checked,
+                        troop_name: troopSelect.value
+                    };
+                }
             });
 
             socket.emit('update_training_queues', { villageId: villageId, settings: settings });
@@ -659,8 +670,7 @@
 
             const villageQueue = FULL_STATE.build_queues[villageId] || [];
             const trainingSettingsForVillage = (FULL_STATE.training_queues || {})[villageId] || {};
-            // training_data is not used in this version as per the new logic
-            // const trainingDataForVillage = (FULL_STATE.training_data || {})[villageId] || {};
+            const trainingDataForVillage = (FULL_STATE.training_data || {})[villageId] || {};
 
 
             const projectedBuildings = JSON.parse(JSON.stringify(villageData.buildings));
@@ -737,22 +747,38 @@
             </div>`;
 
             const buildingTypes = {
-                barracks: { gid: 19, troops: ["Legionnaire", "Praetorian", "Imperian", "Clubswinger", "Spearman", "Axeman", "Phalanx", "Swordsman", "Pathfinder", "Theutates Thunder", "Druidrider", "Haeduan"] },
-                stable: { gid: 20, troops: ["Equites Legati", "Equites Imperatoris", "Equites Caesaris", "Scout", "Paladin", "Teutonic Knight", "Theutates Thunder", "Druidrider", "Haeduan"] },
-                workshop: { gid: 21, troops: ["Battering Ram", "Fire Catapult", "Trebuchet"] },
-                great_barracks: { gid: 29, troops: ["Legionnaire", "Praetorian", "Imperian", "Clubswinger", "Spearman", "Axeman", "Phalanx", "Swordsman", "Pathfinder", "Theutates Thunder", "Druidrider", "Haeduan"] },
-                great_stable: { gid: 30, troops: ["Equites Legati", "Equites Imperatoris", "Equites Caesaris", "Scout", "Paladin", "Teutonic Knight", "Theutates Thunder", "Druidrider", "Haeduan"] }
+                barracks: { gid: 19, name: 'Barracks' },
+                stable: { gid: 20, name: 'Stable' },
+                workshop: { gid: 21, name: 'Workshop' },
+                great_barracks: { gid: 29, name: 'Great Barracks'},
+                great_stable: { gid: 30, name: 'Great Stable'}
             };
-            
+
             Object.entries(buildingTypes).forEach(([key, value]) => {
-                const buildingExists = villageData.buildings.some(b => b.gid === value.gid);
-                if (!buildingExists) return;
+                const buildingData = trainingDataForVillage[value.gid];
+                if (!buildingData) return; // Don't show card if building doesn't exist or no data
 
                 const buildingConfig = (trainingSettingsForVillage.buildings || {})[key] || {};
+                
+                let optionsHtml = '<option value="">-- Select Troop --</option>';
+                (buildingData.trainable || []).forEach(troop => {
+                    optionsHtml += `<option value="${troop.name}" ${troop.name === buildingConfig.troop_name ? 'selected' : ''}>${troop.name}</option>`;
+                });
+
+                let queueHtml = '<h4>In Training</h4>';
+                if(buildingData.training_queue && buildingData.training_queue.length > 0) {
+                    queueHtml += `<table><thead><tr><th>Amount</th><th>Troop</th><th>Duration</th></tr></thead><tbody>`;
+                    buildingData.training_queue.forEach(q => {
+                         queueHtml += `<tr><td>${q.amount.toLocaleString()}</td><td>${q.name}</td><td>${formatDuration(q.duration)}</td></tr>`;
+                    });
+                    queueHtml += '</tbody></table>';
+                } else {
+                    queueHtml += '<p>No troops currently in training.</p>';
+                }
 
                 trainingContent += `<div class="card" style="margin-top: 1rem; border: 1px solid var(--text-muted);">
                     <div class="card-header" style="padding: 0.8rem 1.2rem;">
-                        <h4 class="card-title" style="font-size: 1.1rem; color: var(--text-primary); text-transform: capitalize;">${key.replace('_', ' ')}</h4>
+                        <h4 class="card-title" style="font-size: 1.1rem; color: var(--text-primary); text-transform: capitalize;">${value.name}</h4>
                     </div>
                     <div class="card-content" style="padding: 1.2rem;">
                         <div class="form-group">
@@ -764,10 +790,11 @@
                         <div class="form-group">
                             <label style="display:block; margin-bottom: 0.5rem;">Troop to Train:</label>
                             <select id="train-select-${villageId}-${key}" class="form-control">
-                                <option value="">-- Select Troop --</option>
-                                ${value.troops.map(troop => `<option value="${troop}" ${troop === buildingConfig.troop_name ? 'selected' : ''}>${troop}</option>`).join('')}
+                                ${optionsHtml}
                             </select>
                         </div>
+                        <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
+                        ${queueHtml}
                     </div>
                 </div>`;
             });
@@ -941,24 +968,6 @@
             if (tabContent) tabContent.style.display = 'block';
             if (event.currentTarget) event.currentTarget.classList.add('active');
             currentTab = tabName;
-        }
-
-        function saveTrainingSettings(villageId) {
-            const settings = {};
-            const trainingDataForVillage = FULL_STATE.training_data[villageId] || {};
-            for (const buildingType in trainingDataForVillage) {
-                const troopSelect = document.getElementById(`train-select-${villageId}-${buildingType}`);
-                const durationInput = document.getElementById(`train-duration-${villageId}-${buildingType}`);
-                if (troopSelect && durationInput) {
-                    const troop_name = troopSelect.value;
-                    const queue_duration_minutes = parseInt(durationInput.value, 10);
-                    if (troop_name && queue_duration_minutes > 0) {
-                        settings[buildingType] = { troop_name, queue_duration_minutes };
-                    }
-                }
-            }
-            socket.emit('update_training_queues', { villageId: villageId, settings: settings });
-            alert('Training settings saved!');
         }
 
         document.getElementById('startBtn').onclick = () => socket.emit('start_bot');

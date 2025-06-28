@@ -123,7 +123,8 @@ BOT_STATE: Dict[str, Any] = {
         ]
     }
 }
-state_lock = threading.Lock()
+# Use a re-entrant lock to prevent deadlocks
+state_lock = threading.RLock()
 
 # ─────────────────────────────────────────
 # CONFIG & DEFAULTS

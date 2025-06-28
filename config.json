@@ -1576,12 +1576,6 @@
         "53559": [
             {
                 "type": "building",
-                "location": 20,
-                "gid": 19,
-                "level": 20
-            },
-            {
-                "type": "building",
                 "location": 21,
                 "gid": 22,
                 "level": 20
@@ -1684,43 +1678,1098 @@
         "53972": [],
         "54772": [],
         "54774": [],
-        "53558": [
-            {
-                "type": "building",
-                "location": 33,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 34,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 35,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 36,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
+        "53558": [],
         "53560": [],
         "54363": [],
         "53970": []
     },
-    "training_queues": {},
+    "training_queues": {
+        "53965": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53964": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53966": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53963": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54368": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53962": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54369": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54371": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53961": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53960": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54373": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53959": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54374": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53958": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54375": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54358": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54357": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54376": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54356": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53976": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54355": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54755": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53977": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53978": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53559": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53970": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54363": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53560": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53558": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54774": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54772": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53972": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53955": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "53575": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "54756": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        }
+    },
     "build_templates": {
         "Off Village": [
             {
