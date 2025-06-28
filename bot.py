@@ -60,8 +60,7 @@ class VillageAgent(threading.Thread):
                     continue
 
                 with state_lock:
-                    BOT_STATE["village_data"][str(self.village_id)] = village_data
-                self.socketio.emit("state_update", BOT_STATE)
+                    BOT_STATE["village_data"][str(self.village_id)] = village_data                
 
                 # Run village-specific modules
                 for module in self.modules:
@@ -76,7 +75,8 @@ class VillageAgent(threading.Thread):
                             self.next_training_check_time = time.time() + (training_interval * 60)
                     except Exception as e:
                         log.error(f"[{self.village_name}] Error in module {type(module).__name__}: {e}", exc_info=True)
-
+                self.socketio.emit("state_update", BOT_STATE)
+                
                 # Aggressive building loop
                 if self.building_module:
                     while not self.stop_event.is_set():

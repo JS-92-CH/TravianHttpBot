@@ -13,18 +13,21 @@ class Module(BaseModule):
     def get_trainable_troops(self, soup):
         """Parses the training page to find trainable troops."""
         trainable = []
-        for div in soup.select('.action'):
-            unit_name_tag = div.select_one('.tit > a:nth-of-type(2)')
-            if not unit_name_tag:
+        # Find all the sections for individual troops
+        for action_div in soup.select('div.action'):
+            # The troop name is in the second link inside the 'tit' div
+            name_tag = action_div.select_one('div.tit a:nth-of-type(2)')
+            if not name_tag or not name_tag.text:
+                continue
+            unit_name = name_tag.text.strip()
+
+            # The troop ID (e.g., u1, u2) is in the class of the image tag
+            img_tag = action_div.select_one('div.tit img.unit')
+            if not img_tag:
                 continue
             
-            unit_name = unit_name_tag.text
-            
-            unit_img_tag = div.select_one('.tit > a > img.unit')
-            if not unit_img_tag:
-                continue
-            
-            unit_class = next((c for c in unit_img_tag['class'] if c.startswith('u') and c[1:].isdigit()), None)
+            # Extract the unit class like 'u1'
+            unit_class = next((c for c in img_tag.get('class', []) if c.startswith('u') and c[1:].isdigit()), None)
             if not unit_class:
                 continue
                 

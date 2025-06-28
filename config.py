@@ -46,7 +46,7 @@ BOT_STATE: Dict[str, Any] = {
     "build_queues": {},
     "training_data": {},
     "training_queues": {},
-    "training_interval_minutes": 5, # New configurable training interval
+    "training_interval_minutes": 1,
     "build_templates": {
         "Off Village": [
             {"type": "building", "location": 26, "gid": 15, "level": 20},
