@@ -1576,60 +1576,6 @@
         "53559": [
             {
                 "type": "building",
-                "location": 21,
-                "gid": 22,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 22,
-                "gid": 24,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 23,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 24,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 25,
-                "gid": 17,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 27,
-                "gid": 13,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "gid": 20,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "gid": 21,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            },
-            {
-                "type": "building",
                 "location": 31,
                 "gid": 14,
                 "level": 20
@@ -1716,18 +1662,18 @@
             }
         },
         "53964": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -1736,29 +1682,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53966": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -1767,13 +1713,13 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },

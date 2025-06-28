@@ -153,10 +153,8 @@ NAME_TO_GID["hero's mansion"] = 37 # Handle apostrophe case
 
 def load_config() -> None:
     if not os.path.exists("config.json"):
-        # --- Start of Changes ---
         log.warning("config.json not found!")
         log.info("Please copy 'config.example.json' to 'config.json' and fill in your account details.")
-        # --- End of Changes ---
         return
     try:
         with open("config.json", "r", encoding="utf‑8") as fh:
@@ -164,10 +162,10 @@ def load_config() -> None:
         with state_lock:
             BOT_STATE["accounts"] = data.get("accounts", [])
             BOT_STATE["build_queues"] = data.get("build_queues", {})
-            BOT_STATE["build_templates"].update(data.get("build_templates", {})) # Update instead of overwrite
+            BOT_STATE["training_queues"] = data.get("training_queues", {})
+            BOT_STATE["build_templates"].update(data.get("build_templates", {})) 
             if "village_data" not in BOT_STATE:
                 BOT_STATE["village_data"] = {}
-                BOT_STATE["training_queues"] = data.get("training_queues", {})
             if "training_data" not in BOT_STATE:
                 BOT_STATE["training_data"] = {}
 

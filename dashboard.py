@@ -63,7 +63,6 @@ def handle_add_account(data):
             "building_logic": data.get("building_logic", "default")
         }
         
-        # Add proxy settings if they exist
         if data.get('proxy_ip') and data.get('proxy_port'):
             new_account['proxy'] = {
                 "ip": data.get('proxy_ip'),
@@ -78,7 +77,6 @@ def handle_add_account(data):
 
 @socketio.on('update_account_setting')
 def handle_update_account_setting(data):
-    """Updates a specific setting for an account."""
     username = data.get('username')
     key = data.get('key')
     value = data.get('value')
@@ -162,7 +160,6 @@ def handle_move_build_queue_item(data):
 
 @socketio.on('update_hero_settings')
 def handle_update_hero_settings(data):
-    """Updates the hero settings for an account."""
     username = data.get('username')
     settings = data.get('settings')
     log.info(f"Updating hero settings for account {username}")
@@ -218,3 +215,60 @@ def handle_update_training_queues(data):
             BOT_STATE['training_queues'][str(village_id)] = settings
         save_config()
         socketio.emit("state_update", BOT_STATE)
+
+@socketio.on('copy_training_settings')
+def handle_copy_training_settings(data):
+    source_village_id_str = data.get('villageId')
+    log.info(f"Copying training settings from village {source_village_id_str} to all others.")
+
+    with state_lock:
+        # Find the source account and all its villages
+        source_account_username = None
+        for username, village_list in BOT_STATE.get("village_data", {}).items():
+            if isinstance(village_list, list) and any(str(v['id']) == source_village_id_str for v in village_list):
+                source_account_username = username
+                break
+        
+        if not source_account_username:
+            log.error(f"Could not find account for source village {source_village_id_str}.")
+            return
+
+        source_settings = BOT_STATE.get("training_queues", {}).get(source_village_id_str)
+        if not source_settings:
+            log.error(f"No training settings found for source village {source_village_id_str}.")
+            return
+
+        all_villages_for_account = BOT_STATE.get("village_data", {}).get(source_account_username, [])
+        
+        for target_village in all_villages_for_account:
+            target_village_id_str = str(target_village['id'])
+            if target_village_id_str == source_village_id_str:
+                continue
+
+            # Get details of the target village to check for buildings
+            target_village_details = BOT_STATE.get("village_data", {}).get(target_village_id_str)
+            if not target_village_details:
+                continue
+
+            log.info(f"Applying settings to village {target_village['name']} ({target_village_id_str})")
+            
+            # Start with a fresh copy of the source settings
+            new_target_settings = source_settings.copy()
+            new_target_settings['buildings'] = {}
+
+            # Iterate through building types (barracks, stable, etc.) from the source
+            for building_key, building_setting in source_settings.get('buildings', {}).items():
+                source_gid = building_setting.get('gid')
+                
+                # Check if the target village has a building with the same GID
+                if any(b.get('gid') == source_gid for b in target_village_details.get('buildings', [])):
+                    new_target_settings['buildings'][building_key] = building_setting
+                    log.info(f"  - Copied setting for {building_key} (GID: {source_gid})")
+                else:
+                    log.info(f"  - Skipped {building_key} (GID: {source_gid}) - building not found in target village.")
+
+            BOT_STATE['training_queues'][target_village_id_str] = new_target_settings
+
+    save_config()
+    socketio.emit("state_update", BOT_STATE)
+    log.info("Finished copying training settings.")

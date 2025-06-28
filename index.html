@@ -514,6 +514,12 @@
             alert('Training settings saved!');
         }
 
+        function copyTrainingSettings(villageId) {
+            if (confirm('Are you sure you want to copy these training settings to all other villages for this account? This will overwrite their existing training configurations.')) {
+                socket.emit('copy_training_settings', { villageId: villageId });
+            }
+        }
+
         function renderHeroSettings() {
             const heroSettingsList = document.getElementById('hero-settings-list');
             if (!heroSettingsList) return;
@@ -756,7 +762,7 @@
 
             Object.entries(buildingTypes).forEach(([key, value]) => {
                 const buildingData = trainingDataForVillage[value.gid];
-                if (!buildingData) return; // Don't show card if building doesn't exist or no data
+                if (!buildingData) return;
 
                 const buildingConfig = (trainingSettingsForVillage.buildings || {})[key] || {};
                 
@@ -798,9 +804,11 @@
                     </div>
                 </div>`;
             });
-
-            trainingContent += `<button onclick="saveTrainingSettings('${villageId}')" class="btn btn-primary" style="margin-top: 1.5rem;">Save Training Settings</button></div>`;
-
+            
+            trainingContent += `<div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                                  <button onclick="saveTrainingSettings('${villageId}')" class="btn btn-primary">Save Settings</button>
+                                  <button onclick="copyTrainingSettings('${villageId}')" class="btn">Copy to All Other Villages</button>
+                                </div></div>`;
 
             let newBuildContent = '<div id="new" class="tab-content"><h4>Build in Empty Slot</h4><table><thead><tr><th>Location</th><th>Action</th></tr></thead><tbody>';
             const baseBuildable = [5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46];
