@@ -431,14 +431,26 @@ class TravianClient:
             initial_payload = {
                 'troop[t11]': '1',
                 'x': str(target_x),
-                'y': str(target_y),
+                'y': str(target_y),                
+                'villagename': '',
                 'eventType': '2',
                 'redeployHero': '1',
                 'ok': 'ok'
             }
             log.info(f"[{self.username}] Step 2/4: Posting initial move request to {initial_post_url}")
             log.debug(f"[{self.username}] POST payload for confirmation: {initial_payload}")
-            confirmation_page_resp = self.sess.post(initial_post_url, data=initial_payload, timeout=15, headers={'Referer': rally_point_url})
+            confirmation_page_resp = self.sess.post(
+                initial_post_url,
+                data=initial_payload,
+                timeout=15,
+                headers={'Referer': rally_point_url},
+            )
+            log.info(
+                f"[{self.username}] Step 2/4 response status: {confirmation_page_resp.status_code}"
+            )
+            log.debug(
+                f"[{self.username}] Confirmation page HTML (first 1000 chars):\n{confirmation_page_resp.text[:1000]}"
+            )
             
             # Step 3: Parse the confirmation page.
             soup = BeautifulSoup(confirmation_page_resp.text, 'html.parser')
@@ -450,6 +462,18 @@ class TravianClient:
 
             # Extract all hidden inputs for the final payload.
             final_payload = {i['name']: i['value'] for i in confirm_form.find_all('input', {'type': 'hidden'})}
+            
+            # The confirmation button's onclick handler sets a checksum value
+            # that isn't present in the form until the button is clicked. We
+            # need to replicate this by parsing the script and inserting the
+            # value manually, otherwise the server ignores the request.
+            if not final_payload.get('checksum'):
+                checksum_script = soup.find('script', id='confirmSendTroops_script')
+                if checksum_script:
+                    m = re.search(r"name=['\"]?checksum['\"]?\].*?\.value\s*=\s*'([^']+)'", checksum_script.text)
+                    if m:
+                        final_payload['checksum'] = m.group(1)
+                        log.debug(f"[{self.username}] Extracted checksum from script: {final_payload['checksum']}")
             log.debug(f"[{self.username}] Parsed final payload from confirmation page: {final_payload}")
 
             travel_time = 0
@@ -463,16 +487,34 @@ class TravianClient:
             
             # The final action URL is the form's action attribute
             final_action_url = urljoin(self.server_url, confirm_form['action'])
+            log.debug(f"[{self.username}] Final action URL: {final_action_url}")
+            log.debug(f"[{self.username}] Final POST payload: {final_payload}")
 
             # Step 4: POST the final confirmation and verify.
             log.info(f"[{self.username}] Step 4/4: Sending final hero move confirmation to {final_action_url}")
             final_resp = self.sess.post(final_action_url, data=final_payload, timeout=15, headers={'Referer': initial_post_url})
 
-            log.info(f"[{self.username}] Final confirmation response status: {final_resp.status_code}")
-            log.debug(f"[{self.username}] Final confirmation response HTML (first 1000 chars):\n {final_resp.text[:1000]}")
+            log.info(
+                f"[{self.username}] Final confirmation response status: {final_resp.status_code}"
+            )
+            log.debug(
+                f"[{self.username}] Final confirmation URL: {final_resp.url}"
+            )
+            log.debug(
+                f"[{self.username}] Final confirmation response HTML (first 1000 chars):\n {final_resp.text[:1000]}"
+            )
 
-            # A successful move redirects back to the rally point, which will contain the 'troop_details' table again.
-            if "troop_details" in final_resp.text and ("troops are on their way" in final_resp.text or "Reinforcement for" in final_resp.text):
+            # Determine success based on typical success messages on the page.
+            success = (
+                "troop_details" in final_resp.text
+                and (
+                    "troops are on their way" in final_resp.text
+                    or "Reinforcement for" in final_resp.text
+                    or "Changed successfully" in final_resp.text
+                )
+            )
+
+            if success:
                 log.info(f"[{self.username}] SUCCESS: Hero movement to ({target_x}|{target_y}) was successfully confirmed by the server.")
                 return True, travel_time
             else:

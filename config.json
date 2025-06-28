@@ -1588,31 +1588,21 @@
     },
     "training_queues": {
         "53965": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
-                    "enabled": false,
-                    "troop_name": ""
-                },
-                "great_barracks": {
-                    "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
-                },
-                "great_stable": {
-                    "gid": 30,
                     "enabled": false,
                     "troop_name": ""
                 }
@@ -1681,18 +1671,18 @@
             }
         },
         "53963": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -1701,29 +1691,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54368": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -1732,29 +1722,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53962": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -1763,29 +1753,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54369": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -1794,29 +1784,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54371": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -1825,29 +1815,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53961": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -1856,29 +1846,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53960": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -1887,13 +1877,13 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
@@ -1929,18 +1919,18 @@
             }
         },
         "53959": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -1949,29 +1939,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54374": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -1980,29 +1970,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53958": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2011,29 +2001,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54375": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2042,29 +2032,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54358": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2073,29 +2063,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54357": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2104,29 +2094,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54376": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2135,29 +2125,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54356": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2166,29 +2156,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53976": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2197,29 +2187,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54355": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2228,29 +2218,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54755": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2259,29 +2249,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53977": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2290,29 +2280,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53978": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2321,29 +2311,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53559": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2352,29 +2342,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53970": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2383,29 +2373,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54363": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2414,29 +2404,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53560": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2445,29 +2435,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53558": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2476,29 +2466,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54774": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2507,29 +2497,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54772": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2538,29 +2528,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53972": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2569,29 +2559,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53955": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2600,29 +2590,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "53575": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2631,29 +2621,29 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         },
         "54756": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 30,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 },
                 "workshop": {
                     "gid": 21,
@@ -2662,13 +2652,13 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Praetorian"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
                 }
             }
         }
