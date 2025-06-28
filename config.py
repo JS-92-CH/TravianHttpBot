@@ -5,6 +5,27 @@ import threading
 import logging
 from typing import List, Dict, Any
 
+# ANSI escape codes for colors
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+class ColoredFormatter(logging.Formatter):
+    """A custom log formatter to add color to log messages."""
+
+    def format(self, record):
+        log_message = super().format(record)
+        if '[TrainingAgent]' in record.getMessage():
+            return f"{bcolors.OKCYAN}{log_message}{bcolors.ENDC}"
+        return log_message
+
 # ─────────────────────────────────────────
 # LOGGING
 # ─────────────────────────────────────────
@@ -15,6 +36,8 @@ class SocketIOHandler(logging.Handler):
 
     def emit(self, record):
         log_entry = self.format(record)
+        # Remove ANSI color codes for the web dashboard
+        log_entry = re.sub(r'\x1b\[[0-9;]*m', '', log_entry)
         self.socketio.emit('log_message', {'data': log_entry})
 
 def setup_logging(socketio_instance=None):
@@ -23,7 +46,8 @@ def setup_logging(socketio_instance=None):
     if not log.handlers:
         log.setLevel(logging.INFO)
         stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(logging.Formatter('[%(levelname)s] [%(asctime)s] %(message)s'))
+        # Use the new ColoredFormatter for console output
+        stream_handler.setFormatter(ColoredFormatter('[%(levelname)s] [%(asctime)s] %(message)s'))
         log.addHandler(stream_handler)
         
         if socketio_instance:

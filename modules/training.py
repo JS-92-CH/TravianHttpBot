@@ -22,7 +22,7 @@ class Module(threading.Thread):
 
     def run(self):
         log.info("[TrainingAgent] Thread started. Waiting for initial data population...")
-        self.stop_event.wait(20) # Initial delay for village agents to start
+        self.stop_event.wait(20)
 
         while not self.stop_event.is_set():
             try:
@@ -42,96 +42,120 @@ class Module(threading.Thread):
                     self.stop_event.wait(300)
                     continue
 
-                villages = []
-                account_villages = all_village_data.get(account['username'], [])
-                for v_summary in account_villages:
-                    v_details = all_village_data.get(str(v_summary['id']))
-                    if v_details:
-                        v_summary['x'] = v_details.get('coords', {}).get('x')
-                        v_summary['y'] = v_details.get('coords', {}).get('y')
-                        villages.append(v_summary)
-
-                active_villages = [v for v in villages if str(v['id']) in training_configs and training_configs.get(str(v['id']), {}).get('enabled')]
-                if not active_villages:
+                # Get a list of villages that are enabled for training
+                active_training_villages = [v for v in all_village_data.get(account['username'], []) if str(v['id']) in training_configs and training_configs.get(str(v['id']), {}).get('enabled')]
+                if not active_training_villages:
+                    log.info("[TrainingAgent] No villages are enabled for training. Waiting...")
                     self.stop_event.wait(60)
                     continue
+                
+                # --- THIS IS THE START OF THE CORRECTED LOGIC ---
 
-                if self.village_cycle_index >= len(active_villages):
+                # Cycle through the active villages
+                if self.village_cycle_index >= len(active_training_villages):
                     self.village_cycle_index = 0
-
-                target_village = active_villages[self.village_cycle_index]
-                village_id = target_village['id']
+                
+                target_village = active_training_villages[self.village_cycle_index]
+                target_village_id = target_village['id']
                 village_name = target_village['name']
-                config = training_configs.get(str(village_id), {})
-                log.info(f"[TrainingAgent] Starting cycle for village: {village_name}")
+                config = training_configs.get(str(target_village_id), {})
 
-                current_hero_location_id = client.get_hero_initial_location()
+                log.info(f"--- [TrainingAgent] Starting Cycle for Village: {village_name} ({target_village_id}) ---")
+
+                # Find where the hero is
+                current_hero_location_id = None
+                log.info("[TrainingAgent] Searching for hero by checking all village rally points...")
+                all_player_villages = all_village_data.get(account['username'], [])
+                for village_to_check in all_player_villages:
+                    found_in_id = client.find_hero_in_rally_point(village_to_check['id'])
+                    if found_in_id:
+                        current_hero_location_id = found_in_id
+                        break
+                    self.stop_event.wait(0.5)
 
                 if current_hero_location_id is None:
-                     log.warning("[TrainingAgent] Could not determine hero location. Skipping cycle.")
-                     self.stop_event.wait(60)
-                     continue
+                    log.warning("[TrainingAgent] Could not find hero in any village. Hero may be moving. Retrying in 3 minutes.")
+                    self.stop_event.wait(180)
+                    continue
 
-                if current_hero_location_id != village_id:
-                    target_x = target_village.get('x')
-                    target_y = target_village.get('y')
-                    if not target_x or not target_y:
-                        log.warning(f"[TrainingAgent] Target village {village_name} missing coordinates. Skipping.")
-                    else:
-                        log.info(f"[TrainingAgent] Hero is at village {current_hero_location_id}, needs to be at {village_id}. Moving...")
-                        move_success, travel_time = client.move_hero(current_hero_location_id, int(target_x), int(target_y))
+                # If hero is not in the target village, move it there and wait.
+                if current_hero_location_id != target_village_id:
+                    log.info(f"[TrainingAgent] Hero is at {current_hero_location_id}, needs to be at {village_name} ({target_village_id}).")
+                    target_coords = all_village_data.get(str(target_village_id), {}).get('coords', {})
+                    if not target_coords:
+                        fresh_data = client.fetch_and_parse_village(target_village_id)
+                        target_coords = fresh_data.get('coords', {}) if fresh_data else {}
+                    
+                    if target_coords.get('x') is not None:
+                        move_success, travel_time = client.move_hero(current_hero_location_id, int(target_coords['x']), int(target_coords['y']))
                         if move_success:
-                            log.info(f"[TrainingAgent] Hero move to {village_name} initiated. Waiting {travel_time}s.")
-                            self.stop_event.wait(travel_time + 5)
+                            wait_time = travel_time + 5
+                            log.info(f"[TrainingAgent] Hero move to {village_name} initiated. Waiting {wait_time}s before next check.")
+                            self.stop_event.wait(wait_time)
                         else:
                             log.error(f"[TrainingAgent] Failed to move hero to {village_name}. Waiting 60s.")
                             self.stop_event.wait(60)
-                    self.village_cycle_index += 1
-                    continue
-                
-                # Fetch fresh village data for resource check
-                current_village_resources = client.fetch_and_parse_village(village_id)
-                if not current_village_resources:
-                    log.warning(f"[TrainingAgent] Could not fetch village resources for {village_name}. Skipping.")
-                    self.village_cycle_index += 1
-                    continue
+                    else:
+                         log.warning(f"[TrainingAgent] Target village {village_name} missing coordinates. Skipping.")
+                    continue # Restart the cycle to re-verify hero location after moving
 
-                log.info(f"[TrainingAgent] Hero is in {village_name}. Checking buildings.")
+                # If we reach here, the hero is in the correct village. Now, check ALL training buildings.
+                log.info(f"[TrainingAgent] Hero is confirmed to be in the correct village: {village_name}. Checking all training buildings.")
                 min_queue_seconds = config.get('min_queue_duration_minutes', 15) * 60
                 
                 for building_type, b_config in config.get('buildings', {}).items():
-                    if not b_config.get('enabled') or not b_config.get('troop_name'):
+                    log.info(f"[TrainingAgent] Checking building: {building_type.replace('_', ' ').title()}")
+                    if not b_config.get('enabled'):
+                        log.debug(f"[TrainingAgent] - Skipped: {building_type} is disabled in config.")
+                        continue
+                    if not b_config.get('troop_name'):
+                        log.debug(f"[TrainingAgent] - Skipped: No troop name configured for {building_type}.")
                         continue
 
                     gid = b_config['gid']
-                    page_data = client.get_training_page(village_id, gid)
-                    if not page_data or not page_data.get('trainable'):
+                    page_data = client.get_training_page(target_village_id, gid)
+                    
+                    if not page_data:
+                        log.warning(f"[TrainingAgent] - Skipped: Could not get page data for {building_type} (GID: {gid}). It might not be built.")
+                        continue
+                    if not page_data.get('trainable'):
+                        log.info(f"[TrainingAgent] - Skipped: No troops researched yet in {building_type}.")
                         continue
 
                     if page_data['queue_duration_seconds'] < min_queue_seconds:
-                        target_troop_name = b_config['troop_name']
-                        troop_to_train = next((t for t in page_data['trainable'] if t['name'] == target_troop_name), None)
-                        if not troop_to_train: continue
-
-                        time_to_fill = min_queue_seconds - page_data['queue_duration_seconds']
-                        if time_to_fill <= 0 or troop_to_train['time_per_unit'] <= 0: continue
+                        log.info(f"[TrainingAgent] - Queue for {building_type} is {page_data['queue_duration_seconds']}s, which is less than the minimum of {min_queue_seconds}s. Attempting to train.")
+                        troop_to_train = next((t for t in page_data['trainable'] if t['name'] == b_config['troop_name']), None)
                         
+                        if not troop_to_train:
+                            log.warning(f"[TrainingAgent] - Could not find troop '{b_config['troop_name']}' to train in {building_type}.")
+                            continue
+                        if troop_to_train['time_per_unit'] <= 0:
+                            log.warning(f"[TrainingAgent] - Troop '{b_config['troop_name']}' has an invalid training time.")
+                            continue
+                        
+                        time_to_fill = min_queue_seconds - page_data['queue_duration_seconds']
                         amount_to_queue = int(time_to_fill / troop_to_train['time_per_unit'])
-                        if amount_to_queue <= 0: continue
-
-                        log.info(f"[TrainingAgent] Attempting to queue {amount_to_queue} x {troop_to_train['name']} in {village_name}")
-                        success = client.train_troops(village_id, page_data['build_id'], page_data['form_data'], {troop_to_train['id']: amount_to_queue})
-                        if success:
-                            log.info(f"[TrainingAgent] Successfully queued troops in {building_type}.")
-                            self.stop_event.wait(2)
+                        
+                        if amount_to_queue > 0:
+                            log.info(f"[TrainingAgent] Attempting to queue {amount_to_queue} x {troop_to_train['name']} in {village_name}'s {building_type}.")
+                            success = client.train_troops(target_village_id, page_data['build_id'], page_data['form_data'], {troop_to_train['id']: amount_to_queue})
+                            if success:
+                                log.info(f"[TrainingAgent] Successfully queued troops in {building_type}.")
+                                self.stop_event.wait(2) # Brief pause after a successful action
+                            else:
+                                log.error(f"[TrainingAgent] Failed to queue troops in {building_type}.")
                         else:
-                            log.error(f"[TrainingAgent] Failed to queue troops in {building_type}.")
+                            log.info(f"[TrainingAgent] - Not enough time to queue even one unit in {building_type}.")
                     else:
-                        log.info(f"[TrainingAgent] {building_type} in {village_name} already has a sufficient queue.")
+                        log.info(f"[TrainingAgent] - {building_type} in {village_name} already has a sufficient queue ({page_data['queue_duration_seconds']}s).")
 
+                # All buildings in the current village have been checked. Now, move to the next village for the next cycle.
+                log.info(f"--- [TrainingAgent] Finished Cycle for Village: {village_name}. Moving to next village in the list. ---")
                 self.village_cycle_index += 1
                 
             except Exception as e:
                 log.error(f"[TrainingAgent] CRITICAL ERROR in training cycle: {e}", exc_info=True)
+                self.village_cycle_index += 1 # Ensure we don't get stuck on an erroring village
             
+            # Wait before starting the entire process over
             self.stop_event.wait(10)

@@ -257,67 +257,176 @@ class TravianClient:
     # --- NEW METHODS FOR TRAINING AGENT ---
 
     def get_hero_initial_location(self) -> Optional[int]:
-        """Fetches /hero/attributes to find the hero's current home village ID."""
+        """
+        Determines the hero's current home village ID. This now primarily relies on get_hero_status.
+        """
+        log.info(f"[{self.username}] --- STARTING HERO LOCATION CHECK (v3) ---")
+        
         try:
-            hero_page_url = f"{self.server_url}/hero/attributes"
-            resp = self.sess.get(hero_page_url, timeout=15)
-            soup = BeautifulSoup(resp.text, 'html.parser')
+            hero_status = self.get_hero_status()
+            if hero_status and hero_status.get('village_id') and not hero_status.get('is_moving'):
+                village_id = hero_status['village_id']
+                log.info(f"[{self.username}] SUCCESS: Hero location confirmed at village ID: {village_id}")
+                log.info(f"[{self.username}] --- ENDING HERO LOCATION CHECK (SUCCESS) ---")
+                return village_id
+            else:
+                log.warning(f"[{self.username}] Hero is moving or status is unavailable. Status: {hero_status}")
 
-            hero_statediv = soup.find('div', class_='heroState')
-            if not hero_statediv or not hero_statediv.find('i', class_='statusHome_medium'):
-                log.warning(f"[{self.username}] Hero is not at home or location is unknown.")
+        except Exception as e:
+            log.error(f"[{self.username}] An exception occurred during hero location check: {e}", exc_info=True)
+
+        log.error(f"[{self.username}] Could not determine hero's home village.")
+        log.info(f"[{self.username}] --- ENDING HERO LOCATION CHECK (FAILURE) ---")
+        return None
+    
+    def find_hero_in_rally_point(self, village_id: int) -> Optional[int]:
+        """
+        Checks the rally point of a specific village to see if the hero is present.
+        Returns the village_id if the hero is found, otherwise None.
+        """
+        log.info(f"[{self.username}] Checking for hero in rally point of village {village_id}...")
+        try:
+            url = f"{self.server_url}/build.php?newdid={village_id}&gid=16&tt=1&filter=3"
+            resp = self.sess.get(url, timeout=15)
+            if resp.status_code != 200:
+                log.warning(f"[{self.username}] Failed to fetch rally point for village {village_id}. Status: {resp.status_code}")
                 return None
 
-            link = hero_statediv.find('a', href=re.compile(r'd=\d+'))
-            if link:
-                match = re.search(r'd=(\d+)', link['href'])
-                if match:
-                    village_id = int(match.group(1))
-                    log.info(f"[{self.username}] Hero initial location identified in village: {village_id}")
-                    return village_id
-
-            log.warning(f"[{self.username}] Could not determine hero's home village from attributes page.")
-            return None
-        except Exception as e:
-            log.error(f"[{self.username}] Error fetching hero's initial location: {e}", exc_info=True)
-            return None
-
-
-    def get_hero_status(self) -> Dict[str, Any]:
-        """Fetches hero status, including current location and movement status."""
-        try:
-            resp = self.sess.get(f"{self.server_url}/hero.php", timeout=15)
             soup = BeautifulSoup(resp.text, 'html.parser')
             
-            script_tag = soup.find("script", string=re.compile(r"window\.Travian\.React\.HeroV2\.render"))
-            if not script_tag:
-                sidebar_hero = soup.select_one("#sidebarBoxHero")
-                if sidebar_hero and sidebar_hero.select_one(".heroStatusMessage .duration"):
-                     timer = sidebar_hero.select_one(".heroStatusMessage .duration .timer")
-                     return {'village_id': None, 'is_moving': True, 'travel_time': int(timer.get('value', 60))}
-                return {'village_id': None, 'is_moving': True, 'travel_time': 60} 
+            # Find all troop tables on the page
+            troop_tables = soup.find_all('table', class_='troop_details')
+            if not troop_tables:
+                log.debug(f"[{self.username}] No troop_details table found in village {village_id}.")
+                return None
 
-            json_str = re.search(r"screenData:\s*(\{.*\})\s*,\s*viewData:", script_tag.string, re.DOTALL)
-            if not json_str: return {}
-            
-            data = json.loads(json_str.group(1))
-            hero_data = data.get('hero', {})
-            
-            return {
-                'village_id': int(hero_data.get('villageId', 0)),
-                'is_moving': hero_data.get('status') != 'home',
-                'travel_time': 0
-            }
+            # Iterate through each troop table (there might be multiple for reinforcements, etc.)
+            for table in troop_tables:
+                # Find the header row with unit icons
+                header_row = table.find('tbody', class_='units').find('tr')
+                if not header_row:
+                    continue
+
+                # Find all unit icon cells and determine the hero's column index
+                unit_icons = header_row.find_all('td', class_='uniticon')
+                hero_column_index = -1
+                for i, icon_cell in enumerate(unit_icons):
+                    if icon_cell.find('img', class_='uhero'):
+                        hero_column_index = i
+                        break
+                
+                if hero_column_index == -1:
+                    continue # Hero not in this table, check the next one
+
+                # Find the corresponding row with troop counts
+                count_row = table.find('tbody', class_='units last').find('tr')
+                if not count_row:
+                    continue
+
+                # Get all data cells from the count row
+                count_cells = count_row.find_all('td', class_='unit')
+                
+                # Check if the hero count is 1 in the correct column
+                if len(count_cells) > hero_column_index:
+                    hero_count_text = count_cells[hero_column_index].text.strip()
+                    if hero_count_text.isdigit() and int(hero_count_text) == 1:
+                        log.info(f"[{self.username}] SUCCESS: Hero found in village {village_id} via rally point.")
+                        return village_id
+
+            log.debug(f"[{self.username}] Hero not found in any troop table in village {village_id}.")
+            return None
+
         except Exception as e:
-            log.error(f"[{self.username}] Could not get hero status: {e}")
-            return {'village_id': None, 'is_moving': False}
+            log.error(f"[{self.username}] An error occurred checking rally point for village {village_id}: {e}", exc_info=True)
+            return None
+
+    def get_hero_status(self) -> Dict[str, Any]:
+        """
+        Fetches hero status from the hero.php page by parsing the embedded React JSON data.
+        This is the most reliable method for getting hero location and status.
+        """
+        log.info(f"[{self.username}] Getting hero status from hero.php...")
+        try:
+            resp = self.sess.get(f"{self.server_url}/hero.php", timeout=15)
+            if resp.status_code != 200:
+                log.error(f"[{self.username}] Failed to fetch hero.php. Status: {resp.status_code}")
+                return {}
+
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            script_tag = soup.find("script", string=re.compile(r"window\.Travian\.React\.HeroV2\.render"))
+            
+            if not script_tag:
+                log.warning(f"[{self.username}] Could not find the HeroV2 render script on hero.php.")
+                return {}
+
+            script_content = script_tag.string
+            # Regex to find the JSON object for screenData
+            match = re.search(r"screenData:\s*(\{.*\})\s*,\s*favouriteTab:", script_content, re.DOTALL)
+            if not match:
+                log.warning(f"[{self.username}] Could not extract screenData JSON from the script.")
+                return {}
+
+            # The matched group is a large, potentially complex JSON string.
+            # We need to find its exact boundaries.
+            json_str = match.group(1)
+            open_braces = 0
+            json_end = -1
+            for i, char in enumerate(json_str):
+                if char == '{':
+                    open_braces += 1
+                elif char == '}':
+                    open_braces -= 1
+                    if open_braces == 0:
+                        json_end = i + 1
+                        break
+            
+            if json_end == -1:
+                log.warning(f"[{self.username}] Could not find the closing brace for the screenData JSON.")
+                return {}
+
+            final_json_str = json_str[:json_end]
+            data = json.loads(final_json_str)
+            
+            hero_state = data.get('heroState', {})
+            status_info = hero_state.get('status', {})
+            
+            # Status 100 means the hero is home in a village
+            if status_info.get('status') == 100:
+                village_id = int(hero_state.get('homeVillage', {}).get('id', 0))
+                if village_id > 0:
+                    log.info(f"[{self.username}] Hero is home at village ID: {village_id}")
+                    return {
+                        'village_id': village_id,
+                        'is_moving': False,
+                        'travel_time': 0
+                    }
+
+            # Any other status means the hero is not home or is moving
+            log.info(f"[{self.username}] Hero is not home. Status: {status_info}")
+            return {'village_id': None, 'is_moving': True, 'travel_time': 60}
+
+        except json.JSONDecodeError as e:
+            log.error(f"[{self.username}] Failed to decode hero JSON from hero.php: {e}")
+        except Exception as e:
+            log.error(f"[{self.username}] Could not get hero status from hero.php: {e}", exc_info=True)
+        
+        return {}
 
     def move_hero(self, current_village_id: int, target_x: int, target_y: int) -> Tuple[bool, int]:
-        """Moves the hero from its current village to the target coordinates and sets it as the new home."""
+        """
+        Moves the hero by accurately simulating the browser's multi-step process.
+        This is the definitive method based on browser request analysis.
+        """
         try:
+            # The base URL for the rally point actions in the target village
             rally_point_url = f"{self.server_url}/build.php?newdid={current_village_id}&gid=16&tt=2"
+            
+            # Step 1: GET the send troops page to establish session state.
+            log.info(f"[{self.username}] Step 1/4: Accessing initial send troops page: {rally_point_url}")
             self.sess.get(rally_point_url, timeout=15)
 
+            # Step 2: POST to the confirmation page URL with the target coordinates.
+            # This is a critical step; the URL is specific and different from the initial GET.
             initial_post_url = f"{self.server_url}/build.php?id=39&tt=2"
             initial_payload = {
                 'troop[t11]': '1',
@@ -327,38 +436,51 @@ class TravianClient:
                 'redeployHero': '1',
                 'ok': 'ok'
             }
-            log.info(f"[{self.username}] Sending initial hero move request...")
+            log.info(f"[{self.username}] Step 2/4: Posting initial move request to {initial_post_url}")
+            log.debug(f"[{self.username}] POST payload for confirmation: {initial_payload}")
             confirmation_page_resp = self.sess.post(initial_post_url, data=initial_payload, timeout=15, headers={'Referer': rally_point_url})
             
+            # Step 3: Parse the confirmation page.
             soup = BeautifulSoup(confirmation_page_resp.text, 'html.parser')
             confirm_form = soup.find('form', id='troopSendForm')
             if not confirm_form:
-                log.error(f"[{self.username}] Could not find hero move confirmation form.")
+                log.error(f"[{self.username}] PARSING FAILED: Could not find the final confirmation form (troopSendForm).")
+                log.debug(f"[{self.username}] HTML of failed confirmation page:\n{confirmation_page_resp.text[:1500]}")
                 return False, 0
 
+            # Extract all hidden inputs for the final payload.
             final_payload = {i['name']: i['value'] for i in confirm_form.find_all('input', {'type': 'hidden'})}
-            
+            log.debug(f"[{self.username}] Parsed final payload from confirmation page: {final_payload}")
+
             travel_time = 0
-            if arrival_timer := soup.select_one("tbody.infos .timer"):
-                travel_time = int(arrival_timer.get('value', 0))
-
-            if travel_time == 0:
-                log.warning(f"[{self.username}] Could not determine hero travel time.")
+            if (arrival_info := soup.select_one("tbody.infos .in")) and (time_match := re.search(r'(\d+):(\d{2}):(\d{2})', arrival_info.text)):
+                h, m, s = map(int, time_match.groups())
+                travel_time = h * 3600 + m * 60 + s
+                log.info(f"[{self.username}] Step 3/4: Parsed travel time: {travel_time} seconds.")
+            else:
+                log.warning(f"[{self.username}] Could not parse travel time from confirmation page. Aborting.")
                 return False, 0
-
+            
+            # The final action URL is the form's action attribute
             final_action_url = urljoin(self.server_url, confirm_form['action'])
-            log.info(f"[{self.username}] Sending final hero move confirmation. Travel time: {travel_time}s")
-            final_resp = self.sess.post(final_action_url, data=final_payload, timeout=15)
 
-            if "Reinforcement to" in final_resp.text or "Arrival" in final_resp.text:
-                log.info(f"[{self.username}] Hero movement to ({target_x}|{target_y}) initiated successfully.")
+            # Step 4: POST the final confirmation and verify.
+            log.info(f"[{self.username}] Step 4/4: Sending final hero move confirmation to {final_action_url}")
+            final_resp = self.sess.post(final_action_url, data=final_payload, timeout=15, headers={'Referer': initial_post_url})
+
+            log.info(f"[{self.username}] Final confirmation response status: {final_resp.status_code}")
+            log.debug(f"[{self.username}] Final confirmation response HTML (first 1000 chars):\n {final_resp.text[:1000]}")
+
+            # A successful move redirects back to the rally point, which will contain the 'troop_details' table again.
+            if "troop_details" in final_resp.text and ("troops are on their way" in final_resp.text or "Reinforcement for" in final_resp.text):
+                log.info(f"[{self.username}] SUCCESS: Hero movement to ({target_x}|{target_y}) was successfully confirmed by the server.")
                 return True, travel_time
             else:
-                log.error(f"[{self.username}] Hero movement final confirmation failed.")
+                log.error(f"[{self.username}] FAILED: The final confirmation POST did not result in a success page.")
                 return False, 0
 
         except Exception as e:
-            log.error(f"[{self.username}] An error occurred while moving the hero: {e}", exc_info=True)
+            log.error(f"[{self.username}] A critical error occurred during the hero move process: {e}", exc_info=True)
             return False, 0
 
     def get_training_page(self, village_id: int, gid: int) -> Optional[Dict]:
