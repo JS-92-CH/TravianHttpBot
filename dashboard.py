@@ -205,3 +205,16 @@ def handle_delete_build_template(data):
             del BOT_STATE['build_templates'][template_name]
     save_config()
     socketio.emit("state_update", BOT_STATE)
+
+@socketio.on('update_training_queues')
+def handle_update_training_queues(data):
+    village_id = data.get('villageId')
+    settings = data.get('settings')
+    if village_id and settings is not None:
+        log.info(f"Updating training queue for village {village_id}")
+        with state_lock:
+            if 'training_queues' not in BOT_STATE:
+                BOT_STATE['training_queues'] = {}
+            BOT_STATE['training_queues'][str(village_id)] = settings
+        save_config()
+        socketio.emit("state_update", BOT_STATE)

@@ -4,7 +4,8 @@ import time
 import threading
 from typing import Dict, Optional
 from modules.adventure import Module as AdventureModule
-from modules.hero import Module as HeroModule # Import the hero module
+from modules.hero import Module as HeroModule
+from modules.training import Module as TrainingModule
 from client import TravianClient
 from config import log, BOT_STATE, state_lock, save_config
 from modules import load_modules
@@ -119,8 +120,10 @@ class BotManager(threading.Thread):
         self.socketio = socketio_instance
         self.stop_event = threading.Event()
         self.village_agents: Dict[int, VillageAgent] = {}
+        # Account-level modules
         self.adventure_module = AdventureModule(self)
         self.hero_module = HeroModule(self)
+        self.training_module = TrainingModule(self)
         self.daemon = True
 
     def stop(self):
@@ -133,12 +136,18 @@ class BotManager(threading.Thread):
     def run(self):
         log.info("Bot Manager started.")
         while not self.stop_event.is_set():
-            with state_lock: accounts = BOT_STATE["accounts"][:]
-            if not accounts: self.stop_event.wait(15); continue
+            with state_lock:
+                accounts = BOT_STATE["accounts"][:]
+            
+            if not accounts:
+                self.stop_event.wait(15)
+                continue
 
             for account in accounts:
-                if self.stop_event.is_set(): break
+                if self.stop_event.is_set():
+                    break
 
+                log.info(f"Processing account: {account['username']}")
                 temp_client = TravianClient(
                     account["username"],
                     account["password"],
@@ -150,23 +159,39 @@ class BotManager(threading.Thread):
                     self.stop_event.wait(60)
                     continue
                 
-                # --- Start of Changes ---
-                # Run account-level modules here, passing the client
-                self.adventure_module.tick(temp_client)
-                time.sleep(1) 
-                self.hero_module.tick(temp_client)
-                time.sleep(1)
-                # --- End of Changes ---
-
+                # --- CORRECTED LOGIC ---
+                # 1. Fetch villages and manage agents
                 try:
                     resp = temp_client.sess.get(f"{temp_client.server_url}/dorf1.php", timeout=15)
                     sidebar_data = temp_client.parse_village_page(resp.text, "dorf1")
                     villages = sidebar_data.get("villages", [])
-                    with state_lock: BOT_STATE["village_data"][account['username']] = villages
 
-                    current_ids = {v['id'] for v in villages}
+                    with state_lock:
+                        BOT_STATE["village_data"][account['username']] = villages
+                        if 'training_queues' not in BOT_STATE: BOT_STATE['training_queues'] = {}
+                        
+                        config_updated = False
+                        for v in villages:
+                            if str(v['id']) not in BOT_STATE['training_queues']:
+                                log.info(f"Creating default (disabled) training config for new village {v['name']}")
+                                BOT_STATE['training_queues'][str(v['id'])] = {
+                                    "enabled": False, "min_queue_duration_minutes": 15,
+                                    "buildings": {
+                                        "barracks": {"gid":19,"enabled":False,"troop_name":""},
+                                        "stable": {"gid":20,"enabled":False,"troop_name":""},
+                                        "workshop": {"gid":21,"enabled":False,"troop_name":""},
+                                        "great_barracks": {"gid":29,"enabled":False,"troop_name":""},
+                                        "great_stable": {"gid":30,"enabled":False,"troop_name":""},
+                                    }
+                                }
+                                config_updated = True
+                        if config_updated:
+                            save_config()
+
+                    # Manage village agent threads
+                    current_village_ids = {v['id'] for v in villages}
                     for vid in list(self.village_agents.keys()):
-                        if vid not in current_ids:
+                        if vid not in current_village_ids:
                             self.village_agents.pop(vid).stop()
                             log.info(f"Stopped and removed agent for stale village ID: {vid}")
 
@@ -177,14 +202,27 @@ class BotManager(threading.Thread):
                             self.village_agents[village['id']] = agent
                             agent.start()
                         else:
+                            # Update settings for existing agents
                             existing_agent = self.village_agents[village['id']]
-                            existing_agent.tribe = account.get("tribe", "roman")
-                            existing_agent.building_logic = account.get("building_logic", "default")
                             existing_agent.use_dual_queue = account.get("use_dual_queue", False)
                             existing_agent.use_hero_resources = account.get("use_hero_resources", False)
 
                 except Exception as exc:
                     log.error(f"Failed to manage agents for {account['username']}: {exc}", exc_info=True)
+                    continue # Skip to next account on failure
 
-            self.stop_event.wait(15)
+                # 2. Run account-level modules AFTER agents are running
+                try:
+                    self.adventure_module.tick(temp_client)
+                    time.sleep(1)
+                    self.hero_module.tick(temp_client)
+                    time.sleep(1)
+                    self.training_module.tick(temp_client)
+                except Exception as e:
+                    log.error(f"Error in an account-level module for {account['username']}: {e}", exc_info=True)
+            # --- END OF CORRECTED LOGIC ---
+
+            # Wait before the next full cycle through all accounts
+            self.stop_event.wait(30)
+            
         log.info("Bot Manager stopped.")
