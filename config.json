@@ -1680,12 +1680,6 @@
         "70406": [
             {
                 "type": "building",
-                "location": 24,
-                "gid": 25,
-                "level": 20
-            },
-            {
-                "type": "building",
                 "location": 25,
                 "gid": 24,
                 "level": 20
@@ -1866,12 +1860,6 @@
             }
         ],
         "70807": [
-            {
-                "type": "building",
-                "location": 20,
-                "gid": 11,
-                "level": 20
-            },
             {
                 "type": "building",
                 "location": 23,
@@ -3044,7 +3032,7 @@
         },
         "70005": {
             "enabled": true,
-            "min_queue_duration_minutes": 150,
+            "min_queue_duration_minutes": 20,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3075,7 +3063,7 @@
         },
         "69604": {
             "enabled": true,
-            "min_queue_duration_minutes": 150,
+            "min_queue_duration_minutes": 20,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3106,7 +3094,7 @@
         },
         "69203": {
             "enabled": true,
-            "min_queue_duration_minutes": 150,
+            "min_queue_duration_minutes": 20,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3137,12 +3125,12 @@
         },
         "69603": {
             "enabled": true,
-            "min_queue_duration_minutes": 120,
+            "min_queue_duration_minutes": 15,
             "buildings": {
                 "barracks": {
                     "gid": 19,
                     "enabled": true,
-                    "troop_name": "Slave Militia"
+                    "troop_name": "Khopesh Warrior"
                 },
                 "stable": {
                     "gid": 20,
@@ -3157,7 +3145,7 @@
                 "great_barracks": {
                     "gid": 29,
                     "enabled": true,
-                    "troop_name": "Slave Militia"
+                    "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
@@ -3168,7 +3156,7 @@
         },
         "70406": {
             "enabled": true,
-            "min_queue_duration_minutes": 120,
+            "min_queue_duration_minutes": 15,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3261,7 +3249,7 @@
         },
         "70405": {
             "enabled": true,
-            "min_queue_duration_minutes": 120,
+            "min_queue_duration_minutes": 15,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3272,6 +3260,11 @@
                     "gid": 20,
                     "enabled": true,
                     "troop_name": "Resheph Chariot"
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": true,
+                    "troop_name": "Ram"
                 },
                 "great_barracks": {
                     "gid": 29,
@@ -3287,7 +3280,7 @@
         },
         "70407": {
             "enabled": true,
-            "min_queue_duration_minutes": 120,
+            "min_queue_duration_minutes": 15,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3298,6 +3291,11 @@
                     "gid": 20,
                     "enabled": true,
                     "troop_name": "Resheph Chariot"
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": true,
+                    "troop_name": "Ram"
                 },
                 "great_barracks": {
                     "gid": 29,
@@ -3313,7 +3311,7 @@
         },
         "70807": {
             "enabled": true,
-            "min_queue_duration_minutes": 120,
+            "min_queue_duration_minutes": 15,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3339,7 +3337,7 @@
         },
         "70808": {
             "enabled": true,
-            "min_queue_duration_minutes": 120,
+            "min_queue_duration_minutes": 15,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3350,6 +3348,11 @@
                     "gid": 20,
                     "enabled": true,
                     "troop_name": "Resheph Chariot"
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": true,
+                    "troop_name": "Ram"
                 },
                 "great_barracks": {
                     "gid": 29,

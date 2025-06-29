@@ -3,7 +3,7 @@ import time
 import re
 import threading
 from bs4 import BeautifulSoup
-from config import log, BOT_STATE, state_lock
+from config import log, BOT_STATE, state_lock, save_config
 
 class Module(threading.Thread):
     """
@@ -189,6 +189,14 @@ class Module(threading.Thread):
                             log.info(f"[TrainingAgent] - {building_type} queue is sufficient.")
 
                     if all_queues_filled_for_this_village:
+                        with state_lock:
+                            current_duration = config.get('min_queue_duration_minutes', 15)
+                            new_duration = current_duration + 5
+                            log.info(f"[TrainingAgent] Increasing max queue duration for {village_name} to {new_duration} minutes for the next cycle.")
+                            
+                            if str(target_village_id) in BOT_STATE['training_queues']:
+                                BOT_STATE['training_queues'][str(target_village_id)]['min_queue_duration_minutes'] = new_duration
+                                save_config()
                         log.info(f"--- [TrainingAgent] All queues in {village_name} are filled. Moving to next village. ---")
                         break
                     else:
