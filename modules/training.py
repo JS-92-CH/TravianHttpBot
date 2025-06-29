@@ -87,13 +87,16 @@ class Module(threading.Thread):
                         target_coords = fresh_data.get('coords', {}) if fresh_data else {}
                     
                     if target_coords.get('x') is not None:
-                        move_success, travel_time = client.move_hero(current_hero_location_id, int(target_coords['x']), int(target_coords['y']))
+                        # Use the new send_hero method
+                        move_success = client.send_hero(int(target_coords['x']), int(target_coords['y']))
                         if move_success:
-                            wait_time = travel_time + 5
-                            log.info(f"[TrainingAgent] Hero move to {village_name} initiated. Waiting {wait_time}s before next check.")
+                            # Since we don't get travel time back from this new method, we'll wait a fixed time.
+                            # You may need to adjust this wait time.
+                            wait_time = 10 
+                            log.info(f"[TrainingAgent] Hero reinforcement to {village_name} initiated. Waiting {wait_time}s before next check.")
                             self.stop_event.wait(wait_time)
                         else:
-                            log.error(f"[TrainingAgent] Failed to move hero to {village_name}. Waiting 60s.")
+                            log.error(f"[TrainingAgent] Failed to send hero to {village_name}. Waiting 60s.")
                             self.stop_event.wait(60)
                     else:
                          log.warning(f"[TrainingAgent] Target village {village_name} missing coordinates. Skipping.")

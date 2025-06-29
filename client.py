@@ -1,3 +1,5 @@
+# client.py
+
 import re
 import json
 import requests
@@ -39,6 +41,75 @@ class TravianClient:
                 "https": proxy_url,
             }
             log.info(f"[{self.username}] Using proxy: {proxy_ip}:{proxy_port}")
+
+    def send_hero(self, x: int, y: int) -> bool:
+        """Sends the hero to the specified coordinates using the logic from the Tampermonkey script."""
+        log.info(f"[{self.username}] Sending hero to ({x}|{y}) as reinforcement.")
+        try:
+            # Step 1: GET the rally point page to get the troop form
+            rp_url = f"{self.server_url}/build.php?gid=16&tt=2"
+            rp_resp = self.sess.get(rp_url, timeout=15)
+            rp_soup = BeautifulSoup(rp_resp.text, 'html.parser')
+
+            troop_form = rp_soup.find('form', action=re.compile(r'build\.php'))
+            if not troop_form:
+                log.error(f"[{self.username}] Could not find troop form on rally point page.")
+                return False
+
+            # Step 2: Prepare and send the first POST request
+            first_post_data = {i['name']: i['value'] for i in troop_form.find_all('input', {'name': True})}
+            first_post_data.update({
+                'troop[t11]': '1',
+                'x': str(x),
+                'y': str(y),
+                'redeployHero': '1',
+                'eventType': '2', # 2 for reinforcement
+                'ok': 'ok'
+            })
+
+            form_action = urljoin(self.server_url, troop_form['action'])
+            sel_resp = self.sess.post(form_action, data=first_post_data, timeout=15)
+            sel_soup = BeautifulSoup(sel_resp.text, 'html.parser')
+
+            # Step 3: Prepare and send the second POST request with the checksum
+            second_post_form = sel_soup.find('form', id='troopSendForm')
+            if not second_post_form:
+                log.error(f"[{self.username}] Could not find the confirmation form.")
+                return False
+            
+            second_post_data = {i['name']: i['value'] for i in second_post_form.find_all('input', {'name': True})}
+
+            # Extract checksum
+            checksum_input = sel_soup.find('input', {'name': 'checksum'})
+            checksum = None
+            if checksum_input and checksum_input.get('value'):
+                checksum = checksum_input['value']
+            else:
+                checksum_button = sel_soup.find('button', id='confirmSendTroops')
+                if checksum_button and checksum_button.has_attr('onclick'):
+                    match = re.search(r"value\s*=\s*['\"]([^']{3,})['\"]", checksum_button['onclick'])
+                    if match:
+                        checksum = match.group(1)
+
+            if not checksum:
+                log.error(f"[{self.username}] Could not extract checksum.")
+                return False
+            
+            second_post_data['checksum'] = checksum
+
+            final_action_url = f"{self.server_url}/build.php?gid=16&tt=2"
+            final_resp = self.sess.post(final_action_url, data=second_post_data, timeout=15)
+
+            if final_resp.status_code == 200:
+                log.info(f"[{self.username}] Hero successfully sent to ({x}|{y}).")
+                return True
+            else:
+                log.error(f"[{self.username}] Final hero send request failed with status code {final_resp.status_code}.")
+                return False
+
+        except Exception as e:
+            log.error(f"[{self.username}] An error occurred while sending hero: {e}", exc_info=True)
+            return False
 
     def start_adventure(self, target_map_id: int) -> bool:
         """Sends the hero on a specific adventure."""
@@ -542,12 +613,20 @@ class TravianClient:
             build_id = int(build_id_match.group(1)) if build_id_match else 0
             form_data = {i['name']: i['value'] for i in form.find_all('input') if i.has_attr('name')}
             
-            # Parse the "in training" queue
+            # --- CORRECTED LOGIC FOR QUEUE DURATION ---
             training_queue = []
             queue_duration_seconds = 0
             if queue_table := soup.find('table', class_='under_progress'):
-                for row in queue_table.select('tbody tr'):
-                    if 'next' in row.get('class', []): continue # Skip the "next soldier" row
+                all_rows = queue_table.select('tbody tr')
+                training_rows = [row for row in all_rows if 'next' not in row.get('class', [])]
+
+                if training_rows:
+                    last_row = training_rows[-1]
+                    if dur_cell := last_row.find('td', class_='dur'):
+                        if timer := dur_cell.find('span', class_='timer'):
+                            queue_duration_seconds = int(timer.get('value', 0))
+
+                for row in training_rows:
                     desc_cell = row.find('td', class_='desc')
                     dur_cell = row.find('td', class_='dur')
                     if desc_cell and dur_cell:
@@ -562,7 +641,6 @@ class TravianClient:
 
                         timer = dur_cell.find('span', class_='timer')
                         duration = int(timer.get('value', 0)) if timer else 0
-                        queue_duration_seconds += duration
                         training_queue.append({'name': unit_name, 'amount': amount, 'duration': duration})
             
             # Parse trainable units
@@ -587,11 +665,19 @@ class TravianClient:
                          max_amount = int(max_match.group(1).replace(',', ''))
                 
                 time_str = "0:0:0"
+                milliseconds = 0
                 if dur_span := details.find('div', class_='duration'):
                     if val_span := dur_span.find('span', class_='value'):
-                        time_str = val_span.text.split('(')[0].strip()
+                        full_time_str = val_span.text.strip()
+                        time_parts = full_time_str.split('(')
+                        time_str = time_parts[0].strip()
+                        if len(time_parts) > 1:
+                            ms_match = re.search(r'(\d+)\s*ms', time_parts[1])
+                            if ms_match:
+                                milliseconds = int(ms_match.group(1))
+
                 h,m,s = map(int, time_str.split(':'))
-                time_per_unit = h*3600 + m*60 + s
+                time_per_unit = (h*3600 + m*60 + s) + (milliseconds / 1000.0)
 
                 trainable_units.append({'id': unit_id, 'name': unit_name, 'max_trainable': max_amount, 'time_per_unit': time_per_unit})
 
