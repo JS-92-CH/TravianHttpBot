@@ -42,21 +42,69 @@ class TravianClient:
             }
             log.info(f"[{self.username}] Using proxy: {proxy_ip}:{proxy_port}")
 
-    def send_hero(self, x: int, y: int) -> bool:
-        """Sends the hero to the specified coordinates using the logic from the Tampermonkey script."""
-        log.info(f"[{self.username}] Sending hero to ({x}|{y}) as reinforcement.")
+    # client.py
+
+import re
+import json
+import requests
+import time
+import logging
+from typing import Dict, Any, Optional, List, Tuple
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin, parse_qs, urlencode
+
+from config import log, gid_name, NAME_TO_GID
+
+class TravianClient:
+    """Lightweight HTTP wrapper around the Travian *HTML* and JSON endpoints."""
+
+    def __init__(self, username: str, password: str, server_url: str, proxy: Optional[Dict[str, Any]] = None):
+        self.username = username
+        self.password = password
+        self.server_url = server_url.rstrip("/")
+        self.sess = requests.Session()
+        self.sess.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+        })
+        self.server_version = None
+
+        if proxy and proxy.get('ip') and proxy.get('port'):
+            proxy_user = proxy.get('username')
+            proxy_pass = proxy.get('password')
+            proxy_ip = proxy.get('ip')
+            proxy_port = proxy.get('port')
+            
+            proxy_auth = ""
+            if proxy_user and proxy_pass:
+                proxy_auth = f"{proxy_user}:{proxy_pass}@"
+            
+            proxy_url = f"http://{proxy_auth}{proxy_ip}:{proxy_port}"
+            
+            self.sess.proxies = {
+                "http": proxy_url,
+                "https": proxy_url,
+            }
+            log.info(f"[{self.username}] Using proxy: {proxy_ip}:{proxy_port}")
+
+    def send_hero(self, current_village_id: int, x: int, y: int) -> tuple[bool, int]:
+        """
+        Sends the hero to the specified coordinates by simulating the browser's
+        multi-step process, parsing the travel time, and returning both
+        success status and the duration in seconds.
+        """
+        log.info(f"[{self.username}] Sending hero from village {current_village_id} to ({x}|{y}) as reinforcement.")
         try:
             # Step 1: GET the rally point page to get the troop form
-            rp_url = f"{self.server_url}/build.php?gid=16&tt=2"
+            rp_url = f"{self.server_url}/build.php?newdid={current_village_id}&gid=16&tt=2"
             rp_resp = self.sess.get(rp_url, timeout=15)
             rp_soup = BeautifulSoup(rp_resp.text, 'html.parser')
 
             troop_form = rp_soup.find('form', action=re.compile(r'build\.php'))
             if not troop_form:
                 log.error(f"[{self.username}] Could not find troop form on rally point page.")
-                return False
+                return False, 0
 
-            # Step 2: Prepare and send the first POST request
+            # Step 2: Prepare and send the first POST request to get the confirmation page
             first_post_data = {i['name']: i['value'] for i in troop_form.find_all('input', {'name': True})}
             first_post_data.update({
                 'troop[t11]': '1',
@@ -71,45 +119,53 @@ class TravianClient:
             sel_resp = self.sess.post(form_action, data=first_post_data, timeout=15)
             sel_soup = BeautifulSoup(sel_resp.text, 'html.parser')
 
-            # Step 3: Prepare and send the second POST request with the checksum
+            # Step 3: Parse travel time from the confirmation page
+            travel_time = 0
+            arrival_info_div = sel_soup.find('div', class_='in')
+            if arrival_info_div:
+                time_match = re.search(r'(\d+):(\d{2}):(\d{2})', arrival_info_div.text)
+                if time_match:
+                    h, m, s = map(int, time_match.groups())
+                    travel_time = h * 3600 + m * 60 + s
+                    log.info(f"[{self.username}] Parsed travel time: {travel_time} seconds.")
+            
+            if travel_time == 0:
+                log.warning(f"[{self.username}] Could not parse travel time. Defaulting to a safe wait of 180 seconds.")
+                travel_time = 180
+
+            # Step 4: Prepare and send the final POST request with the checksum
             second_post_form = sel_soup.find('form', id='troopSendForm')
             if not second_post_form:
-                log.error(f"[{self.username}] Could not find the confirmation form.")
-                return False
+                log.error(f"[{self.username}] Could not find the confirmation form. The hero might be busy or another issue occurred.")
+                return False, 0
             
             second_post_data = {i['name']: i['value'] for i in second_post_form.find_all('input', {'name': True})}
 
-            # Extract checksum
-            checksum_input = sel_soup.find('input', {'name': 'checksum'})
-            checksum = None
-            if checksum_input and checksum_input.get('value'):
-                checksum = checksum_input['value']
-            else:
-                checksum_button = sel_soup.find('button', id='confirmSendTroops')
-                if checksum_button and checksum_button.has_attr('onclick'):
-                    match = re.search(r"value\s*=\s*['\"]([^']{3,})['\"]", checksum_button['onclick'])
-                    if match:
-                        checksum = match.group(1)
-
-            if not checksum:
-                log.error(f"[{self.username}] Could not extract checksum.")
-                return False
+            # --- ROBUST CHECKSUM EXTRACTION ---
+            checksum_button = sel_soup.find('button', id='confirmSendTroops')
+            if checksum_button and checksum_button.has_attr('onclick'):
+                # This regex is more robust and handles variations in spacing and quotes.
+                match = re.search(r"value\s*=\s*'([^']+)'", checksum_button['onclick'])
+                if match:
+                    second_post_data['checksum'] = match.group(1)
             
-            second_post_data['checksum'] = checksum
-
-            final_action_url = f"{self.server_url}/build.php?gid=16&tt=2"
+            if not second_post_data.get('checksum'):
+                log.error(f"[{self.username}] CRITICAL: Could not extract checksum from the confirmation button. Aborting hero send.")
+                return False, 0
+            
+            final_action_url = urljoin(self.server_url, second_post_form['action'])
             final_resp = self.sess.post(final_action_url, data=second_post_data, timeout=15)
 
-            if final_resp.status_code == 200:
+            if final_resp.status_code == 200 and ("Reinforcement for" in final_resp.text or "troops are on their way" in final_resp.text):
                 log.info(f"[{self.username}] Hero successfully sent to ({x}|{y}).")
-                return True
+                return True, travel_time
             else:
-                log.error(f"[{self.username}] Final hero send request failed with status code {final_resp.status_code}.")
-                return False
+                log.error(f"[{self.username}] Final hero send request failed. The server did not confirm the movement. Status: {final_resp.status_code}.")
+                return False, 0
 
         except Exception as e:
-            log.error(f"[{self.username}] An error occurred while sending hero: {e}", exc_info=True)
-            return False
+            log.error(f"[{self.username}] An unhandled error occurred during send_hero: {e}", exc_info=True)
+            return False, 0
 
     def start_adventure(self, target_map_id: int) -> bool:
         """Sends the hero on a specific adventure."""

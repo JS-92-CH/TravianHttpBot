@@ -1577,63 +1577,31 @@
         "53970": [],
         "70005": [
             {
-                "type": "building",
-                "location": 40,
-                "gid": 42,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 21,
-                "gid": 17,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 23,
-                "gid": 22,
+                "type": "resource_plan",
                 "level": 20
             }
         ],
         "69604": [
             {
                 "type": "building",
-                "location": 22,
-                "gid": 24,
+                "location": 40,
+                "gid": 31,
                 "level": 20
             },
             {
                 "type": "building",
-                "location": 20,
-                "gid": 22,
+                "location": 38,
+                "gid": 14,
                 "level": 20
             },
             {
                 "type": "building",
-                "location": 39,
-                "gid": 16,
+                "location": 37,
+                "gid": 17,
                 "level": 20
             }
         ],
         "69203": [
-            {
-                "type": "building",
-                "location": 31,
-                "gid": 46,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 24,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 25,
-                "gid": 13,
-                "level": 20
-            },
             {
                 "type": "building",
                 "location": 22,
@@ -1657,15 +1625,15 @@
                 "location": 32,
                 "gid": 14,
                 "level": 20
+            },
+            {
+                "type": "building",
+                "location": 38,
+                "gid": 17,
+                "level": 20
             }
         ],
         "69603": [
-            {
-                "type": "building",
-                "location": 31,
-                "gid": 21,
-                "level": 20
-            },
             {
                 "type": "building",
                 "location": 25,
@@ -1692,30 +1660,24 @@
             },
             {
                 "type": "building",
-                "location": 24,
-                "gid": 22,
+                "location": 32,
+                "gid": 46,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 38,
+                "gid": 14,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 37,
+                "gid": 17,
                 "level": 20
             }
         ],
         "70406": [
-            {
-                "type": "building",
-                "location": 19,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 23,
-                "gid": 22,
-                "level": 20
-            },
             {
                 "type": "building",
                 "location": 24,
@@ -1739,6 +1701,30 @@
                 "location": 39,
                 "gid": 16,
                 "level": 20
+            },
+            {
+                "type": "building",
+                "location": 32,
+                "gid": 46,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 40,
+                "gid": 31,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 38,
+                "gid": 14,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 37,
+                "gid": 17,
+                "level": 20
             }
         ],
         "69602": [],
@@ -1746,14 +1732,8 @@
         "70405": [
             {
                 "type": "building",
-                "location": 29,
-                "gid": 29,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 30,
-                "gid": 30,
+                "location": 31,
+                "gid": 21,
                 "level": 20
             },
             {
@@ -1782,18 +1762,6 @@
             },
             {
                 "type": "building",
-                "location": 23,
-                "gid": 22,
-                "level": 11
-            },
-            {
-                "type": "building",
-                "location": 23,
-                "gid": 22,
-                "level": 20
-            },
-            {
-                "type": "building",
                 "location": 22,
                 "gid": 25,
                 "level": 20
@@ -1809,47 +1777,191 @@
                 "location": 19,
                 "gid": 10,
                 "level": 20
-            }
-        ],
-        "70407": [
+            },
             {
                 "type": "building",
-                "location": 29,
-                "gid": 29,
+                "location": 40,
+                "gid": 31,
                 "level": 20
             },
             {
                 "type": "building",
                 "location": 30,
-                "gid": 30,
+                "gid": 46,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 38,
+                "gid": 14,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 37,
+                "gid": 17,
+                "level": 20
+            }
+        ],
+        "70407": [
+            {
+                "type": "building",
+                "location": 30,
+                "gid": 21,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 19,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 20,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 25,
+                "gid": 13,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 24,
+                "gid": 24,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 22,
+                "gid": 25,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 31,
+                "gid": 14,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 32,
+                "gid": 17,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 40,
+                "gid": 31,
                 "level": 20
             }
         ],
         "70807": [
             {
                 "type": "building",
-                "location": 29,
-                "gid": 29,
+                "location": 20,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 23,
+                "gid": 22,
                 "level": 20
             },
             {
                 "type": "building",
                 "location": 30,
-                "gid": 30,
+                "gid": 21,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 31,
+                "gid": 46,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 40,
+                "gid": 31,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 25,
+                "gid": 13,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 24,
+                "gid": 24,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 3
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
                 "level": 20
             }
         ],
         "70808": [
             {
                 "type": "building",
-                "location": 29,
-                "gid": 29,
+                "location": 31,
+                "gid": 21,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 19,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 20,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 25,
+                "gid": 13,
+                "level": 5
+            },
+            {
+                "type": "building",
+                "location": 25,
+                "gid": 13,
                 "level": 20
             },
             {
                 "type": "building",
                 "location": 30,
-                "gid": 30,
+                "gid": 46,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 40,
+                "gid": 31,
                 "level": 20
             }
         ]
@@ -2932,7 +3044,7 @@
         },
         "70005": {
             "enabled": true,
-            "min_queue_duration_minutes": 90,
+            "min_queue_duration_minutes": 150,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2947,7 +3059,7 @@
                 "workshop": {
                     "gid": 21,
                     "enabled": true,
-                    "troop_name": "Stone Catapult"
+                    "troop_name": "Ram"
                 },
                 "great_barracks": {
                     "gid": 29,
@@ -2963,7 +3075,7 @@
         },
         "69604": {
             "enabled": true,
-            "min_queue_duration_minutes": 90,
+            "min_queue_duration_minutes": 150,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2978,7 +3090,7 @@
                 "workshop": {
                     "gid": 21,
                     "enabled": true,
-                    "troop_name": "Stone Catapult"
+                    "troop_name": "Ram"
                 },
                 "great_barracks": {
                     "gid": 29,
@@ -2994,7 +3106,7 @@
         },
         "69203": {
             "enabled": true,
-            "min_queue_duration_minutes": 90,
+            "min_queue_duration_minutes": 150,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3025,22 +3137,27 @@
         },
         "69603": {
             "enabled": true,
-            "min_queue_duration_minutes": 60,
+            "min_queue_duration_minutes": 120,
             "buildings": {
                 "barracks": {
                     "gid": 19,
                     "enabled": true,
-                    "troop_name": "Khopesh Warrior"
+                    "troop_name": "Slave Militia"
                 },
                 "stable": {
                     "gid": 20,
                     "enabled": true,
                     "troop_name": "Sopdu Explorer"
                 },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": true,
+                    "troop_name": "Ram"
+                },
                 "great_barracks": {
                     "gid": 29,
                     "enabled": true,
-                    "troop_name": "Khopesh Warrior"
+                    "troop_name": "Slave Militia"
                 },
                 "great_stable": {
                     "gid": 30,
@@ -3051,7 +3168,7 @@
         },
         "70406": {
             "enabled": true,
-            "min_queue_duration_minutes": 30,
+            "min_queue_duration_minutes": 120,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3144,7 +3261,7 @@
         },
         "70405": {
             "enabled": true,
-            "min_queue_duration_minutes": 15,
+            "min_queue_duration_minutes": 120,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3160,12 +3277,17 @@
                     "gid": 29,
                     "enabled": true,
                     "troop_name": "Khopesh Warrior"
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": true,
+                    "troop_name": "Resheph Chariot"
                 }
             }
         },
         "70407": {
             "enabled": true,
-            "min_queue_duration_minutes": 15,
+            "min_queue_duration_minutes": 120,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3181,12 +3303,17 @@
                     "gid": 29,
                     "enabled": true,
                     "troop_name": "Khopesh Warrior"
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": true,
+                    "troop_name": "Resheph Chariot"
                 }
             }
         },
         "70807": {
             "enabled": true,
-            "min_queue_duration_minutes": 15,
+            "min_queue_duration_minutes": 120,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3202,12 +3329,17 @@
                     "gid": 29,
                     "enabled": true,
                     "troop_name": "Khopesh Warrior"
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": true,
+                    "troop_name": "Resheph Chariot"
                 }
             }
         },
         "70808": {
             "enabled": true,
-            "min_queue_duration_minutes": 15,
+            "min_queue_duration_minutes": 120,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3216,6 +3348,16 @@
                 },
                 "stable": {
                     "gid": 20,
+                    "enabled": true,
+                    "troop_name": "Resheph Chariot"
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": true,
+                    "troop_name": "Khopesh Warrior"
+                },
+                "great_stable": {
+                    "gid": 30,
                     "enabled": true,
                     "troop_name": "Resheph Chariot"
                 }

@@ -41,7 +41,7 @@ class Module(threading.Thread):
 
                 account = accounts[0]
                 client = self.client_class(account['username'], account['password'], account['server_url'], account.get('proxy'))
-                
+
                 if not client.login():
                     log.error("[TrainingAgent] Login failed. Retrying in 5 minutes.")
                     self.stop_event.wait(300)
@@ -55,7 +55,7 @@ class Module(threading.Thread):
 
                 if self.village_cycle_index >= len(active_training_villages):
                     self.village_cycle_index = 0
-                
+
                 target_village = active_training_villages[self.village_cycle_index]
                 target_village_id = target_village['id']
                 village_name = target_village['name']
@@ -64,14 +64,22 @@ class Module(threading.Thread):
                 log.info(f"--- [TrainingAgent] Starting Cycle for Village: {village_name} ({target_village_id}) ---")
 
                 current_hero_location_id = None
-                log.info("[TrainingAgent] Searching for hero by checking all village rally points...")
-                all_player_villages = all_village_data.get(account['username'], [])
-                for village_to_check in all_player_villages:
-                    found_in_id = client.find_hero_in_rally_point(village_to_check['id'])
-                    if found_in_id:
-                        current_hero_location_id = found_in_id
-                        break
-                    self.stop_event.wait(0.5)
+                log.info(f"[TrainingAgent] Searching for hero, starting with the current village: {village_name}")
+
+                found_in_id = client.find_hero_in_rally_point(target_village_id)
+                if found_in_id:
+                    current_hero_location_id = found_in_id
+                else:
+                    log.info(f"[TrainingAgent] Hero not in {village_name}. Searching all other villages...")
+                    all_player_villages = all_village_data.get(account['username'], [])
+                    for village_to_check in all_player_villages:
+                        if village_to_check['id'] == target_village_id:
+                            continue
+                        found_in_id = client.find_hero_in_rally_point(village_to_check['id'])
+                        if found_in_id:
+                            current_hero_location_id = found_in_id
+                            break
+                        self.stop_event.wait(0.5)
 
                 if current_hero_location_id is None:
                     log.warning("[TrainingAgent] Could not find hero in any village. Hero may be moving. Retrying in 3 minutes.")
@@ -84,12 +92,12 @@ class Module(threading.Thread):
                     if not target_coords:
                         fresh_data = client.fetch_and_parse_village(target_village_id)
                         target_coords = fresh_data.get('coords', {}) if fresh_data else {}
-                    
+
                     if target_coords.get('x') is not None:
-                        move_success = client.send_hero(int(target_coords['x']), int(target_coords['y']))
+                        move_success, travel_time = client.send_hero(current_hero_location_id, int(target_coords['x']), int(target_coords['y']))
                         if move_success:
-                            wait_time = 10 
-                            log.info(f"[TrainingAgent] Hero reinforcement to {village_name} initiated. Waiting {wait_time}s before next check.")
+                            wait_time = travel_time + 0.5
+                            log.info(f"[TrainingAgent] Hero reinforcement to {village_name} initiated. Waiting {wait_time}s for arrival.")
                             self.stop_event.wait(wait_time)
                         else:
                             log.error(f"[TrainingAgent] Failed to send hero to {village_name}. Waiting 60s.")
@@ -99,20 +107,28 @@ class Module(threading.Thread):
                     continue
 
                 log.info(f"[TrainingAgent] Hero is confirmed to be in {village_name}. Starting aggressive training loop.")
-                
+
                 while not self.stop_event.is_set():
                     all_queues_filled_for_this_village = True
                     min_queue_seconds = config.get('min_queue_duration_minutes', 15) * 60
-                    
+
                     hero_inventory = client.get_hero_inventory()
                     if not hero_inventory:
                         log.warning("[TrainingAgent] Could not refresh hero inventory. Retrying in 3 minutes.")
                         self.stop_event.wait(180)
                         break
+                    
+                    processing_order = ['barracks', 'great_barracks', 'stable', 'great_stable', 'workshop']
+                    
+                    buildings_config = config.get('buildings', {})
+                    sorted_buildings = sorted(
+                        buildings_config.items(), 
+                        key=lambda item: processing_order.index(item[0]) if item[0] in processing_order else len(processing_order)
+                    )
 
-                    for building_type, b_config in sorted(config.get('buildings', {}).items()):
+                    for building_type, b_config in sorted_buildings:
                         if self.stop_event.is_set(): break
-                        
+
                         log.info(f"[TrainingAgent] Checking: {building_type.replace('_', ' ').title()}")
                         if not b_config.get('enabled') or not b_config.get('troop_name'):
                             continue
@@ -128,7 +144,7 @@ class Module(threading.Thread):
                             if not equipped_helmet or equipped_helmet.get('id') != required_helmet_id:
                                 log.info(f"[TrainingAgent] Incorrect helmet equipped for {building_type}. Switching...")
                                 helmet_to_equip = next((item for item in hero_inventory.get('inventory', []) if item.get('id') == required_helmet_id), None)
-                                
+
                                 if helmet_to_equip:
                                     if client.equip_item(helmet_to_equip['id']):
                                         log.info(f"[TrainingAgent] Successfully equipped helmet for {building_type}. Pausing and refreshing inventory.")
@@ -143,26 +159,23 @@ class Module(threading.Thread):
 
                         gid = b_config['gid']
                         page_data = client.get_training_page(target_village_id, gid)
-                        
+
                         if not page_data or not page_data.get('trainable'):
                             continue
 
-                        # --- Start of Changes ---
-                        # Check if the queue duration is less than 95% of the target duration
                         if page_data['queue_duration_seconds'] < (min_queue_seconds * 0.95):
                             all_queues_filled_for_this_village = False
                             log.info(f"[TrainingAgent] - {building_type} queue ({page_data['queue_duration_seconds']}s) is less than 95% of target ({min_queue_seconds}s).")
-                        # --- End of Changes ---
-                            
+
                             troop_to_train = next((t for t in page_data['trainable'] if t['name'] == b_config['troop_name']), None)
                             if not troop_to_train or troop_to_train['time_per_unit'] <= 0:
                                 continue
-                            
+
                             time_to_fill = min_queue_seconds - page_data['queue_duration_seconds']
                             amount_based_on_time = int(time_to_fill / troop_to_train['time_per_unit'])
                             max_possible_by_res = troop_to_train.get('max_trainable', 0)
                             amount_to_queue = min(amount_based_on_time, max_possible_by_res)
-                            
+
                             if amount_to_queue > 0:
                                 log.info(f"[TrainingAgent] Attempting to queue {amount_to_queue} x {troop_to_train['name']}.")
                                 if client.train_troops(target_village_id, page_data['build_id'], page_data['form_data'], {troop_to_train['id']: amount_to_queue}):
@@ -174,7 +187,7 @@ class Module(threading.Thread):
                                 log.info(f"[TrainingAgent] - Not enough resources to queue even one unit in {building_type}.")
                         else:
                             log.info(f"[TrainingAgent] - {building_type} queue is sufficient.")
-                    
+
                     if all_queues_filled_for_this_village:
                         log.info(f"--- [TrainingAgent] All queues in {village_name} are filled. Moving to next village. ---")
                         break
@@ -183,9 +196,9 @@ class Module(threading.Thread):
                         self.stop_event.wait(5)
 
                 self.village_cycle_index += 1
-                
+
             except Exception as e:
                 log.error(f"[TrainingAgent] CRITICAL ERROR in training cycle: {e}", exc_info=True)
                 self.village_cycle_index += 1
-            
+
             self.stop_event.wait(10)
