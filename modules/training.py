@@ -125,8 +125,10 @@ class Module(threading.Thread):
                         log.info(f"[TrainingAgent] - Skipped: No troops researched yet in {building_type}.")
                         continue
 
-                    if page_data['queue_duration_seconds'] < min_queue_seconds:
-                        log.info(f"[TrainingAgent] - Queue for {building_type} is {page_data['queue_duration_seconds']}s, which is less than the minimum of {min_queue_seconds}s. Attempting to train.")
+                    # --- Start of Changes ---
+                    if page_data['queue_duration_seconds'] < (min_queue_seconds / 2):
+                        log.info(f"[TrainingAgent] - Queue for {building_type} is {page_data['queue_duration_seconds']}s, which is less than half the minimum of {min_queue_seconds}s. Attempting to train.")
+                    # --- End of Changes ---
                         troop_to_train = next((t for t in page_data['trainable'] if t['name'] == b_config['troop_name']), None)
                         
                         if not troop_to_train:

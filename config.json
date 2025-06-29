@@ -1578,12 +1578,6 @@
         "70005": [
             {
                 "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            },
-            {
-                "type": "building",
                 "location": 32,
                 "gid": 14,
                 "level": 20
@@ -1676,12 +1670,6 @@
         "70406": [
             {
                 "type": "building",
-                "location": 29,
-                "gid": 29,
-                "level": 20
-            },
-            {
-                "type": "building",
                 "location": 30,
                 "gid": 30,
                 "level": 20
@@ -1690,12 +1678,6 @@
         "69602": [],
         "70004": [],
         "70405": [
-            {
-                "type": "building",
-                "location": 25,
-                "gid": 24,
-                "level": 10
-            },
             {
                 "type": "building",
                 "location": 27,
@@ -1730,12 +1712,6 @@
         "70407": [
             {
                 "type": "building",
-                "location": 25,
-                "gid": 24,
-                "level": 10
-            },
-            {
-                "type": "building",
                 "location": 27,
                 "gid": 13,
                 "level": 3
@@ -1768,12 +1744,6 @@
         "70807": [
             {
                 "type": "building",
-                "location": 25,
-                "gid": 24,
-                "level": 10
-            },
-            {
-                "type": "building",
                 "location": 27,
                 "gid": 13,
                 "level": 3
@@ -1804,30 +1774,6 @@
             }
         ],
         "70808": [
-            {
-                "type": "building",
-                "location": 20,
-                "gid": 11,
-                "level": 5
-            },
-            {
-                "type": "building",
-                "location": 21,
-                "gid": 19,
-                "level": 3
-            },
-            {
-                "type": "building",
-                "location": 22,
-                "gid": 25,
-                "level": 10
-            },
-            {
-                "type": "building",
-                "location": 24,
-                "gid": 22,
-                "level": 10
-            },
             {
                 "type": "building",
                 "location": 25,
@@ -3052,7 +2998,7 @@
                 "great_stable": {
                     "gid": 30,
                     "enabled": true,
-                    "troop_name": "Resheph Chariot"
+                    "troop_name": "Sopdu Explorer"
                 }
             }
         },
@@ -3074,6 +3020,11 @@
                     "gid": 29,
                     "enabled": true,
                     "troop_name": "Khopesh Warrior"
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": true,
+                    "troop_name": "Resheph Chariot"
                 }
             }
         },
