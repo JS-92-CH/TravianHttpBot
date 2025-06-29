@@ -325,7 +325,94 @@ class TravianClient:
             if link := v_entry.find("a",href=re.compile(r"newdid=")):
                 out["villages"].append({"id":int(re.search(r"newdid=(\d+)",link["href"]).group(1)),"name":v_entry.find("span",class_="name").text.strip(),"active":"active" in v_entry.get("class",[])})
         return out
-    # --- NEW METHODS FOR TRAINING AGENT ---
+    
+    def get_hero_inventory(self) -> Dict[str, Any]:
+        """
+        Fetches the hero's inventory and equipped items.
+        """
+        log.info(f"[{self.username}] Fetching hero inventory...")
+        try:
+            url = f"{self.server_url}/hero/inventory"
+            resp = self.sess.get(url, timeout=15)
+            soup = BeautifulSoup(resp.text, 'html.parser')
+
+            script_tag = soup.find("script", string=re.compile(r"window\.Travian\.React\.HeroV2\.render"))
+            if not script_tag:
+                log.warning(f"[{self.username}] Could not find hero data script on inventory page.")
+                return {}
+
+            script_content = script_tag.string
+            match = re.search(r"screenData:\s*(\{.*\})\s*,\s*favouriteTab:", script_content, re.DOTALL)
+            if not match:
+                log.warning(f"[{self.username}] Could not extract screenData JSON from the script.")
+                return {}
+
+            json_str = match.group(1)
+            open_braces = 0
+            json_end = -1
+            for i, char in enumerate(json_str):
+                if char == '{':
+                    open_braces += 1
+                elif char == '}':
+                    open_braces -= 1
+                    if open_braces == 0:
+                        json_end = i + 1
+                        break
+            
+            if json_end == -1:
+                log.warning(f"[{self.username}] Could not find the closing brace for the screenData JSON.")
+                return {}
+
+            final_json_str = json_str[:json_end]
+            data = json.loads(final_json_str)
+
+            return {
+                'inventory': data.get('viewData', {}).get('itemsInventory', []),
+                'equipped': data.get('viewData', {}).get('itemsEquipped', [])
+            }
+
+        except Exception as e:
+            log.error(f"[{self.username}] An error occurred while fetching hero inventory: {e}", exc_info=True)
+            return {}
+
+    def equip_item(self, item_id: int) -> bool:
+        """
+        Equips a specific item from the hero's inventory.
+        """
+        log.info(f"[{self.username}] Attempting to equip item with ID: {item_id}")
+        try:
+            api_url = f"{self.server_url}/api/v1/hero/v2/inventory/move-item"
+            payload = {
+                "action": "inventory",
+                "itemId": item_id,
+                "amount": 1,
+                "targetPlaceId": -1  # -1 is the helmet slot
+            }
+            headers = {
+                'X-Version': self.server_version,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json; charset=UTF-8',
+                'Referer': f'{self.server_url}/hero/inventory'
+            }
+            
+            resp = self.sess.post(api_url, json=payload, headers=headers, timeout=15)
+            
+            if resp.status_code == 200 or resp.status_code == 204:
+                log.info(f"[{self.username}] Successfully sent request to equip item {item_id} (Status: {resp.status_code}).")
+                try:
+                    self.sess.get(f"{self.server_url}/api/v1/hero/dataForHUD", timeout=15)
+                    self.sess.get(f"{self.server_url}/api/v1/hero/v2/screen/inventory", timeout=15)
+                    log.info(f"[{self.username}] Performed follow-up GET requests to refresh hero data.")
+                except Exception as e:
+                    log.warning(f"[{self.username}] Follow-up GET requests after equipping failed: {e}")
+                return True
+            else:
+                log.error(f"[{self.username}] Failed to equip item {item_id}. Status: {resp.status_code}, Response: {resp.text}")
+                return False
+                
+        except Exception as e:
+            log.error(f"[{self.username}] An error occurred while equipping item {item_id}: {e}", exc_info=True)
+            return False
 
     def get_hero_initial_location(self) -> Optional[int]:
         """
@@ -365,20 +452,16 @@ class TravianClient:
 
             soup = BeautifulSoup(resp.text, 'html.parser')
             
-            # Find all troop tables on the page
             troop_tables = soup.find_all('table', class_='troop_details')
             if not troop_tables:
                 log.debug(f"[{self.username}] No troop_details table found in village {village_id}.")
                 return None
 
-            # Iterate through each troop table (there might be multiple for reinforcements, etc.)
             for table in troop_tables:
-                # Find the header row with unit icons
                 header_row = table.find('tbody', class_='units').find('tr')
                 if not header_row:
                     continue
 
-                # Find all unit icon cells and determine the hero's column index
                 unit_icons = header_row.find_all('td', class_='uniticon')
                 hero_column_index = -1
                 for i, icon_cell in enumerate(unit_icons):
@@ -387,17 +470,14 @@ class TravianClient:
                         break
                 
                 if hero_column_index == -1:
-                    continue # Hero not in this table, check the next one
+                    continue
 
-                # Find the corresponding row with troop counts
                 count_row = table.find('tbody', class_='units last').find('tr')
                 if not count_row:
                     continue
 
-                # Get all data cells from the count row
                 count_cells = count_row.find_all('td', class_='unit')
                 
-                # Check if the hero count is 1 in the correct column
                 if len(count_cells) > hero_column_index:
                     hero_count_text = count_cells[hero_column_index].text.strip()
                     if hero_count_text.isdigit() and int(hero_count_text) == 1:
@@ -431,14 +511,11 @@ class TravianClient:
                 return {}
 
             script_content = script_tag.string
-            # Regex to find the JSON object for screenData
             match = re.search(r"screenData:\s*(\{.*\})\s*,\s*favouriteTab:", script_content, re.DOTALL)
             if not match:
                 log.warning(f"[{self.username}] Could not extract screenData JSON from the script.")
                 return {}
 
-            # The matched group is a large, potentially complex JSON string.
-            # We need to find its exact boundaries.
             json_str = match.group(1)
             open_braces = 0
             json_end = -1
@@ -461,7 +538,6 @@ class TravianClient:
             hero_state = data.get('heroState', {})
             status_info = hero_state.get('status', {})
             
-            # Status 100 means the hero is home in a village
             if status_info.get('status') == 100:
                 village_id = int(hero_state.get('homeVillage', {}).get('id', 0))
                 if village_id > 0:
@@ -472,7 +548,6 @@ class TravianClient:
                         'travel_time': 0
                     }
 
-            # Any other status means the hero is not home or is moving
             log.info(f"[{self.username}] Hero is not home. Status: {status_info}")
             return {'village_id': None, 'is_moving': True, 'travel_time': 60}
 
@@ -486,18 +561,13 @@ class TravianClient:
     def move_hero(self, current_village_id: int, target_x: int, target_y: int) -> Tuple[bool, int]:
         """
         Moves the hero by accurately simulating the browser's multi-step process.
-        This is the definitive method based on browser request analysis.
         """
         try:
-            # The base URL for the rally point actions in the target village
             rally_point_url = f"{self.server_url}/build.php?newdid={current_village_id}&gid=16&tt=2"
             
-            # Step 1: GET the send troops page to establish session state.
             log.info(f"[{self.username}] Step 1/4: Accessing initial send troops page: {rally_point_url}")
             self.sess.get(rally_point_url, timeout=15)
 
-            # Step 2: POST to the confirmation page URL with the target coordinates.
-            # This is a critical step; the URL is specific and different from the initial GET.
             initial_post_url = f"{self.server_url}/build.php?id=39&tt=2"
             initial_payload = {
                 'troop[t11]': '1',
@@ -509,44 +579,28 @@ class TravianClient:
                 'ok': 'ok'
             }
             log.info(f"[{self.username}] Step 2/4: Posting initial move request to {initial_post_url}")
-            log.debug(f"[{self.username}] POST payload for confirmation: {initial_payload}")
             confirmation_page_resp = self.sess.post(
                 initial_post_url,
                 data=initial_payload,
                 timeout=15,
                 headers={'Referer': rally_point_url},
             )
-            log.info(
-                f"[{self.username}] Step 2/4 response status: {confirmation_page_resp.status_code}"
-            )
-            log.debug(
-                f"[{self.username}] Confirmation page HTML (first 1000 chars):\n{confirmation_page_resp.text[:1000]}"
-            )
             
-            # Step 3: Parse the confirmation page.
             soup = BeautifulSoup(confirmation_page_resp.text, 'html.parser')
             confirm_form = soup.find('form', id='troopSendForm')
             if not confirm_form:
                 log.error(f"[{self.username}] PARSING FAILED: Could not find the final confirmation form (troopSendForm).")
-                log.debug(f"[{self.username}] HTML of failed confirmation page:\n{confirmation_page_resp.text[:1500]}")
                 return False, 0
 
-            # Extract all hidden inputs for the final payload.
             final_payload = {i['name']: i['value'] for i in confirm_form.find_all('input', {'type': 'hidden'})}
             
-            # The confirmation button's onclick handler sets a checksum value
-            # that isn't present in the form until the button is clicked. We
-            # need to replicate this by parsing the script and inserting the
-            # value manually, otherwise the server ignores the request.
             if not final_payload.get('checksum'):
                 checksum_script = soup.find('script', id='confirmSendTroops_script')
                 if checksum_script:
                     m = re.search(r"name=['\"]?checksum['\"]?\].*?\.value\s*=\s*'([^']+)'", checksum_script.text)
                     if m:
                         final_payload['checksum'] = m.group(1)
-                        log.debug(f"[{self.username}] Extracted checksum from script: {final_payload['checksum']}")
-            log.debug(f"[{self.username}] Parsed final payload from confirmation page: {final_payload}")
-
+            
             travel_time = 0
             if (arrival_info := soup.select_one("tbody.infos .in")) and (time_match := re.search(r'(\d+):(\d{2}):(\d{2})', arrival_info.text)):
                 h, m, s = map(int, time_match.groups())
@@ -556,26 +610,11 @@ class TravianClient:
                 log.warning(f"[{self.username}] Could not parse travel time from confirmation page. Aborting.")
                 return False, 0
             
-            # The final action URL is the form's action attribute
             final_action_url = urljoin(self.server_url, confirm_form['action'])
-            log.debug(f"[{self.username}] Final action URL: {final_action_url}")
-            log.debug(f"[{self.username}] Final POST payload: {final_payload}")
-
-            # Step 4: POST the final confirmation and verify.
+            
             log.info(f"[{self.username}] Step 4/4: Sending final hero move confirmation to {final_action_url}")
             final_resp = self.sess.post(final_action_url, data=final_payload, timeout=15, headers={'Referer': initial_post_url})
 
-            log.info(
-                f"[{self.username}] Final confirmation response status: {final_resp.status_code}"
-            )
-            log.debug(
-                f"[{self.username}] Final confirmation URL: {final_resp.url}"
-            )
-            log.debug(
-                f"[{self.username}] Final confirmation response HTML (first 1000 chars):\n {final_resp.text[:1000]}"
-            )
-
-            # Determine success based on typical success messages on the page.
             success = (
                 "troop_details" in final_resp.text
                 and (
@@ -613,7 +652,6 @@ class TravianClient:
             build_id = int(build_id_match.group(1)) if build_id_match else 0
             form_data = {i['name']: i['value'] for i in form.find_all('input') if i.has_attr('name')}
             
-            # --- CORRECTED LOGIC FOR QUEUE DURATION ---
             training_queue = []
             queue_duration_seconds = 0
             if queue_table := soup.find('table', class_='under_progress'):
@@ -643,7 +681,6 @@ class TravianClient:
                         duration = int(timer.get('value', 0)) if timer else 0
                         training_queue.append({'name': unit_name, 'amount': amount, 'duration': duration})
             
-            # Parse trainable units
             trainable_units = []
             for action_div in soup.select(".buildActionOverview .action"):
                 details = action_div.find('div', class_='details')

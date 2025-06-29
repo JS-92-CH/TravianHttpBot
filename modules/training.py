@@ -4,18 +4,18 @@ import re
 import threading
 from bs4 import BeautifulSoup
 from config import log, BOT_STATE, state_lock
-from client import TravianClient
 
 class Module(threading.Thread):
     """
     An independent agent thread that handles queuing troops in all villages.
     It moves the hero between villages and queues troops based on configuration.
     """
-    def __init__(self, bot_manager):
+    def __init__(self, bot_manager, client_class):
         super().__init__()
         self.stop_event = threading.Event()
         self.daemon = True
         self.village_cycle_index = 0
+        self.client_class = client_class
 
     def stop(self):
         self.stop_event.set()
@@ -23,6 +23,10 @@ class Module(threading.Thread):
     def run(self):
         log.info("[TrainingAgent] Thread started. Waiting for initial data population...")
         self.stop_event.wait(20)
+
+        # Hardcoded helmet IDs
+        INFANTRY_HELMET_ID = 1126
+        CAVALRY_HELMET_ID = 1018
 
         while not self.stop_event.is_set():
             try:
@@ -36,22 +40,19 @@ class Module(threading.Thread):
                     continue
 
                 account = accounts[0]
-                client = TravianClient(account['username'], account['password'], account['server_url'], account.get('proxy'))
+                client = self.client_class(account['username'], account['password'], account['server_url'], account.get('proxy'))
+                
                 if not client.login():
                     log.error("[TrainingAgent] Login failed. Retrying in 5 minutes.")
                     self.stop_event.wait(300)
                     continue
 
-                # Get a list of villages that are enabled for training
                 active_training_villages = [v for v in all_village_data.get(account['username'], []) if str(v['id']) in training_configs and training_configs.get(str(v['id']), {}).get('enabled')]
                 if not active_training_villages:
                     log.info("[TrainingAgent] No villages are enabled for training. Waiting...")
                     self.stop_event.wait(60)
                     continue
-                
-                # --- THIS IS THE START OF THE CORRECTED LOGIC ---
 
-                # Cycle through the active villages
                 if self.village_cycle_index >= len(active_training_villages):
                     self.village_cycle_index = 0
                 
@@ -62,7 +63,6 @@ class Module(threading.Thread):
 
                 log.info(f"--- [TrainingAgent] Starting Cycle for Village: {village_name} ({target_village_id}) ---")
 
-                # Find where the hero is
                 current_hero_location_id = None
                 log.info("[TrainingAgent] Searching for hero by checking all village rally points...")
                 all_player_villages = all_village_data.get(account['username'], [])
@@ -78,7 +78,6 @@ class Module(threading.Thread):
                     self.stop_event.wait(180)
                     continue
 
-                # If hero is not in the target village, move it there and wait.
                 if current_hero_location_id != target_village_id:
                     log.info(f"[TrainingAgent] Hero is at {current_hero_location_id}, needs to be at {village_name} ({target_village_id}).")
                     target_coords = all_village_data.get(str(target_village_id), {}).get('coords', {})
@@ -87,11 +86,8 @@ class Module(threading.Thread):
                         target_coords = fresh_data.get('coords', {}) if fresh_data else {}
                     
                     if target_coords.get('x') is not None:
-                        # Use the new send_hero method
                         move_success = client.send_hero(int(target_coords['x']), int(target_coords['y']))
                         if move_success:
-                            # Since we don't get travel time back from this new method, we'll wait a fixed time.
-                            # You may need to adjust this wait time.
                             wait_time = 10 
                             log.info(f"[TrainingAgent] Hero reinforcement to {village_name} initiated. Waiting {wait_time}s before next check.")
                             self.stop_event.wait(wait_time)
@@ -99,68 +95,97 @@ class Module(threading.Thread):
                             log.error(f"[TrainingAgent] Failed to send hero to {village_name}. Waiting 60s.")
                             self.stop_event.wait(60)
                     else:
-                         log.warning(f"[TrainingAgent] Target village {village_name} missing coordinates. Skipping.")
-                    continue # Restart the cycle to re-verify hero location after moving
+                            log.warning(f"[TrainingAgent] Target village {village_name} missing coordinates. Skipping.")
+                    continue
 
-                # If we reach here, the hero is in the correct village. Now, check ALL training buildings.
-                log.info(f"[TrainingAgent] Hero is confirmed to be in the correct village: {village_name}. Checking all training buildings.")
-                min_queue_seconds = config.get('min_queue_duration_minutes', 15) * 60
+                log.info(f"[TrainingAgent] Hero is confirmed to be in {village_name}. Starting aggressive training loop.")
                 
-                for building_type, b_config in config.get('buildings', {}).items():
-                    log.info(f"[TrainingAgent] Checking building: {building_type.replace('_', ' ').title()}")
-                    if not b_config.get('enabled'):
-                        log.debug(f"[TrainingAgent] - Skipped: {building_type} is disabled in config.")
-                        continue
-                    if not b_config.get('troop_name'):
-                        log.debug(f"[TrainingAgent] - Skipped: No troop name configured for {building_type}.")
-                        continue
-
-                    gid = b_config['gid']
-                    page_data = client.get_training_page(target_village_id, gid)
+                while not self.stop_event.is_set():
+                    all_queues_filled_for_this_village = True
+                    min_queue_seconds = config.get('min_queue_duration_minutes', 15) * 60
                     
-                    if not page_data:
-                        log.warning(f"[TrainingAgent] - Skipped: Could not get page data for {building_type} (GID: {gid}). It might not be built.")
-                        continue
-                    if not page_data.get('trainable'):
-                        log.info(f"[TrainingAgent] - Skipped: No troops researched yet in {building_type}.")
-                        continue
+                    hero_inventory = client.get_hero_inventory()
+                    if not hero_inventory:
+                        log.warning("[TrainingAgent] Could not refresh hero inventory. Retrying in 3 minutes.")
+                        self.stop_event.wait(180)
+                        break
 
-                    # --- Start of Changes ---
-                    if page_data['queue_duration_seconds'] < (min_queue_seconds / 2):
-                        log.info(f"[TrainingAgent] - Queue for {building_type} is {page_data['queue_duration_seconds']}s, which is less than half the minimum of {min_queue_seconds}s. Attempting to train.")
-                    # --- End of Changes ---
-                        troop_to_train = next((t for t in page_data['trainable'] if t['name'] == b_config['troop_name']), None)
+                    for building_type, b_config in sorted(config.get('buildings', {}).items()):
+                        if self.stop_event.is_set(): break
                         
-                        if not troop_to_train:
-                            log.warning(f"[TrainingAgent] - Could not find troop '{b_config['troop_name']}' to train in {building_type}.")
+                        log.info(f"[TrainingAgent] Checking: {building_type.replace('_', ' ').title()}")
+                        if not b_config.get('enabled') or not b_config.get('troop_name'):
                             continue
-                        if troop_to_train['time_per_unit'] <= 0:
-                            log.warning(f"[TrainingAgent] - Troop '{b_config['troop_name']}' has an invalid training time.")
+
+                        required_helmet_id = None
+                        if building_type in ["barracks", "great_barracks"]:
+                            required_helmet_id = INFANTRY_HELMET_ID
+                        elif building_type in ["stable", "great_stable"]:
+                            required_helmet_id = CAVALRY_HELMET_ID
+
+                        if required_helmet_id:
+                            equipped_helmet = next((item for item in hero_inventory.get('equipped', []) if item.get('slot') == 'helmet'), None)
+                            if not equipped_helmet or equipped_helmet.get('id') != required_helmet_id:
+                                log.info(f"[TrainingAgent] Incorrect helmet equipped for {building_type}. Switching...")
+                                helmet_to_equip = next((item for item in hero_inventory.get('inventory', []) if item.get('id') == required_helmet_id), None)
+                                
+                                if helmet_to_equip:
+                                    if client.equip_item(helmet_to_equip['id']):
+                                        log.info(f"[TrainingAgent] Successfully equipped helmet for {building_type}. Pausing and refreshing inventory.")
+                                        self.stop_event.wait(0.25)
+                                        hero_inventory = client.get_hero_inventory()
+                                    else:
+                                        log.error(f"[TrainingAgent] Failed to equip helmet for {building_type}. Skipping.")
+                                        continue
+                                else:
+                                    log.warning(f"[TrainingAgent] Required helmet (ID: {required_helmet_id}) not found in inventory. Skipping {building_type}.")
+                                    continue
+
+                        gid = b_config['gid']
+                        page_data = client.get_training_page(target_village_id, gid)
+                        
+                        if not page_data or not page_data.get('trainable'):
                             continue
-                        
-                        time_to_fill = min_queue_seconds - page_data['queue_duration_seconds']
-                        amount_to_queue = int(time_to_fill / troop_to_train['time_per_unit'])
-                        
-                        if amount_to_queue > 0:
-                            log.info(f"[TrainingAgent] Attempting to queue {amount_to_queue} x {troop_to_train['name']} in {village_name}'s {building_type}.")
-                            success = client.train_troops(target_village_id, page_data['build_id'], page_data['form_data'], {troop_to_train['id']: amount_to_queue})
-                            if success:
-                                log.info(f"[TrainingAgent] Successfully queued troops in {building_type}.")
-                                self.stop_event.wait(2) # Brief pause after a successful action
+
+                        # --- Start of Changes ---
+                        # Check if the queue duration is less than 95% of the target duration
+                        if page_data['queue_duration_seconds'] < (min_queue_seconds * 0.95):
+                            all_queues_filled_for_this_village = False
+                            log.info(f"[TrainingAgent] - {building_type} queue ({page_data['queue_duration_seconds']}s) is less than 95% of target ({min_queue_seconds}s).")
+                        # --- End of Changes ---
+                            
+                            troop_to_train = next((t for t in page_data['trainable'] if t['name'] == b_config['troop_name']), None)
+                            if not troop_to_train or troop_to_train['time_per_unit'] <= 0:
+                                continue
+                            
+                            time_to_fill = min_queue_seconds - page_data['queue_duration_seconds']
+                            amount_based_on_time = int(time_to_fill / troop_to_train['time_per_unit'])
+                            max_possible_by_res = troop_to_train.get('max_trainable', 0)
+                            amount_to_queue = min(amount_based_on_time, max_possible_by_res)
+                            
+                            if amount_to_queue > 0:
+                                log.info(f"[TrainingAgent] Attempting to queue {amount_to_queue} x {troop_to_train['name']}.")
+                                if client.train_troops(target_village_id, page_data['build_id'], page_data['form_data'], {troop_to_train['id']: amount_to_queue}):
+                                    log.info(f"[TrainingAgent] Successfully queued troops.")
+                                    self.stop_event.wait(2)
+                                else:
+                                    log.error(f"[TrainingAgent] Failed to queue troops.")
                             else:
-                                log.error(f"[TrainingAgent] Failed to queue troops in {building_type}.")
+                                log.info(f"[TrainingAgent] - Not enough resources to queue even one unit in {building_type}.")
                         else:
-                            log.info(f"[TrainingAgent] - Not enough time to queue even one unit in {building_type}.")
+                            log.info(f"[TrainingAgent] - {building_type} queue is sufficient.")
+                    
+                    if all_queues_filled_for_this_village:
+                        log.info(f"--- [TrainingAgent] All queues in {village_name} are filled. Moving to next village. ---")
+                        break
                     else:
-                        log.info(f"[TrainingAgent] - {building_type} in {village_name} already has a sufficient queue ({page_data['queue_duration_seconds']}s).")
+                        log.info(f"[TrainingAgent] Not all queues in {village_name} are full. Waiting 15 seconds before re-checking...")
+                        self.stop_event.wait(15)
 
-                # All buildings in the current village have been checked. Now, move to the next village for the next cycle.
-                log.info(f"--- [TrainingAgent] Finished Cycle for Village: {village_name}. Moving to next village in the list. ---")
                 self.village_cycle_index += 1
                 
             except Exception as e:
                 log.error(f"[TrainingAgent] CRITICAL ERROR in training cycle: {e}", exc_info=True)
-                self.village_cycle_index += 1 # Ensure we don't get stuck on an erroring village
+                self.village_cycle_index += 1
             
-            # Wait before starting the entire process over
             self.stop_event.wait(10)
