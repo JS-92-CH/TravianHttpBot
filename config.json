@@ -1753,6 +1753,1046 @@
             }
         ]
     },
+    "demolish_queues": {
+        "69604": [
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 18
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 17
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 16
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 15
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 14
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 13
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 12
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 11
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 10
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 9
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 8
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 7
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 6
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 5
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 4
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 3
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 2
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 1
+            },
+            {
+                "type": "demolish",
+                "location": 20,
+                "gid": 22,
+                "level": 0
+            }
+        ],
+        "70005": [
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 18
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 17
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 16
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 15
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 14
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 13
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 12
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 11
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 10
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 9
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 8
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 7
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 6
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 5
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 4
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 3
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 2
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 1
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 0
+            }
+        ],
+        "69203": [
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 18
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 17
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 16
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 15
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 14
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 13
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 12
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 11
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 10
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 9
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 8
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 7
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 6
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 5
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 4
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 3
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 2
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 1
+            },
+            {
+                "type": "demolish",
+                "location": 21,
+                "gid": 22,
+                "level": 0
+            }
+        ],
+        "69603": [
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 18
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 17
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 16
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 15
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 14
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 13
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 12
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 11
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 10
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 9
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 8
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 7
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 6
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 5
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 4
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 3
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 2
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 1
+            },
+            {
+                "type": "demolish",
+                "location": 24,
+                "gid": 22,
+                "level": 0
+            }
+        ],
+        "70406": [
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 17
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 16
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 15
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 14
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 13
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 12
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 11
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 10
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 9
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 8
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 7
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 6
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 5
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 4
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 3
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 2
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 1
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 0
+            }
+        ],
+        "70405": [
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 18
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 17
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 16
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 15
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 14
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 13
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 12
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 11
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 10
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 9
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 8
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 7
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 6
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 5
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 4
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 3
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 2
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 1
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 0
+            }
+        ],
+        "70407": [
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 18
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 17
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 16
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 15
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 14
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 13
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 12
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 11
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 10
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 9
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 8
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 7
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 6
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 5
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 4
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 3
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 2
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 1
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 0
+            }
+        ],
+        "70807": [
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 18
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 17
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 16
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 15
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 14
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 13
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 12
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 11
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 10
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 9
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 8
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 7
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 6
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 5
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 4
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 3
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 2
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 1
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 0
+            }
+        ],
+        "70808": [
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 18
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 17
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 16
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 15
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 14
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 13
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 12
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 11
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 10
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 9
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 8
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 7
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 6
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 5
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 4
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 3
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 2
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 1
+            },
+            {
+                "type": "demolish",
+                "location": 23,
+                "gid": 22,
+                "level": 0
+            }
+        ]
+    },
     "training_queues": {
         "53965": {
             "enabled": true,
@@ -2831,7 +3871,7 @@
         },
         "70005": {
             "enabled": true,
-            "min_queue_duration_minutes": 700,
+            "min_queue_duration_minutes": 710,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2863,7 +3903,7 @@
         },
         "69604": {
             "enabled": true,
-            "min_queue_duration_minutes": 680,
+            "min_queue_duration_minutes": 690,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2895,7 +3935,7 @@
         },
         "69203": {
             "enabled": true,
-            "min_queue_duration_minutes": 670,
+            "min_queue_duration_minutes": 680,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2927,7 +3967,7 @@
         },
         "69603": {
             "enabled": true,
-            "min_queue_duration_minutes": 660,
+            "min_queue_duration_minutes": 670,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2959,7 +3999,7 @@
         },
         "70406": {
             "enabled": true,
-            "min_queue_duration_minutes": 650,
+            "min_queue_duration_minutes": 660,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3053,7 +4093,7 @@
         },
         "70405": {
             "enabled": true,
-            "min_queue_duration_minutes": 650,
+            "min_queue_duration_minutes": 660,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3085,7 +4125,7 @@
         },
         "70407": {
             "enabled": true,
-            "min_queue_duration_minutes": 650,
+            "min_queue_duration_minutes": 660,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3117,7 +4157,7 @@
         },
         "70807": {
             "enabled": true,
-            "min_queue_duration_minutes": 650,
+            "min_queue_duration_minutes": 660,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3149,7 +4189,7 @@
         },
         "70808": {
             "enabled": true,
-            "min_queue_duration_minutes": 650,
+            "min_queue_duration_minutes": 660,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3181,7 +4221,7 @@
         },
         "70408": {
             "enabled": true,
-            "min_queue_duration_minutes": 650,
+            "min_queue_duration_minutes": 660,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3213,7 +4253,7 @@
         },
         "70806": {
             "enabled": true,
-            "min_queue_duration_minutes": 650,
+            "min_queue_duration_minutes": 660,
             "buildings": {
                 "barracks": {
                     "gid": 19,

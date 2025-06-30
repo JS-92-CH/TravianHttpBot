@@ -66,6 +66,7 @@ BOT_STATE: Dict[str, Any] = {
     "accounts": [],
     "village_data": {},
     "build_queues": {},
+    "demolish_queues": {},
     "training_data": {},
     "training_queues": {},
     "build_templates": {
@@ -185,7 +186,6 @@ def load_config() -> None:
         with open(config_path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
 
-        # --- CONFIG MIGRATION LOGIC ---
         config_updated = False
         accounts = data.get("accounts", [])
         for account in accounts:
@@ -201,12 +201,11 @@ def load_config() -> None:
                 }
                 config_updated = True
                 log.info(f"Configuration Update: Added default proxy object to account '{account.get('username')}'.")
-        
-        # --- END MIGRATION LOGIC ---
 
         with state_lock:
             BOT_STATE["accounts"] = accounts
             BOT_STATE["build_queues"] = data.get("build_queues", {})
+            BOT_STATE["demolish_queues"] = data.get("demolish_queues", {})
             BOT_STATE["training_queues"] = data.get("training_queues", {})
             BOT_STATE["build_templates"].update(data.get("build_templates", {}))
             if "village_data" not in BOT_STATE:
@@ -228,6 +227,7 @@ def save_config() -> None:
         payload = {
             "accounts": [acc.copy() for acc in BOT_STATE["accounts"]],
             "build_queues": BOT_STATE["build_queues"].copy(),
+            "demolish_queues": BOT_STATE["demolish_queues"].copy(),
             "training_queues": BOT_STATE["training_queues"].copy(),
             "build_templates": BOT_STATE.get("build_templates", {}).copy()
         }

@@ -281,16 +281,12 @@
             event.currentTarget.classList.add('active');
         }
         
-        // --- NEW FUNCTION for collapsible sections ---
         function toggleCollapsible(sectionId) {
             const section = document.getElementById(sectionId);
             if (section) {
                 section.classList.toggle('open');
             }
         }
-
-        // --- All other JavaScript functions remain the same ---
-        // (The full script from the previous response is included here for completeness)
         
         function isMultiInstance(gid) {
             gid = parseInt(gid);
@@ -669,6 +665,53 @@
             addBuildTask(villageId, location, gid, level, false);
         }
 
+        function queueDemolishTask(villageId, building) {
+            const levelInput = document.getElementById(`demolish-level-input-${villageId}-${building.id}`);
+            const targetLevel = parseInt(levelInput.value, 10);
+
+            if (isNaN(targetLevel) || targetLevel < 0 || targetLevel >= building.level) {
+                alert(`Please enter a valid level to demolish to (must be less than current level ${building.level}).`);
+                return;
+            }
+
+            let demolishQueue = FULL_STATE.demolish_queues[villageId] || [];
+
+            for (let i = building.level; i > targetLevel; i--) {
+                demolishQueue.push({
+                    type: 'demolish',
+                    location: building.id,
+                    gid: building.gid,
+                    level: i - 1
+                });
+            }
+            
+            const uniqueTasks = [];
+            const seen = new Set();
+            for (const task of demolishQueue) {
+                const key = `${task.location}-${task.level}`;
+                if (!seen.has(key)) {
+                    uniqueTasks.push(task);
+                    seen.add(key);
+                }
+            }
+            
+            uniqueTasks.sort((a, b) => {
+                if (a.location < b.location) return -1;
+                if (a.location > b.location) return 1;
+                return b.level - a.level;
+            });
+
+
+            socket.emit('update_demolish_queue', { villageId: villageId, queue: uniqueTasks });
+            alert(`Queued ${GID_MAP[building.gid]} for demolition down to level ${targetLevel}.`);
+        }
+
+        function removeDemolishQueueItem(villageId, index) {
+            const currentQueue = FULL_STATE.demolish_queues[villageId] || [];
+            currentQueue.splice(index, 1);
+            socket.emit('update_demolish_queue', { villageId: villageId, queue: currentQueue });
+        }
+
         function showVillageDetails(villageId) {
             if (!villageId) {
                 renderGlobalSummary();
@@ -679,8 +722,7 @@
             const titleEl = document.getElementById('village-details-title');
             if (!detailsDiv || !titleEl) return;
 
-            renderAccountsAndVillages(); // This will set currentVillageName
-            
+            renderAccountsAndVillages(); 
 
             document.querySelectorAll('.village-list-item').forEach(el => el.classList.remove('active'));
             const villageItem = document.getElementById(`village-item-${villageId}`);
@@ -693,9 +735,9 @@
             }
 
             const villageQueue = FULL_STATE.build_queues[villageId] || [];
+            const demolishQueue = FULL_STATE.demolish_queues ? (FULL_STATE.demolish_queues[villageId] || []) : [];
             const trainingSettingsForVillage = (FULL_STATE.training_queues || {})[villageId] || {};
             const trainingDataForVillage = (FULL_STATE.training_data || {})[villageId] || {};
-
 
             const projectedBuildings = JSON.parse(JSON.stringify(villageData.buildings));
             const projectedBuildingMap = new Map(projectedBuildings.map(b => [b.id, b]));
@@ -709,17 +751,16 @@
                     }
                 }
             });
-
             
             let tabsHtml = `<div class="tabs">
                                 <div class="tab" id="tab-fields" onclick="openTab(event, 'fields')">Resource Fields</div>
                                 <div class="tab" id="tab-buildings" onclick="openTab(event, 'buildings')">City Buildings</div>
                                 <div class="tab" id="tab-training" onclick="openTab(event, 'training')">Training</div>
+                                <div class="tab" id="tab-demolish" onclick="openTab(event, 'demolish')">Demolish</div>
                                 <div class="tab" id="tab-new" onclick="openTab(event, 'new')">New Build</div>
                             </div>`;
 
             titleEl.innerHTML = `<span>Village: ${currentVillageName}</span>${tabsHtml}`;
-
 
             function getActionControls(villageId, building) {
                 const currentLevelInQueue = villageQueue.filter(q => q.location === building.id).reduce((maxLvl, q) => Math.max(maxLvl, q.level), building.level);
@@ -838,6 +879,36 @@
             
             trainingContent += `</div>`;
 
+            let demolishContent = `<div id="demolish" class="tab-content">
+                                    <h3>Demolish Building</h3>
+                                    <p>Select a level to demolish a building down to. The bot will queue one task for each level to be demolished.</p>
+                                    <table><thead><tr><th>Name</th><th>Current Level</th><th>Action</th></tr></thead><tbody>`;
+
+            villageData.buildings.filter(b => b.gid > 0 && b.id > 18 && b.level > 0).sort((a, b) => (a.name || GID_MAP[a.gid]).localeCompare(b.name || GID_MAP[b.gid])).forEach(b => {
+                demolishContent += `<tr>
+                    <td>${b.name || GID_MAP[b.gid]}</td>
+                    <td>${b.level}</td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap: 10px;">
+                            <input type="number" id="demolish-level-input-${villageId}-${b.id}" class="form-control" min="0" max="${b.level - 1}" value="${b.level - 1}" style="width: 80px;">
+                            <button onclick="queueDemolishTask('${villageId}', {id: ${b.id}, gid: ${b.gid}, level: ${b.level}})" class="btn btn-danger">Queue Demolish</button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+            demolishContent += '</tbody></table>';
+            
+            demolishContent += `<h3 style="margin-top: 2rem;">Demolition Queue (${demolishQueue.length})</h3>`;
+            demolishContent += `<ol id="demolish-queue-list" style="list-style-type: none; padding: 0;">`;
+            demolishQueue.forEach((job, index) => {
+                 let jobName = `${GID_MAP[job.gid] || 'Unknown'} (Loc: ${job.location || '??'})`;
+                 demolishContent += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 4px; background-color: var(--bg-tertiary); margin-bottom: 0.5rem;">
+                    <span>${index + 1}. Demolish ${jobName} to Level ${job.level}</span>
+                    <button class="btn btn-small btn-danger" onclick="removeDemolishQueueItem('${villageId}', ${index})">X</button>
+                 </li>`;
+            });
+            demolishContent += '</ol></div>';
+
             let newBuildContent = '<div id="new" class="tab-content"><h4>Build in Empty Slot</h4><table><thead><tr><th>Location</th><th>Action</th></tr></thead><tbody>';
             const baseBuildable = [5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46];
             const existingUniqueGids = new Set(projectedBuildings.filter(b => b.gid > 0 && !isMultiInstance(b.gid)).map(b => b.gid));
@@ -902,7 +973,7 @@
             });
             queueHtml += '</ol>';
 
-            detailsDiv.innerHTML = fieldsContent + buildingsContent + trainingContent + newBuildContent + queueHtml;
+            detailsDiv.innerHTML = fieldsContent + buildingsContent + trainingContent + demolishContent + newBuildContent + queueHtml;
             renderTemplateList(villageId);
             
             const tabElem = titleEl.querySelector(`#tab-${currentTab}`) || titleEl.querySelector('.tab');

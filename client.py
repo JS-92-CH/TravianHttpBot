@@ -800,3 +800,94 @@ class TravianClient:
         except Exception as e:
             log.error(f"[{self.username}] Failed to train troops: {e}")
             return False
+
+    def get_demolish_info(self, village_id: int) -> Optional[Dict]:
+        """
+        Fetches the main building page to get data needed for demolition.
+        """
+        try:
+            main_building_slot = None
+            # We need to find the location ID of the main building first
+            dorf2_resp = self.sess.get(f"{self.server_url}/dorf2.php?newdid={village_id}", timeout=15)
+            dorf2_soup = BeautifulSoup(dorf2_resp.text, 'html.parser')
+            mb_slot = dorf2_soup.select_one('.buildingSlot.g15')
+            if not mb_slot or not mb_slot.has_attr('data-aid'):
+                log.error(f"[{self.username}] Could not find Main Building slot in village {village_id}.")
+                return None
+            main_building_slot = mb_slot['data-aid']
+
+            url = f"{self.server_url}/build.php?newdid={village_id}&id={main_building_slot}"
+            resp = self.sess.get(url, timeout=15)
+            soup = BeautifulSoup(resp.text, 'html.parser')
+
+            # Check if a demolition is already in progress
+            if soup.find('table', id='demolish', class_='under_progress'):
+                return {'can_demolish': False}
+
+            form = soup.find('form', class_='demolish_building')
+            if not form:
+                return {'can_demolish': False, 'options': []}
+
+            form_data = {i['name']: i['value'] for i in form.find_all('input', {'type': 'hidden'}) if i.has_attr('name')}
+            
+            options = []
+            for option in form.select('select#demolish option'):
+                text = option.text
+                value = option['value']
+                
+                # Extract details like "19 . Warehouse 20"
+                match = re.search(r'(\d+)\s*\.\s*(.*?)\s*(\d+)', text)
+                if match:
+                    location_id = int(match.group(1).strip())
+                    name = match.group(2).strip()
+                    level = int(match.group(3).strip())
+                    options.append({'location_id': location_id, 'name': name, 'level': level, 'value': value})
+
+            return {
+                'can_demolish': True,
+                'form_data': form_data,
+                'options': options
+            }
+        except Exception as e:
+            log.error(f"[{self.username}] Failed to get demolition info for village {village_id}: {e}", exc_info=True)
+            return None
+
+    def demolish_building(self, village_id: int, abriss_value: str, form_data: Dict) -> int:
+        """
+        Sends the POST request to demolish a building and returns the duration.
+        """
+        try:
+            # Find the main building's own location ID to build the referrer URL
+            dorf2_resp = self.sess.get(f"{self.server_url}/dorf2.php?newdid={village_id}", timeout=15)
+            dorf2_soup = BeautifulSoup(dorf2_resp.text, 'html.parser')
+            mb_slot_div = dorf2_soup.select_one('.buildingSlot.g15')
+            if not mb_slot_div or not mb_slot_div.has_attr('data-aid'):
+                log.error(f"[{self.username}] Could not find Main Building slot ID for referrer.")
+                return 0
+            
+            mb_location_id = mb_slot_div['data-aid']
+            
+            url = f"{self.server_url}/build.php?gid=15"
+            payload = form_data.copy()
+            payload['abriss'] = abriss_value
+
+            headers = {'Referer': f"{self.server_url}/build.php?id={mb_location_id}"}
+            
+            resp = self.sess.post(url, data=payload, headers=headers, timeout=15, params={'newdid': village_id})
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            
+            # We look for a table with id="demolish" that is also "under_progress"
+            demolish_table = soup.select_one("table#demolish.transparent")
+            if demolish_table:
+                timer_span = demolish_table.find("span", class_="timer")
+                if timer_span and timer_span.has_attr('value'):
+                    duration = int(timer_span['value'])
+                    log.info(f"[{self.username}] Successfully initiated demolition. Duration: {duration}s")
+                    return duration
+            
+            log.warning(f"[{self.username}] Could not find demolition timer after request.")
+            return 0
+            
+        except Exception as e:
+            log.error(f"[{self.username}] Failed to execute demolition: {e}", exc_info=True)
+            return 0

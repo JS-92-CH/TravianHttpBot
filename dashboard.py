@@ -236,6 +236,19 @@ def handle_update_training_queues(data):
         save_config()
         socketio.emit("state_update", BOT_STATE)
 
+@socketio.on('update_demolish_queue')
+def handle_update_demolish_queue(data):
+    village_id = data.get('villageId')
+    queue = data.get('queue')
+    if village_id and queue is not None:
+        log.info(f"Updating demolish queue for village {village_id}")
+        with state_lock:
+            if 'demolish_queues' not in BOT_STATE:
+                BOT_STATE['demolish_queues'] = {}
+            BOT_STATE['demolish_queues'][str(village_id)] = queue
+        save_config()
+        socketio.emit("state_update", BOT_STATE)
+
 @socketio.on('copy_training_settings')
 def handle_copy_training_settings(data):
     source_village_id_str = data.get('villageId')

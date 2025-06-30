@@ -7,6 +7,7 @@ from typing import Dict, Optional, List
 from modules.adventure import Module as AdventureModule
 from modules.hero import Module as HeroModule
 from modules.training import Module as TrainingModule
+from modules.demolish import Module as DemolishModule
 from client import TravianClient
 from config import log, BOT_STATE, state_lock, save_config
 from modules import load_modules
@@ -135,6 +136,7 @@ class BotManager(threading.Thread):
         self.adventure_module = AdventureModule(self)
         self.hero_module = HeroModule(self)
         self.training_module = TrainingModule(self, TravianClient)
+        self.demolish_module = DemolishModule(self, TravianClient)
         self.daemon = True
 
     def stop(self):
@@ -153,6 +155,11 @@ class BotManager(threading.Thread):
         log.info("Stopping training agent...")
         self.training_module.stop()
         self.training_module.join()
+
+        log.info("Stopping demolish agent...")
+        self.demolish_module.stop()
+        self.demolish_module.join()
+
         log.info("Bot Manager stopped.")
 
     def _stop_agents_for_account(self, username: str):
@@ -179,6 +186,8 @@ class BotManager(threading.Thread):
         log.info("Bot Manager thread started and is now monitoring accounts.")
         log.info("Starting independent training agent...")
         self.training_module.start()
+        log.info("Starting independent demolish agent...")
+        self.demolish_module.start()
 
         while not self.stop_event.is_set():
             try:
