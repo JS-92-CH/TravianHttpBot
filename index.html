@@ -67,6 +67,7 @@
             align-items: center;
             padding: 1rem 1.5rem;
             border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
         }
 
         .card-title {
@@ -85,6 +86,10 @@
         
         .card-content.collapsed {
             display: none;
+        }
+        
+        .card.collapsed-card {
+            height: auto;
         }
 
         .btn {
@@ -142,9 +147,6 @@
         .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem; }
         .tab { padding: 1rem; cursor: pointer; border-bottom: 3px solid transparent; }
         .tab.active { color: var(--accent-primary); border-bottom: 3px solid var(--accent-primary); font-weight: 700; }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
 
         .resource-upgrade-form{
             display:flex;
@@ -283,7 +285,7 @@
         const GID_MAP = {1:"Woodcutter",2:"Clay Pit",3:"Iron Mine",4:"Cropland",5:"Sawmill",6:"Brickyard",7:"Iron Foundry",8:"Grain Mill",9:"Bakery",10:"Warehouse",11:"Granary",13:"Smithy",14:"Tournament Square",15:"Main Building",16:"Rally Point",17:"Marketplace",18:"Embassy",19:"Barracks",20:"Stable",21:"Workshop",22:"Academy",23:"Cranny",24:"Town Hall",25:"Residence",26:"Palace",27:"Treasury",28:"Trade Office",29:"Great Barracks",30:"Great Stable",31:"City Wall",32:"Earth Wall",33:"Palisade",34:"Stonemason's Lodge",35:"Brewery",36:"Trapper",37:"Hero's Mansion",38:"Great Warehouse",39:"Great Granary",40:"Wonder of the World",41:"Horse Drinking Trough",42:"Stone Wall",43:"Makeshift Wall",44:"Command Center",45:"Waterworks",46:"Hospital"};
         let selectedVillageId = null;
         let currentVillageName = '';
-        let currentTab = 'fields';
+        let currentTab = 'training';
 
         function openLeftTab(event, tabId) {
             document.querySelectorAll('.left-tab-content').forEach(tab => tab.style.display = 'none');
@@ -492,6 +494,7 @@
             const settings = {
                 enabled: document.getElementById(`training-enabled-${villageId}`).checked,
                 min_queue_duration_minutes: parseInt(document.getElementById(`min-queue-duration-${villageId}`).value, 10),
+                max_training_time: document.getElementById(`max-training-time-${villageId}`).value,
                 buildings: {}
             };
             const buildingTypes = ["barracks", "stable", "workshop", "great_barracks", "great_stable"];
@@ -662,7 +665,7 @@
             if (!detailsDiv || !titleEl) return;
 
             renderAccountsAndVillages(); // This will set currentVillageName
-            titleEl.textContent = `Village: ${currentVillageName}`;
+            
 
             document.querySelectorAll('.village-list-item').forEach(el => el.classList.remove('active'));
             const villageItem = document.getElementById(`village-item-${villageId}`);
@@ -692,18 +695,16 @@
                 }
             });
 
-            let resourcesHtml = `<h3>Resources</h3><table><thead><tr><th>Resource</th><th>Current</th><th>Storage</th><th>Production/hr</th></tr></thead><tbody>`;
-            resourcesHtml += `<tr><td>Wood</td><td>${Math.floor(villageData.resources.l1) || 0}</td><td>${villageData.storage.l1 || 0}</td><td>${villageData.production.l1 || 0}</td></tr>`;
-            resourcesHtml += `<tr><td>Clay</td><td>${Math.floor(villageData.resources.l2) || 0}</td><td>${villageData.storage.l2 || 0}</td><td>${villageData.production.l2 || 0}</td></tr>`;
-            resourcesHtml += `<tr><td>Iron</td><td>${Math.floor(villageData.resources.l3) || 0}</td><td>${villageData.storage.l3 || 0}</td><td>${villageData.production.l3 || 0}</td></tr>`;
-            resourcesHtml += `<tr><td>Crop</td><td>${Math.floor(villageData.resources.l4) || 0}</td><td>${villageData.storage.l4 || 0}</td><td>${villageData.production.l4 || 0}</td></tr></tbody></table>`;
+            
+            let tabsHtml = `<div class="tabs">
+                                <div class="tab" id="tab-fields" onclick="openTab(event, 'fields')">Resource Fields</div>
+                                <div class="tab" id="tab-buildings" onclick="openTab(event, 'buildings')">City Buildings</div>
+                                <div class="tab" id="tab-training" onclick="openTab(event, 'training')">Training</div>
+                                <div class="tab" id="tab-new" onclick="openTab(event, 'new')">New Build</div>
+                            </div>`;
 
-            let tabsHtml = '<div class="tabs">'
-                 + '<div class="tab" id="tab-fields" onclick="openTab(event, \'fields\')">Resource Fields</div>'
-                 + '<div class="tab" id="tab-buildings" onclick="openTab(event, \'buildings\')">City Buildings</div>'
-                 + '<div class="tab" id="tab-training" onclick="openTab(event, \'training\')">Training</div>'
-                 + '<div class="tab" id="tab-new" onclick="openTab(event, \'new\')">New Build</div>'
-                 + '</div>';
+            titleEl.innerHTML = `<span>Village: ${currentVillageName}</span>${tabsHtml}`;
+
 
             function getActionControls(villageId, building) {
                 const currentLevelInQueue = villageQueue.filter(q => q.location === building.id).reduce((maxLvl, q) => Math.max(maxLvl, q.level), building.level);
@@ -736,11 +737,16 @@
             
             let buildingsContent = '<div id="buildings" class="tab-content"><table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
             projectedBuildings.filter(b => b.id > 18 && b.gid > 0).sort((a,b) => a.id - b.id).forEach(b => {
-                buildingsContent += `<tr><td>${b.id}</td><td>${b.name || GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td>${getActionControls(villageId, b)}</td></tr>`;
+                buildingsContent += `<tr><td>${b.name || GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td>${getActionControls(villageId, b)}</td></tr>`;
             });
             buildingsContent += '</tbody></table></div>';
             
             let trainingContent = `<div id="training" class="tab-content"><h3>Troop Training Configuration</h3>`;
+            trainingContent += `
+                <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px;">
+                    <button onclick="saveTrainingSettings('${villageId}')" class="btn btn-primary">Save Settings</button>
+                    <button onclick="copyTrainingSettings('${villageId}')" class="btn">Copy to All Other Villages</button>
+                </div>`;
             trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px;">
                 <label style="display: block; margin-bottom: 0.5rem;">
                     <input type="checkbox" id="training-enabled-${villageId}" ${trainingSettingsForVillage.enabled ? 'checked' : ''}>
@@ -749,6 +755,10 @@
                 <label style="display: block; margin-top: 1rem;">
                     Queue troops for at least (minutes):
                     <input type="number" id="min-queue-duration-${villageId}" class="form-control" style="width: 100px; display: inline-block;" value="${trainingSettingsForVillage.min_queue_duration_minutes || 15}">
+                </label>
+                <label style="display: block; margin-top: 1rem;">
+                    Max training time (e.g., 30.06.2025 15:00):
+                    <input type="text" id="max-training-time-${villageId}" class="form-control" style="width: 250px; display: inline-block;" value="${trainingSettingsForVillage.max_training_time || ''}">
                 </label>
             </div>`;
 
@@ -771,7 +781,12 @@
                     optionsHtml += `<option value="${troop.name}" ${troop.name === buildingConfig.troop_name ? 'selected' : ''}>${troop.name}</option>`;
                 });
 
-                let queueHtml = '<h4>In Training</h4>';
+                let queueHtml = `
+                    <div class="card" id="training-queue-card-${key}">
+                        <div class="card-header" onclick="toggleCollapse('training-queue-content-${key}')">
+                            <h4 class="card-title" style="font-size: 1.1rem;">In Training</h4>
+                        </div>
+                        <div class="card-content collapsed" id="training-queue-content-${key}">`;
                 if(buildingData.training_queue && buildingData.training_queue.length > 0) {
                     queueHtml += `<table><thead><tr><th>Amount</th><th>Troop</th><th>Duration</th></tr></thead><tbody>`;
                     buildingData.training_queue.forEach(q => {
@@ -781,6 +796,7 @@
                 } else {
                     queueHtml += '<p>No troops currently in training.</p>';
                 }
+                queueHtml += '</div></div>';
 
                 trainingContent += `<div class="card" style="margin-top: 1rem; border: 1px solid var(--text-muted);">
                     <div class="card-header" style="padding: 0.8rem 1.2rem;">
@@ -805,10 +821,7 @@
                 </div>`;
             });
             
-            trainingContent += `<div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-                                  <button onclick="saveTrainingSettings('${villageId}')" class="btn btn-primary">Save Settings</button>
-                                  <button onclick="copyTrainingSettings('${villageId}')" class="btn">Copy to All Other Villages</button>
-                                </div></div>`;
+            trainingContent += `</div>`;
 
             let newBuildContent = '<div id="new" class="tab-content"><h4>Build in Empty Slot</h4><table><thead><tr><th>Location</th><th>Action</th></tr></thead><tbody>';
             const baseBuildable = [5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46];
@@ -874,13 +887,12 @@
             });
             queueHtml += '</ol>';
 
-            detailsDiv.innerHTML = resourcesHtml + tabsHtml + fieldsContent + buildingsContent + trainingContent + newBuildContent + queueHtml;
+            detailsDiv.innerHTML = fieldsContent + buildingsContent + trainingContent + newBuildContent + queueHtml;
             renderTemplateList(villageId);
             
-            const tabElem = detailsDiv.querySelector(`#tab-${currentTab}`) || detailsDiv.querySelector('.tab');
+            const tabElem = titleEl.querySelector(`#tab-${currentTab}`) || titleEl.querySelector('.tab');
             if (tabElem) {
-                let tabName = tabElem.id.replace('tab-','');
-                openTab({currentTarget: tabElem}, tabName);
+                openTab({currentTarget: tabElem}, currentTab);
             }
         }
         
@@ -971,7 +983,7 @@
         
         function openTab(event, tabName) {
             document.querySelectorAll('#right-column .tab-content').forEach(tc => tc.style.display = 'none');
-            document.querySelectorAll('#right-column .tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#village-details-title .tab').forEach(t => t.classList.remove('active'));
             const tabContent = document.getElementById(tabName);
             if (tabContent) tabContent.style.display = 'block';
             if (event.currentTarget) event.currentTarget.classList.add('active');
@@ -1018,6 +1030,12 @@
                 index: index,
                 direction: direction
             });
+        }
+        
+        function toggleCollapse(elementId) {
+            const content = document.getElementById(elementId);
+            content.classList.toggle('collapsed');
+            content.parentElement.classList.toggle('collapsed-card');
         }
 
     </script>

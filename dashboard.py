@@ -1,3 +1,5 @@
+# dashboard.py
+
 from flask import Flask, render_template_string
 from flask_socketio import SocketIO
 
@@ -212,7 +214,9 @@ def handle_update_training_queues(data):
         with state_lock:
             if 'training_queues' not in BOT_STATE:
                 BOT_STATE['training_queues'] = {}
-            BOT_STATE['training_queues'][str(village_id)] = settings
+            if str(village_id) not in BOT_STATE['training_queues']:
+                BOT_STATE['training_queues'][str(village_id)] = {}
+            BOT_STATE['training_queues'][str(village_id)].update(settings)
         save_config()
         socketio.emit("state_update", BOT_STATE)
 

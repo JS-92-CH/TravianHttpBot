@@ -2,6 +2,7 @@
 import time
 import re
 import threading
+from datetime import datetime, timezone
 from bs4 import BeautifulSoup
 from config import log, BOT_STATE, state_lock, save_config
 
@@ -16,9 +17,7 @@ class Module(threading.Thread):
         self.daemon = True
         self.village_cycle_index = 0
         self.client_class = client_class
-        # --- Start of Changes ---
         self.current_hero_location_id = None
-        # --- End of Changes ---
 
     def stop(self):
         self.stop_event.set()
@@ -117,6 +116,25 @@ class Module(threading.Thread):
                     all_queues_filled_for_this_village = True
                     min_queue_seconds = config.get('min_queue_duration_minutes', 15) * 60
 
+                    # --- Max Training Time Logic ---
+                    max_time_str = config.get('max_training_time')
+                    remaining_time_cap = float('inf')
+                    if max_time_str:
+                        try:
+                            # Assuming the format is "dd.mm.yyyy HH:MM"
+                            max_datetime = datetime.strptime(max_time_str, "%d.%m.%Y %H:%M")
+                            # This should be compared to local time if the bot runs on a local machine
+                            # For simplicity, we'll assume the bot's system time is the user's local time
+                            now_datetime = datetime.now()
+                            remaining_time_cap = (max_datetime - now_datetime).total_seconds()
+                            if remaining_time_cap <= 0:
+                                log.info(f"[TrainingAgent] Max training time for {village_name} has passed. Halting training for this cycle.")
+                                break
+                            log.info(f"[TrainingAgent] Max training time is set. Remaining time: {remaining_time_cap:.0f}s")
+                        except ValueError:
+                            log.warning(f"[TrainingAgent] Invalid max_training_time format: '{max_time_str}'. Ignoring.")
+
+
                     hero_inventory = client.get_hero_inventory()
                     if not hero_inventory:
                         log.warning("[TrainingAgent] Could not refresh hero inventory. Retrying in 3 minutes.")
@@ -167,16 +185,27 @@ class Module(threading.Thread):
 
                         if not page_data or not page_data.get('trainable'):
                             continue
+                        
+                        current_queue_duration = page_data['queue_duration_seconds']
+                        
+                        # Check against max training time cap
+                        if current_queue_duration >= remaining_time_cap:
+                            log.info(f"[TrainingAgent] - {building_type} queue ({current_queue_duration}s) already exceeds the max training time limit. Skipping.")
+                            continue
 
-                        if page_data['queue_duration_seconds'] < (min_queue_seconds * 0.95):
+                        if current_queue_duration < (min_queue_seconds * 0.95):
                             all_queues_filled_for_this_village = False
-                            log.info(f"[TrainingAgent] - {building_type} queue ({page_data['queue_duration_seconds']}s) is less than 95% of target ({min_queue_seconds}s).")
+                            log.info(f"[TrainingAgent] - {building_type} queue ({current_queue_duration}s) is less than 95% of target ({min_queue_seconds}s).")
 
                             troop_to_train = next((t for t in page_data['trainable'] if t['name'] == b_config['troop_name']), None)
                             if not troop_to_train or troop_to_train['time_per_unit'] <= 0:
                                 continue
 
-                            time_to_fill = min_queue_seconds - page_data['queue_duration_seconds']
+                            time_to_fill = min(min_queue_seconds - current_queue_duration, remaining_time_cap - current_queue_duration)
+                            
+                            if time_to_fill <= 0:
+                                continue
+
                             amount_based_on_time = int(time_to_fill / troop_to_train['time_per_unit'])
                             max_possible_by_res = troop_to_train.get('max_trainable', 0)
                             amount_to_queue = min(amount_based_on_time, max_possible_by_res)

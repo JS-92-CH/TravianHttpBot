@@ -1594,12 +1594,6 @@
         "70408": [
             {
                 "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            },
-            {
-                "type": "building",
                 "location": 31,
                 "gid": 14,
                 "level": 20
@@ -1620,18 +1614,6 @@
         "70806": [
             {
                 "type": "building",
-                "location": 22,
-                "gid": 24,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 25,
-                "gid": 17,
-                "level": 20
-            },
-            {
-                "type": "building",
                 "location": 27,
                 "gid": 13,
                 "level": 20
@@ -1650,18 +1632,6 @@
             }
         ],
         "71208": [
-            {
-                "type": "building",
-                "location": 27,
-                "gid": 13,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            },
             {
                 "type": "building",
                 "location": 31,
@@ -2748,7 +2718,7 @@
         },
         "70005": {
             "enabled": true,
-            "min_queue_duration_minutes": 715,
+            "min_queue_duration_minutes": 755,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2775,11 +2745,12 @@
                     "enabled": true,
                     "troop_name": "Resheph Chariot"
                 }
-            }
+            },
+            "max_training_time": "30.06.2025 20:00"
         },
         "69604": {
             "enabled": true,
-            "min_queue_duration_minutes": 715,
+            "min_queue_duration_minutes": 755,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2806,11 +2777,12 @@
                     "enabled": true,
                     "troop_name": "Resheph Chariot"
                 }
-            }
+            },
+            "max_training_time": "30.06.2025 20:00"
         },
         "69203": {
             "enabled": true,
-            "min_queue_duration_minutes": 715,
+            "min_queue_duration_minutes": 755,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2837,11 +2809,12 @@
                     "enabled": true,
                     "troop_name": "Resheph Chariot"
                 }
-            }
+            },
+            "max_training_time": "30.06.2025 20:00"
         },
         "69603": {
             "enabled": true,
-            "min_queue_duration_minutes": 715,
+            "min_queue_duration_minutes": 755,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2868,11 +2841,12 @@
                     "enabled": true,
                     "troop_name": "Sopdu Explorer"
                 }
-            }
+            },
+            "max_training_time": "30.06.2025 20:00"
         },
         "70406": {
             "enabled": true,
-            "min_queue_duration_minutes": 715,
+            "min_queue_duration_minutes": 735,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2899,7 +2873,8 @@
                     "enabled": true,
                     "troop_name": "Resheph Chariot"
                 }
-            }
+            },
+            "max_training_time": "30.06.2025 20:00"
         },
         "69602": {
             "enabled": false,
@@ -2965,7 +2940,7 @@
         },
         "70405": {
             "enabled": true,
-            "min_queue_duration_minutes": 715,
+            "min_queue_duration_minutes": 725,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2992,11 +2967,12 @@
                     "enabled": true,
                     "troop_name": "Resheph Chariot"
                 }
-            }
+            },
+            "max_training_time": "30.06.2025 20:00"
         },
         "70407": {
             "enabled": true,
-            "min_queue_duration_minutes": 700,
+            "min_queue_duration_minutes": 710,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3023,11 +2999,12 @@
                     "enabled": true,
                     "troop_name": "Resheph Chariot"
                 }
-            }
+            },
+            "max_training_time": "30.06.2025 20:00"
         },
         "70807": {
             "enabled": true,
-            "min_queue_duration_minutes": 700,
+            "min_queue_duration_minutes": 710,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3054,11 +3031,12 @@
                     "enabled": true,
                     "troop_name": "Resheph Chariot"
                 }
-            }
+            },
+            "max_training_time": "30.06.2025 20:00"
         },
         "70808": {
             "enabled": true,
-            "min_queue_duration_minutes": 680,
+            "min_queue_duration_minutes": 690,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3085,11 +3063,12 @@
                     "enabled": true,
                     "troop_name": "Resheph Chariot"
                 }
-            }
+            },
+            "max_training_time": "30.06.2025 20:00"
         },
         "70408": {
             "enabled": true,
-            "min_queue_duration_minutes": 150,
+            "min_queue_duration_minutes": 160,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3103,14 +3082,25 @@
                 },
                 "workshop": {
                     "gid": 21,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Ram"
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": true,
+                    "troop_name": "Slave Militia"
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": true,
+                    "troop_name": "Resheph Chariot"
                 }
-            }
+            },
+            "max_training_time": "30.06.2025 20:00"
         },
         "70806": {
             "enabled": true,
-            "min_queue_duration_minutes": 150,
+            "min_queue_duration_minutes": 160,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3124,10 +3114,21 @@
                 },
                 "workshop": {
                     "gid": 21,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Ram"
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": true,
+                    "troop_name": "Slave Militia"
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": true,
+                    "troop_name": "Resheph Chariot"
                 }
-            }
+            },
+            "max_training_time": "30.06.2025 20:00"
         },
         "71208": {
             "enabled": true,
@@ -3145,10 +3146,21 @@
                 },
                 "workshop": {
                     "gid": 21,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Ram"
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": true,
+                    "troop_name": "Slave Militia"
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": true,
+                    "troop_name": "Sopdu Explorer"
                 }
-            }
+            },
+            "max_training_time": "30.06.2025 20:00"
         }
     },
     "build_templates": {
