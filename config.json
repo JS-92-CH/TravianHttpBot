@@ -1585,141 +1585,31 @@
         "70005": [
             {
                 "type": "building",
-                "location": 37,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 38,
+                "location": 23,
                 "gid": 10,
                 "level": 20
             }
         ],
-        "69604": [
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 38,
-                "gid": 10,
-                "level": 20
-            }
-        ],
-        "69203": [
-            {
-                "type": "building",
-                "location": 36,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
-        "69603": [
-            {
-                "type": "building",
-                "location": 22,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
-        "70406": [
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 38,
-                "gid": 11,
-                "level": 20
-            }
-        ],
+        "69604": [],
+        "69203": [],
+        "69603": [],
+        "70406": [],
         "69602": [],
         "70004": [],
-        "70405": [
-            {
-                "type": "building",
-                "location": 36,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
-        "70407": [
-            {
-                "type": "building",
-                "location": 36,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
-        "70807": [
-            {
-                "type": "building",
-                "location": 36,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
-        "70808": [
-            {
-                "type": "building",
-                "location": 36,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 11,
-                "level": 20
-            }
-        ],
+        "70405": [],
+        "70407": [],
+        "70807": [],
+        "70808": [],
         "70408": [
             {
                 "type": "building",
-                "location": 34,
-                "gid": 10,
+                "location": 35,
+                "gid": 11,
                 "level": 20
             },
             {
                 "type": "building",
-                "location": 35,
+                "location": 38,
                 "gid": 11,
                 "level": 20
             }
@@ -1727,1071 +1617,45 @@
         "70806": [
             {
                 "type": "building",
-                "location": 34,
-                "gid": 10,
+                "location": 35,
+                "gid": 11,
                 "level": 20
             },
             {
                 "type": "building",
-                "location": 35,
-                "gid": 11,
+                "location": 37,
+                "gid": 10,
                 "level": 20
             }
         ],
         "71208": [
             {
                 "type": "building",
-                "location": 34,
-                "gid": 10,
+                "location": 35,
+                "gid": 11,
                 "level": 20
             },
             {
                 "type": "building",
-                "location": 35,
-                "gid": 11,
+                "location": 37,
+                "gid": 10,
                 "level": 20
             }
         ]
     },
     "demolish_queues": {
-        "69604": [
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 18
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 17
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 16
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 15
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 14
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 13
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 12
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 11
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 10
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 9
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 8
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 7
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 6
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 5
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 4
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 3
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 2
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 1
-            },
-            {
-                "type": "demolish",
-                "location": 20,
-                "gid": 22,
-                "level": 0
-            }
-        ],
-        "70005": [
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 18
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 17
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 16
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 15
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 14
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 13
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 12
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 11
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 10
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 9
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 8
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 7
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 6
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 5
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 4
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 3
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 2
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 1
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 0
-            }
-        ],
-        "69203": [
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 18
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 17
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 16
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 15
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 14
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 13
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 12
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 11
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 10
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 9
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 8
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 7
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 6
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 5
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 4
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 3
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 2
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 1
-            },
-            {
-                "type": "demolish",
-                "location": 21,
-                "gid": 22,
-                "level": 0
-            }
-        ],
-        "69603": [
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 18
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 17
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 16
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 15
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 14
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 13
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 12
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 11
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 10
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 9
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 8
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 7
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 6
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 5
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 4
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 3
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 2
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 1
-            },
-            {
-                "type": "demolish",
-                "location": 24,
-                "gid": 22,
-                "level": 0
-            }
-        ],
-        "70406": [
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 17
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 16
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 15
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 14
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 13
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 12
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 11
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 10
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 9
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 8
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 7
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 6
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 5
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 4
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 3
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 2
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 1
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 0
-            }
-        ],
-        "70405": [
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 18
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 17
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 16
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 15
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 14
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 13
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 12
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 11
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 10
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 9
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 8
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 7
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 6
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 5
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 4
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 3
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 2
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 1
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 0
-            }
-        ],
-        "70407": [
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 18
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 17
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 16
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 15
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 14
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 13
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 12
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 11
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 10
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 9
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 8
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 7
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 6
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 5
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 4
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 3
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 2
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 1
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 0
-            }
-        ],
-        "70807": [
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 18
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 17
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 16
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 15
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 14
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 13
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 12
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 11
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 10
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 9
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 8
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 7
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 6
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 5
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 4
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 3
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 2
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 1
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 0
-            }
-        ],
-        "70808": [
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 18
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 17
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 16
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 15
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 14
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 13
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 12
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 11
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 10
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 9
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 8
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 7
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 6
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 5
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 4
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 3
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 2
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 1
-            },
-            {
-                "type": "demolish",
-                "location": 23,
-                "gid": 22,
-                "level": 0
-            }
-        ]
+        "69604": [],
+        "70005": [],
+        "69203": [],
+        "69603": [],
+        "70406": [],
+        "70405": [],
+        "70407": [],
+        "70807": [],
+        "70808": [],
+        "70408": [],
+        "70806": [],
+        "71208": []
     },
     "training_queues": {
         "53965": {
@@ -3871,7 +2735,7 @@
         },
         "70005": {
             "enabled": true,
-            "min_queue_duration_minutes": 710,
+            "min_queue_duration_minutes": 860,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3903,7 +2767,7 @@
         },
         "69604": {
             "enabled": true,
-            "min_queue_duration_minutes": 690,
+            "min_queue_duration_minutes": 830,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3935,7 +2799,7 @@
         },
         "69203": {
             "enabled": true,
-            "min_queue_duration_minutes": 680,
+            "min_queue_duration_minutes": 820,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3967,7 +2831,7 @@
         },
         "69603": {
             "enabled": true,
-            "min_queue_duration_minutes": 670,
+            "min_queue_duration_minutes": 810,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3999,7 +2863,7 @@
         },
         "70406": {
             "enabled": true,
-            "min_queue_duration_minutes": 660,
+            "min_queue_duration_minutes": 800,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -4093,7 +2957,7 @@
         },
         "70405": {
             "enabled": true,
-            "min_queue_duration_minutes": 660,
+            "min_queue_duration_minutes": 800,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -4125,7 +2989,7 @@
         },
         "70407": {
             "enabled": true,
-            "min_queue_duration_minutes": 660,
+            "min_queue_duration_minutes": 780,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -4157,7 +3021,7 @@
         },
         "70807": {
             "enabled": true,
-            "min_queue_duration_minutes": 660,
+            "min_queue_duration_minutes": 770,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -4189,7 +3053,7 @@
         },
         "70808": {
             "enabled": true,
-            "min_queue_duration_minutes": 660,
+            "min_queue_duration_minutes": 770,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -4221,7 +3085,7 @@
         },
         "70408": {
             "enabled": true,
-            "min_queue_duration_minutes": 660,
+            "min_queue_duration_minutes": 760,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -4253,7 +3117,7 @@
         },
         "70806": {
             "enabled": true,
-            "min_queue_duration_minutes": 660,
+            "min_queue_duration_minutes": 760,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -4285,7 +3149,7 @@
         },
         "71208": {
             "enabled": true,
-            "min_queue_duration_minutes": 650,
+            "min_queue_duration_minutes": 740,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -4314,6 +3178,164 @@
                 }
             },
             "max_training_time": "30.06.2025 23:59"
+        }
+    },
+    "smithy_upgrades": {
+        "70005": {
+            "enabled": true,
+            "priority": [
+                "Khopesh Warrior",
+                "Resheph Chariot",
+                "Ram",
+                "Stone Catapult",
+                "Slave Militia",
+                "Ash Warden",
+                "Sopdu Explorer",
+                "Anhur Guard"
+            ]
+        },
+        "69604": {
+            "enabled": true,
+            "priority": [
+                "Khopesh Warrior",
+                "Resheph Chariot",
+                "Ram",
+                "Stone Catapult",
+                "Slave Militia",
+                "Ash Warden",
+                "Sopdu Explorer",
+                "Anhur Guard"
+            ]
+        },
+        "69203": {
+            "enabled": true,
+            "priority": [
+                "Khopesh Warrior",
+                "Resheph Chariot",
+                "Ram",
+                "Stone Catapult",
+                "Slave Militia",
+                "Ash Warden",
+                "Sopdu Explorer",
+                "Anhur Guard"
+            ]
+        },
+        "69603": {
+            "enabled": true,
+            "priority": [
+                "Slave Militia",
+                "Sopdu Explorer",
+                "Ash Warden",
+                "Anhur Guard",
+                "Resheph Chariot",
+                "Ram",
+                "Khopesh Warrior",
+                "Stone Catapult"
+            ]
+        },
+        "70406": {
+            "enabled": true,
+            "priority": [
+                "Khopesh Warrior",
+                "Resheph Chariot",
+                "Slave Militia",
+                "Ash Warden",
+                "Sopdu Explorer",
+                "Anhur Guard",
+                "Ram",
+                "Stone Catapult"
+            ]
+        },
+        "70405": {
+            "enabled": true,
+            "priority": [
+                "Khopesh Warrior",
+                "Resheph Chariot",
+                "Slave Militia",
+                "Ash Warden",
+                "Sopdu Explorer",
+                "Anhur Guard",
+                "Ram",
+                "Stone Catapult"
+            ]
+        },
+        "70407": {
+            "enabled": true,
+            "priority": [
+                "Khopesh Warrior",
+                "Resheph Chariot",
+                "Slave Militia",
+                "Ash Warden",
+                "Sopdu Explorer",
+                "Anhur Guard",
+                "Ram",
+                "Stone Catapult"
+            ]
+        },
+        "70807": {
+            "enabled": true,
+            "priority": [
+                "Khopesh Warrior",
+                "Resheph Chariot",
+                "Slave Militia",
+                "Ash Warden",
+                "Sopdu Explorer",
+                "Anhur Guard",
+                "Ram",
+                "Stone Catapult"
+            ]
+        },
+        "70808": {
+            "enabled": true,
+            "priority": [
+                "Khopesh Warrior",
+                "Resheph Chariot",
+                "Slave Militia",
+                "Ash Warden",
+                "Sopdu Explorer",
+                "Anhur Guard",
+                "Ram",
+                "Stone Catapult"
+            ]
+        },
+        "70408": {
+            "enabled": true,
+            "priority": [
+                "Slave Militia",
+                "Resheph Chariot",
+                "Ram",
+                "Ash Warden",
+                "Sopdu Explorer",
+                "Khopesh Warrior",
+                "Anhur Guard",
+                "Stone Catapult"
+            ]
+        },
+        "70806": {
+            "enabled": true,
+            "priority": [
+                "Slave Militia",
+                "Resheph Chariot",
+                "Ram",
+                "Ash Warden",
+                "Khopesh Warrior",
+                "Sopdu Explorer",
+                "Anhur Guard",
+                "Stone Catapult"
+            ]
+        },
+        "71208": {
+            "enabled": true,
+            "priority": [
+                "Slave Militia",
+                "Sopdu Explorer",
+                "Resheph Chariot",
+                "Ram",
+                "Ash Warden",
+                "Khopesh Warrior",
+                "Anhur Guard",
+                "Stone Catapult"
+            ]
         }
     },
     "build_templates": {

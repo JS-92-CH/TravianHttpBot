@@ -69,6 +69,8 @@ BOT_STATE: Dict[str, Any] = {
     "demolish_queues": {},
     "training_data": {},
     "training_queues": {},
+    "smithy_upgrades": {},
+    "smithy_data": {},
     "build_templates": {
         "Off Village": [
             {"type": "building", "location": 26, "gid": 15, "level": 20},
@@ -207,6 +209,7 @@ def load_config() -> None:
             BOT_STATE["build_queues"] = data.get("build_queues", {})
             BOT_STATE["demolish_queues"] = data.get("demolish_queues", {})
             BOT_STATE["training_queues"] = data.get("training_queues", {})
+            BOT_STATE["smithy_upgrades"] = data.get("smithy_upgrades", {})
             BOT_STATE["build_templates"].update(data.get("build_templates", {}))
             if "village_data" not in BOT_STATE:
                 BOT_STATE["village_data"] = {}
@@ -229,6 +232,7 @@ def save_config() -> None:
             "build_queues": BOT_STATE["build_queues"].copy(),
             "demolish_queues": BOT_STATE["demolish_queues"].copy(),
             "training_queues": BOT_STATE["training_queues"].copy(),
+            "smithy_upgrades": BOT_STATE["smithy_upgrades"].copy(),
             "build_templates": BOT_STATE.get("build_templates", {}).copy()
         }
     with open("config.json", "w", encoding="utf‑8") as fh:

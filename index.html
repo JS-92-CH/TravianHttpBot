@@ -84,13 +84,12 @@
             display: none;
         }
 
-        /* New class for collapsible sections */
         .collapsible-section .collapsible-content {
-            display: none; /* Hidden by default */
+            display: none;
             padding-top: 1rem;
         }
         .collapsible-section.open .collapsible-content {
-            display: block; /* Show when open */
+            display: block;
         }
         .collapsible-header {
             cursor: pointer;
@@ -99,7 +98,6 @@
             margin-top: 1.5rem;
         }
          .collapsible-header h3 { margin: 0; color: var(--text-secondary); }
-
 
         .btn {
             background-color: var(--bg-tertiary);
@@ -116,7 +114,6 @@
         .btn-primary { background-color: var(--accent-primary); color: var(--bg-primary); }
         .btn-danger { background-color: var(--accent-secondary); color: var(--bg-primary); }
         .btn-small { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
-
 
         .form-group { margin-bottom: 1rem; }
         .form-control {
@@ -166,6 +163,18 @@
         .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem; }
         .tab { padding: 1rem; cursor: pointer; border-bottom: 3px solid transparent; }
         .tab.active { color: var(--accent-primary); border-bottom: 3px solid var(--accent-primary); font-weight: 700; }
+
+        .draggable {
+            cursor: move;
+            background-color: var(--bg-tertiary);
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+        .drag-over {
+            border-top: 2px solid var(--accent-primary);
+        }
 
     </style>
 </head>
@@ -756,6 +765,7 @@
                                 <div class="tab" id="tab-fields" onclick="openTab(event, 'fields')">Resource Fields</div>
                                 <div class="tab" id="tab-buildings" onclick="openTab(event, 'buildings')">City Buildings</div>
                                 <div class="tab" id="tab-training" onclick="openTab(event, 'training')">Training</div>
+                                <div class="tab" id="tab-smithy" onclick="openTab(event, 'smithy')">Smithy</div>
                                 <div class="tab" id="tab-demolish" onclick="openTab(event, 'demolish')">Demolish</div>
                                 <div class="tab" id="tab-new" onclick="openTab(event, 'new')">New Build</div>
                             </div>`;
@@ -973,13 +983,116 @@
             });
             queueHtml += '</ol>';
 
-            detailsDiv.innerHTML = fieldsContent + buildingsContent + trainingContent + demolishContent + newBuildContent + queueHtml;
+            let smithyContent = `<div id="smithy" class="tab-content"><h3>Smithy Upgrade Priority</h3></div>`;
+            
+            detailsDiv.innerHTML = fieldsContent + buildingsContent + trainingContent + smithyContent + demolishContent + newBuildContent + queueHtml;
             renderTemplateList(villageId);
+            renderSmithyUpgrades(villageId);
             
             const tabElem = titleEl.querySelector(`#tab-${currentTab}`) || titleEl.querySelector('.tab');
             if (tabElem) {
                 openTab({currentTarget: tabElem}, currentTab);
             }
+        }
+
+        function renderSmithyUpgrades(villageId) {
+            const smithyTab = document.getElementById('smithy');
+            if (!smithyTab) return;
+
+            const smithySettings = (FULL_STATE.smithy_upgrades || {})[villageId] || { enabled: false, priority: [] };
+            const villageDetails = FULL_STATE.village_data[villageId];
+            const smithyBuilding = (villageDetails.buildings || []).find(b => b.gid === 13);
+            
+            if (!smithyBuilding) {
+                smithyTab.innerHTML = '<h3>Smithy not found in this village.</h3>';
+                return;
+            }
+
+            let html = `
+                <div class="form-group" style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem;">
+                        <input type="checkbox" id="smithy-enabled-${villageId}" ${smithySettings.enabled ? 'checked' : ''} onchange="saveSmithySettings('${villageId}')">
+                        Enable automatic smithy upgrades for this village
+                    </label>
+                </div>
+                <h4>Upgrade Priority (drag to reorder)</h4>
+                <div id="smithy-priority-list-${villageId}" class="priority-list"></div>
+            `;
+            smithyTab.innerHTML = html;
+
+            const priorityListEl = document.getElementById(`smithy-priority-list-${villageId}`);
+            const smithyData = (FULL_STATE.smithy_data || {})[villageId] || {};
+            const availableResearches = smithyData.researches || [];
+            
+            const priority = smithySettings.priority || [];
+            
+            // Filter out researches that are not in the priority list and append them at the end
+            const prioritySet = new Set(priority);
+            const nonPriorityResearches = availableResearches.filter(r => !prioritySet.has(r.name));
+
+            const sortedResearches = [
+                ...priority.map(name => availableResearches.find(r => r.name === name)).filter(Boolean),
+                ...nonPriorityResearches
+            ];
+
+            sortedResearches.forEach(research => {
+                const item = document.createElement('div');
+                item.className = 'draggable';
+                item.draggable = true;
+                item.textContent = `${research.name} (Level ${research.level})`;
+                item.dataset.unitName = research.name;
+                priorityListEl.appendChild(item);
+            });
+
+            let draggedItem = null;
+
+            priorityListEl.addEventListener('dragstart', (e) => {
+                draggedItem = e.target;
+                e.target.style.opacity = '0.5';
+            });
+
+            priorityListEl.addEventListener('dragend', (e) => {
+                e.target.style.opacity = '1';
+                draggedItem = null;
+                saveSmithySettings(villageId);
+            });
+
+            priorityListEl.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(priorityListEl, e.clientY);
+                if (afterElement == null) {
+                    priorityListEl.appendChild(draggedItem);
+                } else {
+                    priorityListEl.insertBefore(draggedItem, afterElement);
+                }
+            });
+        }
+        
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function saveSmithySettings(villageId) {
+            const enabled = document.getElementById(`smithy-enabled-${villageId}`).checked;
+            const priorityListEl = document.getElementById(`smithy-priority-list-${villageId}`);
+            const priority = [...priorityListEl.querySelectorAll('.draggable')].map(item => item.dataset.unitName);
+
+            const settings = {
+                enabled,
+                priority
+            };
+
+            socket.emit('update_smithy_upgrades', { villageId: villageId, settings: settings });
         }
         
         function renderTemplateList(villageId) {

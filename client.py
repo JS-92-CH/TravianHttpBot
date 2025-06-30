@@ -891,3 +891,88 @@ class TravianClient:
         except Exception as e:
             log.error(f"[{self.username}] Failed to execute demolition: {e}", exc_info=True)
             return 0
+        
+    def get_smithy_page(self, village_id: int) -> Optional[Dict]:
+        """Fetches and parses the smithy page (GID 13)."""
+        try:
+            # First, find the location ID of the smithy in the village
+            village_details = self.fetch_and_parse_village(village_id)
+            if not village_details: return None
+            
+            smithy_building = next((b for b in village_details.get('buildings', []) if b.get('gid') == 13), None)
+            if not smithy_building:
+                # This is not an error, the village just doesn't have a smithy
+                return None
+            
+            location_id = smithy_building.get('id')
+            url = f"{self.server_url}/build.php?newdid={village_id}&id={location_id}"
+            resp = self.sess.get(url, timeout=15)
+            soup = BeautifulSoup(resp.text, 'html.parser')
+
+            researches = []
+            for research_div in soup.select('.build_details.researches .research'):
+                title_div = research_div.select_one('.information .title')
+                if not title_div: continue
+
+                name_anchor = title_div.select_one('a:nth-of-type(2)')
+                if not name_anchor: continue
+                
+                name = name_anchor.text.strip()
+                level_span = title_div.select_one('.level')
+                
+                # Robustly parse level, handling "level 13 + 1"
+                level = 0
+                if level_span:
+                    level_text = level_span.text
+                    level_match = re.search(r'\d+', level_text)
+                    if level_match:
+                        level = int(level_match.group(0))
+
+                upgrade_url = None
+                button = research_div.select_one('.cta button.green')
+                if button and button.has_attr('onclick'):
+                    match = re.search(r"window\.location\.href = '(.+?)'", button['onclick'])
+                    if match:
+                        upgrade_url = urljoin(self.server_url, match.group(1).replace('&amp;', '&'))
+
+                researches.append({'name': name, 'level': level, 'upgrade_url': upgrade_url})
+            
+            # Parse the list of currently researching units
+            research_queue = []
+            if queue_table := soup.find('table', class_='under_progress'):
+                for row in queue_table.select('tbody tr'):
+                    name_cell = row.find('td', class_='desc')
+                    duration_cell = row.find('td', class_='fin') # 'fin' contains the timer
+                    if name_cell and duration_cell:
+                        name = name_cell.get_text(strip=True).split('level')[0].strip()
+                        timer = duration_cell.find('span', class_='timer')
+                        if timer and timer.has_attr('value'):
+                            eta = int(timer['value'])
+                            research_queue.append({'name': name, 'eta': eta})
+            
+            # Robustly check for Plus account by seeing if the second queue slot container exists
+            plus_account = soup.select_one('.upgradeButtonsContainer .section2') is not None
+
+            return {
+                'researches': researches,
+                'research_queue': research_queue,
+                'plus_account': plus_account
+            }
+
+        except Exception as e:
+            log.error(f"[{self.username}] Failed to get/parse Smithy page for village {village_id}: {e}", exc_info=True)
+            return None
+
+    def upgrade_unit(self, village_id: int, upgrade_url: str) -> bool:
+        """Sends the GET request to upgrade a unit in the smithy."""
+        try:
+            log.info(f"[{self.username}] Sending upgrade request: {upgrade_url}")
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
+                "Referer": f"{self.server_url}/build.php?newdid={village_id}&gid=13"
+            }
+            resp = self.sess.get(upgrade_url, headers=headers, timeout=15)
+            return resp.status_code == 200
+        except Exception as e:
+            log.error(f"[{self.username}] Failed to execute unit upgrade: {e}", exc_info=True)
+            return False

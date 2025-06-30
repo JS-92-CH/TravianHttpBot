@@ -1,3 +1,5 @@
+# modules/__init__.py
+
 import os
 import importlib
 
@@ -7,9 +9,19 @@ def load_modules(agent):
     """Dynamically load all module classes in this package and instantiate them."""
     modules = []
     base_dir = os.path.dirname(__file__)
+    # Exclude independent agents (threads) and base classes from this list.
+    modules_to_exclude = [
+        '__init__.py', 
+        'base.py', 
+        'adventure.py', 
+        'hero.py', 
+        'training.py', 
+        'demolish.py',
+        'smithyupgrades.py'
+    ]
+
     for fname in sorted(os.listdir(base_dir)):
-        # Exclude independent agents (threads) and base classes from this list.
-        if fname.endswith('.py') and fname not in ('__init__.py', 'base.py', 'adventure.py', 'hero.py', 'training.py', 'demolish.py'):
+        if fname.endswith('.py') and fname not in modules_to_exclude:
             mod_name = fname[:-3]
             mod = importlib.import_module(f'.{mod_name}', package=__name__)
             cls = getattr(mod, 'Module', None)

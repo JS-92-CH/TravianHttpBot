@@ -8,6 +8,7 @@ from modules.adventure import Module as AdventureModule
 from modules.hero import Module as HeroModule
 from modules.training import Module as TrainingModule
 from modules.demolish import Module as DemolishModule
+from modules.smithyupgrades import Module as SmithyModule
 from client import TravianClient
 from config import log, BOT_STATE, state_lock, save_config
 from modules import load_modules
@@ -69,10 +70,14 @@ class VillageAgent(threading.Thread):
                             training_page_data = self.client.get_training_page(self.village_id, gid)
                             if training_page_data:
                                 BOT_STATE['training_data'][str(self.village_id)][str(gid)] = training_page_data
+
+                    if any(b['gid'] == 13 for b in village_data.get('buildings', [])):
+                        smithy_page_data = self.client.get_smithy_page(self.village_id)
+                        if smithy_page_data:
+                            BOT_STATE['smithy_data'][str(self.village_id)] = smithy_page_data
                 
                 with state_lock:
                     BOT_STATE["village_data"][str(self.village_id)] = village_data
-                    # --- FIX IS HERE ---
                     # Emit a deep copy of the state to prevent runtime errors
                     self.socketio.emit("state_update", copy.deepcopy(BOT_STATE))
 
@@ -137,6 +142,7 @@ class BotManager(threading.Thread):
         self.hero_module = HeroModule(self)
         self.training_module = TrainingModule(self, TravianClient)
         self.demolish_module = DemolishModule(self, TravianClient)
+        self.smithy_module = SmithyModule(self, TravianClient)
         self.daemon = True
 
     def stop(self):
@@ -159,6 +165,10 @@ class BotManager(threading.Thread):
         log.info("Stopping demolish agent...")
         self.demolish_module.stop()
         self.demolish_module.join()
+
+        log.info("Stopping smithy agent...")
+        self.smithy_module.stop()             
+        self.smithy_module.join()
 
         log.info("Bot Manager stopped.")
 
@@ -188,6 +198,8 @@ class BotManager(threading.Thread):
         self.training_module.start()
         log.info("Starting independent demolish agent...")
         self.demolish_module.start()
+        log.info("Starting independent smithy agent...")
+        self.smithy_module.start() 
 
         while not self.stop_event.is_set():
             try:
@@ -258,6 +270,7 @@ class BotManager(threading.Thread):
             with state_lock:
                 BOT_STATE["village_data"][username] = villages
                 if 'training_queues' not in BOT_STATE: BOT_STATE['training_queues'] = {}
+                if 'smithy_upgrades' not in BOT_STATE: BOT_STATE['smithy_upgrades'] = {}
                 config_updated = False
                 for v in villages:
                     if str(v['id']) not in BOT_STATE['training_queues']:
@@ -269,6 +282,13 @@ class BotManager(threading.Thread):
                                 "workshop": {"gid":21,"enabled":False,"troop_name":""}, "great_barracks": {"gid":29,"enabled":False,"troop_name":""},
                                 "great_stable": {"gid":30,"enabled":False,"troop_name":""},
                             }
+                        }
+
+                    if str(v['id']) not in BOT_STATE['smithy_upgrades']:
+                        log.info(f"Creating default (disabled) smithy upgrade config for new village {v['name']}")
+                        BOT_STATE['smithy_upgrades'][str(v['id'])] = {
+                            "enabled": False,
+                            "priority": []
                         }
                         config_updated = True
                 if config_updated: save_config()

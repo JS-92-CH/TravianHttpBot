@@ -249,6 +249,21 @@ def handle_update_demolish_queue(data):
         save_config()
         socketio.emit("state_update", BOT_STATE)
 
+@socketio.on('update_smithy_upgrades')
+def handle_update_smithy_upgrades(data):
+    village_id = data.get('villageId')
+    settings = data.get('settings')
+    if village_id and settings is not None:
+        log.info(f"Updating smithy upgrades for village {village_id}")
+        with state_lock:
+            if 'smithy_upgrades' not in BOT_STATE:
+                BOT_STATE['smithy_upgrades'] = {}
+            if str(village_id) not in BOT_STATE['smithy_upgrades']:
+                BOT_STATE['smithy_upgrades'][str(village_id)] = {}
+            BOT_STATE['smithy_upgrades'][str(village_id)].update(settings)
+        save_config()
+        socketio.emit("state_update", BOT_STATE)
+        
 @socketio.on('copy_training_settings')
 def handle_copy_training_settings(data):
     source_village_id_str = data.get('villageId')

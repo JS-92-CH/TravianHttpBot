@@ -102,4 +102,4 @@ class Module(threading.Thread):
                 log.error(f"[DemolishAgent] CRITICAL ERROR in main loop: {e}", exc_info=True)
             
             # Main sleep interval between full checks of all villages
-            self.stop_event.wait(15)
+            self.stop_event.wait(10)
