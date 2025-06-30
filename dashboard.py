@@ -2,13 +2,17 @@
 
 from flask import Flask, render_template_string
 from flask_socketio import SocketIO
+import copy
 
-from config import BOT_STATE, state_lock, save_config, log
+from config import BOT_STATE, state_lock, save_config, log, setup_logging
 from bot import BotManager
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "8b8e2d43‐dashboard‐secret"
 socketio = SocketIO(app, async_mode="threading")
+
+# Setup logging to include the socketio handler
+setup_logging(socketio)
 
 # The BotManager now runs continuously, managing agents based on their 'active' state.
 bot_manager_thread = None
@@ -18,7 +22,7 @@ def index_route():
     try:
         # Start the BotManager on the first request
         global bot_manager_thread
-        if bot_manager_thread is None:
+        if bot_manager_thread is None or not bot_manager_thread.is_alive():
             log.info("Starting bot manager thread...")
             bot_manager_thread = BotManager(socketio)
             bot_manager_thread.start()
@@ -32,7 +36,7 @@ def index_route():
 def on_connect():
     log.info("Dashboard connected.")
     with state_lock:
-        socketio.emit("state_update", BOT_STATE)
+        socketio.emit("state_update", copy.deepcopy(BOT_STATE))
 
 @socketio.on('start_account')
 def handle_start_account(data):
@@ -44,8 +48,6 @@ def handle_start_account(data):
                 acc['active'] = True
                 break
     save_config()
-    socketio.emit("state_update", BOT_STATE)
-    log.info(f"Account {username} marked as active. BotManager will pick it up.")
 
 @socketio.on('stop_account')
 def handle_stop_account(data):
@@ -57,9 +59,6 @@ def handle_stop_account(data):
                 acc['active'] = False
                 break
     save_config()
-    # The BotManager will see the 'active: false' flag and stop the agents.
-    socketio.emit("state_update", BOT_STATE)
-    log.info(f"Account {username} marked as inactive. BotManager will stop its agents.")
 
 
 @socketio.on('add_account')
@@ -89,10 +88,7 @@ def handle_add_account(data):
         
         BOT_STATE['accounts'].append(new_account)
     save_config()
-    socketio.emit("state_update", BOT_STATE)
 
-# Other event handlers like 'update_account_setting', 'remove_account', etc., remain the same.
-# Make sure they are still present in your file.
 @socketio.on('update_account_setting')
 def handle_update_account_setting(data):
     username = data.get('username')
@@ -106,6 +102,7 @@ def handle_update_account_setting(data):
                     proxy_key = key.split('_', 1)[1]
                     if 'proxy' not in acc:
                         acc['proxy'] = {"ip": "", "port": "", "username": "", "password": ""}
+                    
                     if proxy_key == 'ip': acc['proxy']['ip'] = value
                     elif proxy_key == 'port': acc['proxy']['port'] = value
                     elif proxy_key == 'user': acc['proxy']['username'] = value
@@ -114,7 +111,6 @@ def handle_update_account_setting(data):
                     acc[key] = value
                 break
     save_config()
-    socketio.emit("state_update", BOT_STATE)
 
 @socketio.on('remove_account')
 def handle_remove_account(data):
@@ -123,21 +119,7 @@ def handle_remove_account(data):
     with state_lock:
         BOT_STATE['accounts'] = [acc for acc in BOT_STATE['accounts'] if acc['username'] != username_to_remove]
     save_config()
-    socketio.emit("state_update", BOT_STATE)
     
-@socketio.on('add_build_task')
-def handle_add_build_task(data):
-    village_id = data.get('villageId')
-    task = data.get('task')
-    if village_id and task:
-        log.info(f"Adding task to build queue for village {village_id}: {task}")
-        with state_lock:
-            if str(village_id) not in BOT_STATE['build_queues']:
-                BOT_STATE['build_queues'][str(village_id)] = []
-            BOT_STATE['build_queues'][str(village_id)].append(task)
-        save_config()
-        socketio.emit("state_update", BOT_STATE)
-
 @socketio.on('update_build_queue')
 def handle_update_build_queue(data):
     village_id = data.get('villageId')
@@ -147,7 +129,6 @@ def handle_update_build_queue(data):
         with state_lock:
             BOT_STATE['build_queues'][str(village_id)] = queue
         save_config()
-        socketio.emit("state_update", BOT_STATE)
 
 @socketio.on('move_build_queue_item')
 def handle_move_build_queue_item(data):
@@ -157,7 +138,7 @@ def handle_move_build_queue_item(data):
 
     with state_lock:
         queue = BOT_STATE['build_queues'].get(village_id, [])
-        if not queue or not (0 <= index < len(queue)):
+        if not (0 <= index < len(queue)):
             return
 
         item = queue.pop(index)
@@ -174,7 +155,6 @@ def handle_move_build_queue_item(data):
         BOT_STATE['build_queues'][village_id] = queue
     
     save_config()
-    socketio.emit("state_update", BOT_STATE)
 
 @socketio.on('update_hero_settings')
 def handle_update_hero_settings(data):
@@ -189,7 +169,6 @@ def handle_update_hero_settings(data):
                 acc['hero_settings'].update(settings)
                 break
     save_config()
-    socketio.emit("state_update", BOT_STATE)
 
 @socketio.on('save_build_template')
 def handle_save_build_template(data):
@@ -200,7 +179,6 @@ def handle_save_build_template(data):
             BOT_STATE['build_templates'] = {}
         BOT_STATE['build_templates'][template_name] = BOT_STATE['build_queues'].get(str(village_id), [])
     save_config()
-    socketio.emit("state_update", BOT_STATE)
 
 @socketio.on('load_build_template')
 def handle_load_build_template(data):
@@ -210,7 +188,6 @@ def handle_load_build_template(data):
         if 'build_templates' in BOT_STATE and template_name in BOT_STATE['build_templates']:
             BOT_STATE['build_queues'][str(village_id)] = BOT_STATE['build_templates'][template_name]
     save_config()
-    socketio.emit("state_update", BOT_STATE)
 
 @socketio.on('delete_build_template')
 def handle_delete_build_template(data):
@@ -219,7 +196,6 @@ def handle_delete_build_template(data):
         if 'build_templates' in BOT_STATE and template_name in BOT_STATE['build_templates']:
             del BOT_STATE['build_templates'][template_name]
     save_config()
-    socketio.emit("state_update", BOT_STATE)
 
 @socketio.on('update_training_queues')
 def handle_update_training_queues(data):
@@ -234,7 +210,6 @@ def handle_update_training_queues(data):
                 BOT_STATE['training_queues'][str(village_id)] = {}
             BOT_STATE['training_queues'][str(village_id)].update(settings)
         save_config()
-        socketio.emit("state_update", BOT_STATE)
 
 @socketio.on('update_demolish_queue')
 def handle_update_demolish_queue(data):
@@ -247,7 +222,6 @@ def handle_update_demolish_queue(data):
                 BOT_STATE['demolish_queues'] = {}
             BOT_STATE['demolish_queues'][str(village_id)] = queue
         save_config()
-        socketio.emit("state_update", BOT_STATE)
 
 @socketio.on('update_smithy_upgrades')
 def handle_update_smithy_upgrades(data):
@@ -262,61 +236,73 @@ def handle_update_smithy_upgrades(data):
                 BOT_STATE['smithy_upgrades'][str(village_id)] = {}
             BOT_STATE['smithy_upgrades'][str(village_id)].update(settings)
         save_config()
-        socketio.emit("state_update", BOT_STATE)
         
-@socketio.on('copy_training_settings')
-def handle_copy_training_settings(data):
-    source_village_id_str = data.get('villageId')
-    log.info(f"Copying training settings from village {source_village_id_str} to all others.")
+@socketio.on('copy_settings')
+def handle_copy_settings(data):
+    source_village_id = data.get('source_village_id')
+    target_village_id = data.get('target_village_id')
+    setting_type = data.get('setting_type') # 'training' or 'smithy'
+
+    log.info(f"Copying {setting_type} settings from village {source_village_id} to {target_village_id}.")
 
     with state_lock:
         # Find the source account and all its villages
         source_account_username = None
         for username, village_list in BOT_STATE.get("village_data", {}).items():
-            if isinstance(village_list, list) and any(str(v['id']) == source_village_id_str for v in village_list):
+            if isinstance(village_list, list) and any(str(v['id']) == source_village_id for v in village_list):
                 source_account_username = username
                 break
         
         if not source_account_username:
-            log.error(f"Could not find account for source village {source_village_id_str}.")
+            log.error(f"Could not find account for source village {source_village_id}.")
             return
 
-        source_settings = BOT_STATE.get("training_queues", {}).get(source_village_id_str)
+        source_key = 'training_queues' if setting_type == 'training' else 'smithy_upgrades'
+        source_settings = BOT_STATE.get(source_key, {}).get(source_village_id)
+
         if not source_settings:
-            log.error(f"No training settings found for source village {source_village_id_str}.")
+            log.error(f"No {setting_type} settings found for source village {source_village_id}.")
             return
 
         all_villages_for_account = BOT_STATE.get("village_data", {}).get(source_account_username, [])
         
-        for target_village in all_villages_for_account:
-            target_village_id_str = str(target_village['id'])
-            if target_village_id_str == source_village_id_str:
-                continue
-
-            # Get details of the target village to check for buildings
-            target_village_details = BOT_STATE.get("village_data", {}).get(target_village_id_str)
+        target_village_ids = []
+        if target_village_id == '__ALL__':
+            target_village_ids = [str(v['id']) for v in all_villages_for_account if str(v['id']) != source_village_id]
+        else:
+            target_village_ids.append(target_village_id)
+        
+        for target_id in target_village_ids:
+            target_village_details = BOT_STATE.get("village_data", {}).get(target_id)
             if not target_village_details:
+                log.warning(f"Skipping copy for {target_id}: no village details found.")
                 continue
 
-            log.info(f"Applying settings to village {target_village['name']} ({target_village_id_str})")
-            
-            # Start with a fresh copy of the source settings
-            new_target_settings = source_settings.copy()
-            new_target_settings['buildings'] = {}
+            log.info(f"Applying {setting_type} settings to village ID {target_id}")
 
-            # Iterate through building types (barracks, stable, etc.) from the source
-            for building_key, building_setting in source_settings.get('buildings', {}).items():
-                source_gid = building_setting.get('gid')
+            if setting_type == 'training':
+                new_target_settings = copy.deepcopy(source_settings)
+                new_target_settings['buildings'] = {}
+
+                for building_key, building_setting in source_settings.get('buildings', {}).items():
+                    source_gid = building_setting.get('gid')
+                    
+                    if any(b.get('gid') == source_gid for b in target_village_details.get('buildings', [])):
+                        new_target_settings['buildings'][building_key] = building_setting
+                        log.info(f"  - Copied setting for {building_key} (GID: {source_gid})")
+                    else:
+                        log.info(f"  - Skipped {building_key} (GID: {source_gid}) - building not found in target village.")
                 
-                # Check if the target village has a building with the same GID
-                if any(b.get('gid') == source_gid for b in target_village_details.get('buildings', [])):
-                    new_target_settings['buildings'][building_key] = building_setting
-                    log.info(f"  - Copied setting for {building_key} (GID: {source_gid})")
-                else:
-                    log.info(f"  - Skipped {building_key} (GID: {source_gid}) - building not found in target village.")
+                BOT_STATE.setdefault(source_key, {})[target_id] = new_target_settings
 
-            BOT_STATE['training_queues'][target_village_id_str] = new_target_settings
+            elif setting_type == 'smithy':
+                # For smithy, we just check if the building exists and copy everything.
+                if any(b.get('gid') == 13 for b in target_village_details.get('buildings', [])):
+                     BOT_STATE.setdefault(source_key, {})[target_id] = copy.deepcopy(source_settings)
+                     log.info(f"  - Copied smithy settings.")
+                else:
+                    log.info(f"  - Skipped smithy settings - building not found in target village.")
+
 
     save_config()
-    socketio.emit("state_update", BOT_STATE)
-    log.info("Finished copying training settings.")
+    log.info(f"Finished copying {setting_type} settings.")

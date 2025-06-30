@@ -986,8 +986,10 @@
             let smithyContent = `<div id="smithy" class="tab-content"><h3>Smithy Upgrade Priority</h3></div>`;
             
             detailsDiv.innerHTML = fieldsContent + buildingsContent + trainingContent + smithyContent + demolishContent + newBuildContent + queueHtml;
-            renderTemplateList(villageId);
+            renderCopyControls(villageId, 'training');
+            TemplateList(villageId);
             renderSmithyUpgrades(villageId);
+            renderCopyControls(villageId, 'smithy');
             
             const tabElem = titleEl.querySelector(`#tab-${currentTab}`) || titleEl.querySelector('.tab');
             if (tabElem) {
@@ -995,6 +997,34 @@
             }
         }
 
+        function renderCopyControls(villageId, settingType) {
+            const container = document.getElementById(`${settingType}-copy-container`);
+            if (!container) return;
+
+            let sourceAccountUsername = null;
+            for (const username in FULL_STATE.village_data) {
+                if (Array.isArray(FULL_STATE.village_data[username]) && FULL_STATE.village_data[username].some(v => v.id == villageId)) {
+                    sourceAccountUsername = username;
+                    break;
+                }
+            }
+            if (!sourceAccountUsername) return;
+
+            const otherVillages = (FULL_STATE.village_data[sourceAccountUsername] || []).filter(v => v.id != villageId);
+            
+            let optionsHtml = '<option value="">-- Select Target --</option><option value="__ALL__">All Other Villages</option>';
+            otherVillages.forEach(v => {
+                optionsHtml += `<option value="${v.id}">${v.name}</option>`;
+            });
+
+            container.innerHTML = `
+                <div class="copy-controls">
+                    <label>Copy to:</label>
+                    <select id="${settingType}-copy-target-select" class="form-control">${optionsHtml}</select>
+                    <button onclick="copySettings('${villageId}', '${settingType}')" class="btn">Copy</button>
+                </div>`;
+        }
+        
         function renderSmithyUpgrades(villageId) {
             const smithyTab = document.getElementById('smithy');
             if (!smithyTab) return;

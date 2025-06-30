@@ -99,7 +99,7 @@ class Module(threading.Thread):
                             break 
                     
                     if not upgrade_triggered:
-                        log.info(f"[SmithyAgent] No units from the priority list were available to upgrade in {village['name']}. Checking again in 5 mins.")
+                        log.info(f"[SmithyAgent] No units from the priority list were available to upgrade in {village['name']}. Checking again in 0.5 min.")
                         self.next_check_times[village_id_str] = time.time() + 30
                     
                     # Small delay between processing each village in the main loop

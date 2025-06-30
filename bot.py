@@ -2,7 +2,7 @@
 
 import time
 import threading
-import copy # <-- ADD THIS IMPORT
+import copy
 from typing import Dict, Optional, List
 from modules.adventure import Module as AdventureModule
 from modules.hero import Module as HeroModule
@@ -78,8 +78,6 @@ class VillageAgent(threading.Thread):
                 
                 with state_lock:
                     BOT_STATE["village_data"][str(self.village_id)] = village_data
-                    # Emit a deep copy of the state to prevent runtime errors
-                    self.socketio.emit("state_update", copy.deepcopy(BOT_STATE))
 
                 for module in self.modules:
                     if module == self.building_module:
@@ -130,13 +128,11 @@ class VillageAgent(threading.Thread):
 
         log.info(f"Agent stopped for village: {self.village_name} ({self.village_id})")
 
-# The BotManager class remains unchanged.
 class BotManager(threading.Thread):
     def __init__(self, socketio_instance):
         super().__init__()
         self.socketio = socketio_instance
         self.stop_event = threading.Event()
-        # Key: username, Value: list of VillageAgent threads
         self.running_account_agents: Dict[str, List[VillageAgent]] = {}
         self.adventure_module = AdventureModule(self)
         self.hero_module = HeroModule(self)
@@ -144,17 +140,28 @@ class BotManager(threading.Thread):
         self.demolish_module = DemolishModule(self, TravianClient)
         self.smithy_module = SmithyModule(self, TravianClient)
         self.daemon = True
+        self._ui_updater_thread = threading.Thread(target=self._ui_updater, daemon=True)
+
+    def _ui_updater(self):
+        log.info("UI Updater thread started.")
+        while not self.stop_event.is_set():
+            with state_lock:
+                try:
+                    # Send a deep copy to avoid race conditions during serialization
+                    self.socketio.emit("state_update", copy.deepcopy(BOT_STATE))
+                except Exception as e:
+                    log.error(f"Error in UI updater: {e}", exc_info=True)
+            self.stop_event.wait(2) # Update UI every 2 seconds
+        log.info("UI Updater thread stopped.")
 
     def stop(self):
         log.info("Stopping Bot Manager and all active agents...")
         self.stop_event.set()
         with state_lock:
-            # Mark all accounts as inactive
             for acc in BOT_STATE['accounts']:
                 acc['active'] = False
             save_config()
             
-        # Stop all running agents
         for username in list(self.running_account_agents.keys()):
             self._stop_agents_for_account(username)
 
@@ -169,11 +176,13 @@ class BotManager(threading.Thread):
         log.info("Stopping smithy agent...")
         self.smithy_module.stop()             
         self.smithy_module.join()
+        
+        if self._ui_updater_thread.is_alive():
+            self._ui_updater_thread.join()
 
         log.info("Bot Manager stopped.")
 
     def _stop_agents_for_account(self, username: str):
-        """Stops and cleans up all agents for a specific account."""
         if username in self.running_account_agents:
             log.info(f"Stopping agents for account: {username}")
             agents = self.running_account_agents.pop(username, [])
@@ -182,15 +191,11 @@ class BotManager(threading.Thread):
             for agent in agents:
                 agent.join()
             log.info(f"All agents for {username} stopped.")
-            # Clear village data for the stopped account
             with state_lock:
-                # Find villages associated with this account and clear their detailed data
                 villages_to_clear = [v['id'] for v in BOT_STATE['village_data'].get(username, [])]
                 for vid in villages_to_clear:
                     BOT_STATE['village_data'].pop(str(vid), None)
                 BOT_STATE['village_data'].pop(username, None)
-                self.socketio.emit("state_update", copy.deepcopy(BOT_STATE))
-
 
     def run(self):
         log.info("Bot Manager thread started and is now monitoring accounts.")
@@ -200,19 +205,18 @@ class BotManager(threading.Thread):
         self.demolish_module.start()
         log.info("Starting independent smithy agent...")
         self.smithy_module.start() 
+        self._ui_updater_thread.start()
 
         while not self.stop_event.is_set():
             try:
                 with state_lock:
                     accounts = [acc.copy() for acc in BOT_STATE["accounts"]]
 
-                # Check for accounts that should be running but aren't
                 for account in accounts:
                     username = account['username']
                     if account.get('active') and username not in self.running_account_agents:
                         self.start_agents_for_account(account)
 
-                # Check for accounts that are running but shouldn't be
                 for username in list(self.running_account_agents.keys()):
                     account_is_active = any(
                         acc['username'] == username and acc.get('active') for acc in accounts
@@ -220,7 +224,6 @@ class BotManager(threading.Thread):
                     if not account_is_active:
                         self._stop_agents_for_account(username)
                 
-                # Run account-level modules (adventure, hero) for active accounts
                 for account in accounts:
                      if account.get('active'):
                         temp_client = TravianClient(
@@ -237,11 +240,10 @@ class BotManager(threading.Thread):
                         else:
                             log.error(f"[{account['username']}] Login failed for account-level module check.")
 
-
             except Exception as e:
                 log.error(f"Critical error in BotManager loop: {e}", exc_info=True)
 
-            self.stop_event.wait(10) # Check status every 10 seconds
+            self.stop_event.wait(10)
 
     def start_agents_for_account(self, account_info: Dict):
         username = account_info['username']
@@ -254,7 +256,7 @@ class BotManager(threading.Thread):
 
         if not temp_client.login():
             log.error(f"[{username}] Login failed. Cannot start agents for this account.")
-            with state_lock: # Mark as inactive again if login fails
+            with state_lock:
                 for acc in BOT_STATE['accounts']:
                     if acc['username'] == username:
                         acc['active'] = False
@@ -302,4 +304,4 @@ class BotManager(threading.Thread):
 
         except Exception as exc:
             log.error(f"Failed to start village agents for {username}: {exc}", exc_info=True)
-            self.running_account_agents.pop(username, None) # Cleanup on failure
+            self.running_account_agents.pop(username, None)

@@ -1582,66 +1582,76 @@
         "53560": [],
         "54363": [],
         "53970": [],
-        "70005": [
+        "70005": [],
+        "69604": [
             {
                 "type": "building",
                 "location": 23,
-                "gid": 10,
+                "gid": 11,
                 "level": 20
             }
         ],
-        "69604": [],
-        "69203": [],
-        "69603": [],
-        "70406": [],
+        "69203": [
+            {
+                "type": "building",
+                "location": 23,
+                "gid": 11,
+                "level": 20
+            }
+        ],
+        "69603": [
+            {
+                "type": "building",
+                "location": 23,
+                "gid": 11,
+                "level": 20
+            }
+        ],
+        "70406": [
+            {
+                "type": "building",
+                "location": 23,
+                "gid": 11,
+                "level": 20
+            }
+        ],
         "69602": [],
         "70004": [],
-        "70405": [],
-        "70407": [],
-        "70807": [],
-        "70808": [],
-        "70408": [
+        "70405": [
             {
                 "type": "building",
-                "location": 35,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 38,
+                "location": 23,
                 "gid": 11,
                 "level": 20
             }
         ],
-        "70806": [
+        "70407": [
             {
                 "type": "building",
-                "location": 35,
+                "location": 23,
                 "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 37,
-                "gid": 10,
                 "level": 20
             }
         ],
-        "71208": [
+        "70807": [
             {
                 "type": "building",
-                "location": 35,
+                "location": 23,
                 "gid": 11,
                 "level": 20
-            },
+            }
+        ],
+        "70808": [
             {
                 "type": "building",
-                "location": 37,
-                "gid": 10,
+                "location": 34,
+                "gid": 11,
                 "level": 20
             }
-        ]
+        ],
+        "70408": [],
+        "70806": [],
+        "71208": []
     },
     "demolish_queues": {
         "69604": [],
@@ -2735,7 +2745,7 @@
         },
         "70005": {
             "enabled": true,
-            "min_queue_duration_minutes": 860,
+            "min_queue_duration_minutes": 920,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2767,7 +2777,7 @@
         },
         "69604": {
             "enabled": true,
-            "min_queue_duration_minutes": 830,
+            "min_queue_duration_minutes": 890,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2799,7 +2809,7 @@
         },
         "69203": {
             "enabled": true,
-            "min_queue_duration_minutes": 820,
+            "min_queue_duration_minutes": 880,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2831,7 +2841,7 @@
         },
         "69603": {
             "enabled": true,
-            "min_queue_duration_minutes": 810,
+            "min_queue_duration_minutes": 870,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2863,7 +2873,7 @@
         },
         "70406": {
             "enabled": true,
-            "min_queue_duration_minutes": 800,
+            "min_queue_duration_minutes": 860,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2957,7 +2967,7 @@
         },
         "70405": {
             "enabled": true,
-            "min_queue_duration_minutes": 800,
+            "min_queue_duration_minutes": 850,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2989,7 +2999,7 @@
         },
         "70407": {
             "enabled": true,
-            "min_queue_duration_minutes": 780,
+            "min_queue_duration_minutes": 840,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3021,7 +3031,7 @@
         },
         "70807": {
             "enabled": true,
-            "min_queue_duration_minutes": 770,
+            "min_queue_duration_minutes": 830,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3053,7 +3063,7 @@
         },
         "70808": {
             "enabled": true,
-            "min_queue_duration_minutes": 770,
+            "min_queue_duration_minutes": 830,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3085,7 +3095,7 @@
         },
         "70408": {
             "enabled": true,
-            "min_queue_duration_minutes": 760,
+            "min_queue_duration_minutes": 820,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3117,7 +3127,7 @@
         },
         "70806": {
             "enabled": true,
-            "min_queue_duration_minutes": 760,
+            "min_queue_duration_minutes": 820,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3149,7 +3159,7 @@
         },
         "71208": {
             "enabled": true,
-            "min_queue_duration_minutes": 740,
+            "min_queue_duration_minutes": 790,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3847,6 +3857,14 @@
                 "type": "building",
                 "location": 30,
                 "gid": 30,
+                "level": 20
+            }
+        ],
+        "gra": [
+            {
+                "type": "building",
+                "location": 23,
+                "gid": 11,
                 "level": 20
             }
         ]
