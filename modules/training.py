@@ -16,13 +16,16 @@ class Module(threading.Thread):
         self.daemon = True
         self.village_cycle_index = 0
         self.client_class = client_class
+        # --- Start of Changes ---
+        self.current_hero_location_id = None
+        # --- End of Changes ---
 
     def stop(self):
         self.stop_event.set()
 
     def run(self):
         log.info("[TrainingAgent] Thread started. Waiting for initial data population...")
-        self.stop_event.wait(20)
+        self.stop_event.wait(10)
 
         # Hardcoded helmet IDs
         INFANTRY_HELMET_ID = 1126
@@ -63,47 +66,49 @@ class Module(threading.Thread):
 
                 log.info(f"--- [TrainingAgent] Starting Cycle for Village: {village_name} ({target_village_id}) ---")
 
-                current_hero_location_id = None
-                log.info(f"[TrainingAgent] Searching for hero, starting with the current village: {village_name}")
-
-                found_in_id = client.find_hero_in_rally_point(target_village_id)
-                if found_in_id:
-                    current_hero_location_id = found_in_id
-                else:
-                    log.info(f"[TrainingAgent] Hero not in {village_name}. Searching all other villages...")
+                # --- Start of Changes: Modified Hero Search Logic ---
+                if self.current_hero_location_id is None:
+                    log.info("[TrainingAgent] Hero location is unknown. Performing a full search...")
                     all_player_villages = all_village_data.get(account['username'], [])
                     for village_to_check in all_player_villages:
-                        if village_to_check['id'] == target_village_id:
-                            continue
                         found_in_id = client.find_hero_in_rally_point(village_to_check['id'])
                         if found_in_id:
-                            current_hero_location_id = found_in_id
+                            self.current_hero_location_id = found_in_id
+                            log.info(f"[TrainingAgent] Hero found in {village_to_check['name']} ({found_in_id}).")
                             break
                         self.stop_event.wait(0.5)
 
-                if current_hero_location_id is None:
-                    log.warning("[TrainingAgent] Could not find hero in any village. Hero may be moving. Retrying in 3 minutes.")
-                    self.stop_event.wait(180)
-                    continue
+                    if self.current_hero_location_id is None:
+                        log.warning("[TrainingAgent] Could not find hero in any village. Hero may be moving. Retrying in 1 minutes.")
+                        self.stop_event.wait(60)
+                        continue
+                # --- End of Changes ---
 
-                if current_hero_location_id != target_village_id:
-                    log.info(f"[TrainingAgent] Hero is at {current_hero_location_id}, needs to be at {village_name} ({target_village_id}).")
-                    target_coords = all_village_data.get(str(target_village_id), {}).get('coords', {})
-                    if not target_coords:
-                        fresh_data = client.fetch_and_parse_village(target_village_id)
-                        target_coords = fresh_data.get('coords', {}) if fresh_data else {}
+                if self.current_hero_location_id != target_village_id:
+                    log.info(f"[TrainingAgent] Hero is at {self.current_hero_location_id}, needs to be at {village_name} ({target_village_id}).")
+                    
+                    # Fetch coordinates for the target village if not available
+                    target_village_details = all_village_data.get(str(target_village_id))
+                    if not target_village_details or 'coords' not in target_village_details:
+                        target_village_details = client.fetch_and_parse_village(target_village_id)
+
+                    target_coords = target_village_details.get('coords', {}) if target_village_details else {}
 
                     if target_coords.get('x') is not None:
-                        move_success, travel_time = client.send_hero(current_hero_location_id, int(target_coords['x']), int(target_coords['y']))
+                        move_success, travel_time = client.send_hero(self.current_hero_location_id, int(target_coords['x']), int(target_coords['y']))
                         if move_success:
                             wait_time = travel_time + 0.5
-                            log.info(f"[TrainingAgent] Hero reinforcement to {village_name} initiated. Waiting {wait_time}s for arrival.")
+                            log.info(f"[TrainingAgent] Hero reinforcement to {village_name} initiated. Waiting {wait_time:.1f}s for arrival.")
                             self.stop_event.wait(wait_time)
+                            self.current_hero_location_id = target_village_id
                         else:
-                            log.error(f"[TrainingAgent] Failed to send hero to {village_name}. Waiting 60s.")
+                            log.error(f"[TrainingAgent] Failed to send hero to {village_name}. Resetting hero location for next cycle. Waiting 60s.")
+                            self.current_hero_location_id = None # Reset location on failure
                             self.stop_event.wait(60)
                     else:
-                            log.warning(f"[TrainingAgent] Target village {village_name} missing coordinates. Skipping.")
+                        log.warning(f"[TrainingAgent] Target village {village_name} missing coordinates. Skipping.")
+                    
+                    # After a move attempt (success or fail), we should continue to the next cycle iteration
                     continue
 
                 log.info(f"[TrainingAgent] Hero is confirmed to be in {village_name}. Starting aggressive training loop.")
@@ -191,7 +196,7 @@ class Module(threading.Thread):
                     if all_queues_filled_for_this_village:
                         with state_lock:
                             current_duration = config.get('min_queue_duration_minutes', 15)
-                            new_duration = current_duration + 5
+                            new_duration = current_duration + 10
                             log.info(f"[TrainingAgent] Increasing max queue duration for {village_name} to {new_duration} minutes for the next cycle.")
                             
                             if str(target_village_id) in BOT_STATE['training_queues']:
@@ -209,4 +214,4 @@ class Module(threading.Thread):
                 log.error(f"[TrainingAgent] CRITICAL ERROR in training cycle: {e}", exc_info=True)
                 self.village_cycle_index += 1
 
-            self.stop_event.wait(10)
+            self.stop_event.wait(4)
