@@ -347,15 +347,40 @@
             }
         });
 
-        socket.on('state_update', newState => {
-            const wasEmpty = !(FULL_STATE.accounts && FULL_STATE.accounts.length > 0);
-            FULL_STATE = newState;
+        let isRenderScheduled = false;
+        let lastRenderTime = 0;
+        const RENDER_INTERVAL = 30000; // 30 seconds
+
+        function renderUI() {
+            console.log("Actively rendering UI at", new Date());
             renderAccountsAndVillages();
             renderResourceFlow();
-            if(selectedVillageId) {
+            if (selectedVillageId) {
                 showVillageDetails(selectedVillageId);
-            } else if (wasEmpty) {
-                 renderGlobalSummary();
+            } else {
+                renderGlobalSummary();
+            }
+            lastRenderTime = Date.now();
+            isRenderScheduled = false;
+        }
+
+        socket.on('state_update', newState => {
+            // Always update the state passively
+            const wasEmpty = !(FULL_STATE.accounts && FULL_STATE.accounts.length > 0);
+            FULL_STATE = newState;
+
+            const now = Date.now();
+            if (wasEmpty && (newState.accounts && newState.accounts.length > 0)) {
+                // Render immediately on first data
+                renderUI();
+            } else if (now - lastRenderTime > RENDER_INTERVAL) {
+                // If enough time has passed, render immediately
+                renderUI();
+            } else if (!isRenderScheduled) {
+                // If it's too soon, schedule a render for later
+                isRenderScheduled = true;
+                const delay = RENDER_INTERVAL - (now - lastRenderTime);
+                setTimeout(renderUI, delay);
             }
         });
         
@@ -537,9 +562,24 @@
             alert('Training settings saved!');
         }
 
-        function copyTrainingSettings(villageId) {
-            if (confirm('Are you sure you want to copy these training settings to all other villages for this account? This will overwrite their existing training configurations.')) {
-                socket.emit('copy_training_settings', { villageId: villageId });
+        function copySettings(sourceVillageId, settingType) {
+            const targetSelect = document.getElementById(`${settingType}-copy-target-select`);
+            const targetVillageId = targetSelect.value;
+
+            if (!targetVillageId) {
+                alert('Please select a target village (or all villages) to copy the settings to.');
+                return;
+            }
+            
+            let message = `Are you sure you want to copy these ${settingType} settings from the current village to ${targetVillageId === '__ALL__' ? 'all other villages' : 'the selected village'}? This will overwrite their existing configurations.`;
+            
+            if (confirm(message)) {
+                socket.emit('copy_settings', {
+                    source_village_id: sourceVillageId,
+                    target_village_id: targetVillageId,
+                    setting_type: settingType
+                });
+                alert('Settings copy command sent!');
             }
         }
 
@@ -809,9 +849,9 @@
             
             let trainingContent = `<div id="training" class="tab-content"><h3>Troop Training Configuration</h3>`;
             trainingContent += `
-                <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px;">
+                <div style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px;">
                     <button onclick="saveTrainingSettings('${villageId}')" class="btn btn-primary">Save Settings</button>
-                    <button onclick="copyTrainingSettings('${villageId}')" class="btn">Copy to All Other Villages</button>
+                    <div id="training-copy-container" style="display:contents;"></div>
                 </div>`;
             trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px;">
                 <label style="display: block; margin-bottom: 0.5rem;">
@@ -987,7 +1027,7 @@
             
             detailsDiv.innerHTML = fieldsContent + buildingsContent + trainingContent + smithyContent + demolishContent + newBuildContent + queueHtml;
             renderCopyControls(villageId, 'training');
-            TemplateList(villageId);
+            renderTemplateList(villageId);
             renderSmithyUpgrades(villageId);
             renderCopyControls(villageId, 'smithy');
             
@@ -1018,9 +1058,9 @@
             });
 
             container.innerHTML = `
-                <div class="copy-controls">
+                <div class="copy-controls" style="display: flex; gap: 0.5rem; align-items: center;">
                     <label>Copy to:</label>
-                    <select id="${settingType}-copy-target-select" class="form-control">${optionsHtml}</select>
+                    <select id="${settingType}-copy-target-select" class="form-control" style="width: auto;">${optionsHtml}</select>
                     <button onclick="copySettings('${villageId}', '${settingType}')" class="btn">Copy</button>
                 </div>`;
         }
@@ -1039,6 +1079,10 @@
             }
 
             let html = `
+                <div style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px;">
+                    <button onclick="saveSmithySettings('${villageId}')" class="btn btn-primary">Save Settings</button>
+                    <div id="smithy-copy-container" style="display:contents;"></div>
+                </div>
                 <div class="form-group" style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 1.5rem;">
                     <label style="display: block; margin-bottom: 0.5rem;">
                         <input type="checkbox" id="smithy-enabled-${villageId}" ${smithySettings.enabled ? 'checked' : ''} onchange="saveSmithySettings('${villageId}')">
