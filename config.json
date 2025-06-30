@@ -1582,20 +1582,176 @@
         "53560": [],
         "54363": [],
         "53970": [],
-        "70005": [],
-        "69604": [],
-        "69203": [],
-        "69603": [],
-        "70406": [],
+        "70005": [
+            {
+                "type": "building",
+                "location": 37,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 38,
+                "gid": 10,
+                "level": 20
+            }
+        ],
+        "69604": [
+            {
+                "type": "building",
+                "location": 37,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 38,
+                "gid": 10,
+                "level": 20
+            }
+        ],
+        "69203": [
+            {
+                "type": "building",
+                "location": 36,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 37,
+                "gid": 11,
+                "level": 20
+            }
+        ],
+        "69603": [
+            {
+                "type": "building",
+                "location": 22,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 37,
+                "gid": 11,
+                "level": 20
+            }
+        ],
+        "70406": [
+            {
+                "type": "building",
+                "location": 37,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 38,
+                "gid": 11,
+                "level": 20
+            }
+        ],
         "69602": [],
         "70004": [],
-        "70405": [],
-        "70407": [],
-        "70807": [],
-        "70808": [],
-        "70408": [],
-        "70806": [],
-        "71208": []
+        "70405": [
+            {
+                "type": "building",
+                "location": 36,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 37,
+                "gid": 11,
+                "level": 20
+            }
+        ],
+        "70407": [
+            {
+                "type": "building",
+                "location": 36,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 37,
+                "gid": 11,
+                "level": 20
+            }
+        ],
+        "70807": [
+            {
+                "type": "building",
+                "location": 36,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 37,
+                "gid": 11,
+                "level": 20
+            }
+        ],
+        "70808": [
+            {
+                "type": "building",
+                "location": 36,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 37,
+                "gid": 11,
+                "level": 20
+            }
+        ],
+        "70408": [
+            {
+                "type": "building",
+                "location": 34,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 35,
+                "gid": 11,
+                "level": 20
+            }
+        ],
+        "70806": [
+            {
+                "type": "building",
+                "location": 34,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 35,
+                "gid": 11,
+                "level": 20
+            }
+        ],
+        "71208": [
+            {
+                "type": "building",
+                "location": 34,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 35,
+                "gid": 11,
+                "level": 20
+            }
+        ]
     },
     "training_queues": {
         "53965": {
@@ -2675,7 +2831,7 @@
         },
         "70005": {
             "enabled": true,
-            "min_queue_duration_minutes": 690,
+            "min_queue_duration_minutes": 700,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2707,7 +2863,7 @@
         },
         "69604": {
             "enabled": true,
-            "min_queue_duration_minutes": 670,
+            "min_queue_duration_minutes": 680,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2739,7 +2895,7 @@
         },
         "69203": {
             "enabled": true,
-            "min_queue_duration_minutes": 660,
+            "min_queue_duration_minutes": 670,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2771,7 +2927,7 @@
         },
         "69603": {
             "enabled": true,
-            "min_queue_duration_minutes": 650,
+            "min_queue_duration_minutes": 660,
             "buildings": {
                 "barracks": {
                     "gid": 19,

@@ -83,22 +83,34 @@ class Module(BaseModule):
             goal_gid = goal_task.get('gid')
             goal_level = goal_task.get('level')
             
+            # --- Start of Changes ---
+            # For unique buildings, check if the goal is already met and remove the task if so.
+            # This logic is now skipped for multi-instance buildings to prevent incorrect deletions.
+            if not is_multi_instance(goal_gid):
+                WALL_GIDS_CHECK = {31, 32, 33, 42, 43}
+                gid_to_check_set = WALL_GIDS_CHECK if goal_gid in WALL_GIDS_CHECK else {goal_gid}
+                
+                existing_unique_building = next((b for b in all_buildings if b.get('gid') in gid_to_check_set), None)
+
+                if existing_unique_building and existing_unique_building.get('level', 0) >= goal_level:
+                    log.info(f"AGENT({agent.village_name}): Goal '{gid_name(goal_gid)}' Lvl {goal_level} is complete. Removing from queue.")
+                    with state_lock: BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
+                    save_config()
+                    # Re-tick to process the next item immediately
+                    refreshed_data = agent.client.fetch_and_parse_village(agent.village_id)
+                    if refreshed_data:
+                        return self.tick(refreshed_data)
+                    return 10
+            # --- End of Changes ---
+
             WALL_GIDS = {31, 32, 33, 42, 43}
             existing_building = None
             if goal_gid in WALL_GIDS:
                 existing_building = next((b for b in all_buildings if b.get('gid') in WALL_GIDS), None)
-            elif is_multi_instance(goal_gid):
-                existing_buildings_of_type = [b for b in all_buildings if b.get('gid') == goal_gid]
-                if existing_buildings_of_type:
-                    # If any of the existing buildings of this type has reached level 20,
-                    # we can build another one. Otherwise, we upgrade the existing one.
-                    if any(b.get('level', 0) >= 20 for b in existing_buildings_of_type):
-                        existing_building = None # This will trigger the logic to build a new one
-                    else:
-                        # Find the one with the lowest level to upgrade
-                        existing_building = min(existing_buildings_of_type, key=lambda b: b.get('level', 0))
             else:
-                existing_building = next((b for b in all_buildings if b.get('gid') == goal_gid), None)
+                # This logic is now safer because the premature removal for multi-instance buildings is gone.
+                # If a location is specified, it will try to use that. If not, it will look for an empty slot later.
+                existing_building = next((b for b in all_buildings if b.get('gid') == goal_gid and b.get('level', 0) < goal_level), None)
 
 
             if existing_building and existing_building.get('level', 0) >= goal_level:
@@ -142,7 +154,6 @@ class Module(BaseModule):
             save_config()
             return 0
         
-        # --- Start of Changes ---
         # If an action is planned, check for resources and use hero items if necessary and enabled.
         if action_plan:
             if agent.use_hero_resources and hasattr(agent, 'resources_module') and agent.resources_module:
@@ -157,7 +168,6 @@ class Module(BaseModule):
                 if used_items:
                     log.info(f"AGENT({agent.village_name}): Used hero resources. Pausing for 2 seconds before re-attempting build.")
                     time.sleep(2)
-        # --- End of Changes ---
 
         # --- EXECUTE BUILD ---
         quick_check_data = agent.client.fetch_and_parse_village(agent.village_id)
