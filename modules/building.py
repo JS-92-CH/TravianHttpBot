@@ -1,5 +1,5 @@
 from .base import BaseModule
-from config import BOT_STATE, state_lock, save_config, gid_name, log
+from config import BOT_STATE, state_lock, save_config, gid_name, log, is_multi_instance
 import json
 import time
 from collections import deque
@@ -87,6 +87,16 @@ class Module(BaseModule):
             existing_building = None
             if goal_gid in WALL_GIDS:
                 existing_building = next((b for b in all_buildings if b.get('gid') in WALL_GIDS), None)
+            elif is_multi_instance(goal_gid):
+                existing_buildings_of_type = [b for b in all_buildings if b.get('gid') == goal_gid]
+                if existing_buildings_of_type:
+                    # If any of the existing buildings of this type has reached level 20,
+                    # we can build another one. Otherwise, we upgrade the existing one.
+                    if any(b.get('level', 0) >= 20 for b in existing_buildings_of_type):
+                        existing_building = None # This will trigger the logic to build a new one
+                    else:
+                        # Find the one with the lowest level to upgrade
+                        existing_building = min(existing_buildings_of_type, key=lambda b: b.get('level', 0))
             else:
                 existing_building = next((b for b in all_buildings if b.get('gid') == goal_gid), None)
 

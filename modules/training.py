@@ -65,7 +65,6 @@ class Module(threading.Thread):
 
                 log.info(f"--- [TrainingAgent] Starting Cycle for Village: {village_name} ({target_village_id}) ---")
 
-                # --- Start of Changes: Modified Hero Search Logic ---
                 if self.current_hero_location_id is None:
                     log.info("[TrainingAgent] Hero location is unknown. Performing a full search...")
                     all_player_villages = all_village_data.get(account['username'], [])
@@ -81,12 +80,10 @@ class Module(threading.Thread):
                         log.warning("[TrainingAgent] Could not find hero in any village. Hero may be moving. Retrying in 1 minutes.")
                         self.stop_event.wait(60)
                         continue
-                # --- End of Changes ---
 
                 if self.current_hero_location_id != target_village_id:
                     log.info(f"[TrainingAgent] Hero is at {self.current_hero_location_id}, needs to be at {village_name} ({target_village_id}).")
                     
-                    # Fetch coordinates for the target village if not available
                     target_village_details = all_village_data.get(str(target_village_id))
                     if not target_village_details or 'coords' not in target_village_details:
                         target_village_details = client.fetch_and_parse_village(target_village_id)
@@ -102,12 +99,11 @@ class Module(threading.Thread):
                             self.current_hero_location_id = target_village_id
                         else:
                             log.error(f"[TrainingAgent] Failed to send hero to {village_name}. Resetting hero location for next cycle. Waiting 60s.")
-                            self.current_hero_location_id = None # Reset location on failure
+                            self.current_hero_location_id = None
                             self.stop_event.wait(60)
                     else:
                         log.warning(f"[TrainingAgent] Target village {village_name} missing coordinates. Skipping.")
                     
-                    # After a move attempt (success or fail), we should continue to the next cycle iteration
                     continue
 
                 log.info(f"[TrainingAgent] Hero is confirmed to be in {village_name}. Starting aggressive training loop.")
@@ -116,15 +112,11 @@ class Module(threading.Thread):
                     all_queues_filled_for_this_village = True
                     min_queue_seconds = config.get('min_queue_duration_minutes', 15) * 60
 
-                    # --- Max Training Time Logic ---
                     max_time_str = config.get('max_training_time')
                     remaining_time_cap = float('inf')
                     if max_time_str:
                         try:
-                            # Assuming the format is "dd.mm.yyyy HH:MM"
                             max_datetime = datetime.strptime(max_time_str, "%d.%m.%Y %H:%M")
-                            # This should be compared to local time if the bot runs on a local machine
-                            # For simplicity, we'll assume the bot's system time is the user's local time
                             now_datetime = datetime.now()
                             remaining_time_cap = (max_datetime - now_datetime).total_seconds()
                             if remaining_time_cap <= 0:
@@ -188,9 +180,8 @@ class Module(threading.Thread):
                         
                         current_queue_duration = page_data['queue_duration_seconds']
                         
-                        # Check against max training time cap
-                        if current_queue_duration >= remaining_time_cap:
-                            log.info(f"[TrainingAgent] - {building_type} queue ({current_queue_duration}s) already exceeds the max training time limit. Skipping.")
+                        if current_queue_duration >= (remaining_time_cap * 0.98):
+                            log.info(f"[TrainingAgent] - {building_type} queue ({current_queue_duration}s) is at 98% of the max training time limit. Skipping.")
                             continue
 
                         if current_queue_duration < (min_queue_seconds * 0.95):
@@ -208,6 +199,15 @@ class Module(threading.Thread):
 
                             amount_based_on_time = int(time_to_fill / troop_to_train['time_per_unit'])
                             max_possible_by_res = troop_to_train.get('max_trainable', 0)
+                            
+                            if amount_based_on_time <= 0:
+                                log.info(f"[TrainingAgent] - Not enough time remaining in the configured 'max_training_time' to queue even one {troop_to_train['name']}. (Time needed: {troop_to_train['time_per_unit']:.2f}s, Time available: {time_to_fill:.2f}s)")
+                                continue
+
+                            if max_possible_by_res <= 0:
+                                log.info(f"[TrainingAgent] - Not enough resources to queue even one {troop_to_train['name']} according to the game's training page.")
+                                continue
+                            
                             amount_to_queue = min(amount_based_on_time, max_possible_by_res)
 
                             if amount_to_queue > 0:
@@ -217,8 +217,6 @@ class Module(threading.Thread):
                                     self.stop_event.wait(2)
                                 else:
                                     log.error(f"[TrainingAgent] Failed to queue troops.")
-                            else:
-                                log.info(f"[TrainingAgent] - Not enough resources to queue even one unit in {building_type}.")
                         else:
                             log.info(f"[TrainingAgent] - {building_type} queue is sufficient.")
 
