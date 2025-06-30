@@ -10,11 +10,19 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = "8b8e2d43‐dashboard‐secret"
 socketio = SocketIO(app, async_mode="threading")
 
+# The BotManager now runs continuously, managing agents based on their 'active' state.
 bot_manager_thread = None
 
 @app.route("/")
 def index_route():
     try:
+        # Start the BotManager on the first request
+        global bot_manager_thread
+        if bot_manager_thread is None:
+            log.info("Starting bot manager thread...")
+            bot_manager_thread = BotManager(socketio)
+            bot_manager_thread.start()
+
         with open("index.html", "r", encoding="utf-8") as f:
             return render_template_string(f.read())
     except FileNotFoundError:
@@ -26,26 +34,33 @@ def on_connect():
     with state_lock:
         socketio.emit("state_update", BOT_STATE)
 
-@socketio.on('start_bot')
-def handle_start_bot(data=None):
-    global bot_manager_thread
-    if bot_manager_thread is None or not bot_manager_thread.is_alive():
-        log.info("Starting bot manager...")
-        bot_manager_thread = BotManager(socketio)
-        bot_manager_thread.start()
-    else:
-        log.info("Bot is already running.")
+@socketio.on('start_account')
+def handle_start_account(data):
+    username = data.get('username')
+    log.info(f"UI request to START account: {username}")
+    with state_lock:
+        for acc in BOT_STATE['accounts']:
+            if acc['username'] == username:
+                acc['active'] = True
+                break
+    save_config()
+    socketio.emit("state_update", BOT_STATE)
+    log.info(f"Account {username} marked as active. BotManager will pick it up.")
 
-@socketio.on('stop_bot')
-def handle_stop_bot(data=None):
-    global bot_manager_thread
-    if bot_manager_thread and bot_manager_thread.is_alive():
-        log.info("Stopping bot manager...")
-        bot_manager_thread.stop()
-        bot_manager_thread.join()
-        bot_manager_thread = None
-    else:
-        log.info("Bot is not running.")
+@socketio.on('stop_account')
+def handle_stop_account(data):
+    username = data.get('username')
+    log.info(f"UI request to STOP account: {username}")
+    with state_lock:
+        for acc in BOT_STATE['accounts']:
+            if acc['username'] == username:
+                acc['active'] = False
+                break
+    save_config()
+    # The BotManager will see the 'active: false' flag and stop the agents.
+    socketio.emit("state_update", BOT_STATE)
+    log.info(f"Account {username} marked as inactive. BotManager will stop its agents.")
+
 
 @socketio.on('add_account')
 def handle_add_account(data):
@@ -62,21 +77,22 @@ def handle_add_account(data):
             "tribe": data.get("tribe", "roman"),
             "use_dual_queue": data.get("use_dual_queue", False),
             "use_hero_resources": data.get("use_hero_resources", False),
-            "building_logic": data.get("building_logic", "default")
-        }
-        
-        if data.get('proxy_ip') and data.get('proxy_port'):
-            new_account['proxy'] = {
-                "ip": data.get('proxy_ip'),
-                "port": data.get('proxy_port'),
+            "building_logic": data.get("building_logic", "default"),
+            "active": False,  # Accounts are inactive by default
+            "proxy": {
+                "ip": data.get('proxy_ip', ''),
+                "port": data.get('proxy_port', ''),
                 "username": data.get('proxy_user', ''),
                 "password": data.get('proxy_pass', '')
             }
+        }
         
         BOT_STATE['accounts'].append(new_account)
     save_config()
     socketio.emit("state_update", BOT_STATE)
 
+# Other event handlers like 'update_account_setting', 'remove_account', etc., remain the same.
+# Make sure they are still present in your file.
 @socketio.on('update_account_setting')
 def handle_update_account_setting(data):
     username = data.get('username')

@@ -7,7 +7,14 @@
             "tribe": "roman",
             "use_dual_queue": true,
             "use_hero_resources": false,
-            "building_logic": "default"
+            "building_logic": "default",
+            "active": true,
+            "proxy": {
+                "ip": "",
+                "port": "",
+                "username": "",
+                "password": ""
+            }
         }
     ],
     "build_queues": {
@@ -2668,7 +2675,7 @@
         },
         "70005": {
             "enabled": true,
-            "min_queue_duration_minutes": 640,
+            "min_queue_duration_minutes": 690,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2700,7 +2707,7 @@
         },
         "69604": {
             "enabled": true,
-            "min_queue_duration_minutes": 640,
+            "min_queue_duration_minutes": 670,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2732,7 +2739,7 @@
         },
         "69203": {
             "enabled": true,
-            "min_queue_duration_minutes": 640,
+            "min_queue_duration_minutes": 660,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2764,7 +2771,7 @@
         },
         "69603": {
             "enabled": true,
-            "min_queue_duration_minutes": 640,
+            "min_queue_duration_minutes": 650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2796,7 +2803,7 @@
         },
         "70406": {
             "enabled": true,
-            "min_queue_duration_minutes": 640,
+            "min_queue_duration_minutes": 650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2890,7 +2897,7 @@
         },
         "70405": {
             "enabled": true,
-            "min_queue_duration_minutes": 640,
+            "min_queue_duration_minutes": 650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2922,7 +2929,7 @@
         },
         "70407": {
             "enabled": true,
-            "min_queue_duration_minutes": 640,
+            "min_queue_duration_minutes": 650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2954,7 +2961,7 @@
         },
         "70807": {
             "enabled": true,
-            "min_queue_duration_minutes": 640,
+            "min_queue_duration_minutes": 650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2986,7 +2993,7 @@
         },
         "70808": {
             "enabled": true,
-            "min_queue_duration_minutes": 640,
+            "min_queue_duration_minutes": 650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3018,7 +3025,7 @@
         },
         "70408": {
             "enabled": true,
-            "min_queue_duration_minutes": 640,
+            "min_queue_duration_minutes": 650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3050,7 +3057,7 @@
         },
         "70806": {
             "enabled": true,
-            "min_queue_duration_minutes": 630,
+            "min_queue_duration_minutes": 650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3082,7 +3089,7 @@
         },
         "71208": {
             "enabled": true,
-            "min_queue_duration_minutes": 630,
+            "min_queue_duration_minutes": 650,
             "buildings": {
                 "barracks": {
                     "gid": 19,

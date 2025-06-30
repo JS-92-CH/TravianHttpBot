@@ -153,7 +153,7 @@ state_lock = threading.RLock()
 # ─────────────────────────────────────────
 # CONFIG & DEFAULTS
 # ─────────────────────────────────────────
-
+# --- (CSHARP_BUILD_ORDER, GID_MAPPING, NAME_TO_GID, etc. remain unchanged) ---
 CSHARP_BUILD_ORDER = r"""
 [{"Id":{"Value":0},"Position":0,"Type":0,"Content":"{\"Location\":39,\"Level\":1,\"Type\":16}"},{"Id":{"Value":0},"Position":1,"Type":0,"Content":"{\"Location\":26,\"Level\":20,\"Type\":15}"},{"Id":{"Value":0},"Position":2,"Type":0,"Content":"{\"Location\":19,\"Level\":5,\"Type\":10}"},{"Id":{"Value":0},"Position":3,"Type":0,"Content":"{\"Location\":20,\"Level\":5,\"Type\":11}"},{"Id":{"Value":0},"Position":4,"Type":0,"Content":"{\"Location\":21,\"Level\":1,\"Type\":17}"},{"Id":{"Value":0},"Position":5,"Type":0,"Content":"{\"Location\":22,\"Level\":20,\"Type\":25}"},{"Id":{"Value":0},"Position":6,"Type":1,"Content":"{\"Level\":5,\"Plan\":0}"},{"Id":{"Value":0},"Position":7,"Type":0,"Content":"{\"Location\":23,\"Level\":3,\"Type\":19}"},{"Id":{"Value":0},"Position":8,"Type":0,"Content":"{\"Location\":24,\"Level\":10,\"Type\":22}"},{"Id":{"Value":0},"Position":9,"Type":0,"Content":"{\"Location\":25,\"Level\":20,\"Type\":24}"},{"Id":{"Value":0},"Position":10,"Type":1,"Content":"{\"Level\":10,\"Plan\":0}"},{"Id":{"Value":0},"Position":11,"Type":0,"Content":"{\"Location\":19,\"Level\":20,\"Type\":10}"},{"Id":{"Value":0},"Position":12,"Type":0,"Content":"{\"Location\":20,\"Level\":20,\"Type\":11}"},{"Id":{"Value":0},"Position":13,"Type":0,"Content":"{\"Location\":21,\"Level\":20,\"Type\":17}"},{"Id":{"Value":0},"Position":14,"Type":0,"Content":"{\"Location\":23,\"Level\":20,\"Type\":19}"},{"Id":{"Value":0},"Position":15,"Type":0,"Content":"{\"Location\":24,\"Level\":20,\"Type\":22}"},{"Id":{"Value":0},"Position":16,"Type":0,"Content":"{\"Location\":27,\"Level\":20,\"Type\":13}"},{"Id":{"Value":0},"Position":17,"Type":0,"Content":"{\"Location\":28,\"Level\":20,\"Type\":20}"},{"Id":{"Value":0},"Position":18,"Type":0,"Content":"{\"Location\":29,\"Level\":20,\"Type\":46}"},{"Id":{"Value":0},"Position":19,"Type":0,"Content":"{\"Location\":39,\"Level\":20,\"Type\":16}"},{"Id":{"Value":0},"Position":20,"Type":0,"Content":"{\"Location\":30,\"Level\":20,\"Type\":14}"},{"Id":{"Value":0},"Position":21,"Type":0,"Content":"{\"Location\":40,\"Level\":20,\"Type\":42}"},{"Id":{"Value":0},"Position":22,"Type":0,"Content":"{\"Location\":31,\"Level\":20,\"Type\":21}"},{"Id":{"Value":0},"Position":23,"Type":0,"Content":"{\"Location\":32,\"Level\":5,\"Type\":5}"},{"Id":{"Value":0},"Position":24,"Type":0,"Content":"{\"Location\":33,\"Level\":5,\"Type\":6}"},{"Id":{"Value":0},"Position":25,"Type":0,"Content":"{\"Location\":34,\"Level\":5,\"Type\":7}"},{"Id":{"Value":0},"Position":26,"Type":0,"Content":"{\"Location\":35,\"Level\":5,\"Type\":8}"},{"Id":{"Value":0},"Position":27,"Type":0,"Content":"{\"Location\":36,\"Level\":5,\"Type\":9}"}]
 """
@@ -176,34 +176,60 @@ NAME_TO_GID = {name.lower(): gid for gid, name in GID_MAPPING.items()}
 NAME_TO_GID["hero's mansion"] = 37 # Handle apostrophe case
 
 def load_config() -> None:
-    if not os.path.exists("config.json"):
-        log.warning("config.json not found!")
-        log.info("Please copy 'config.example.json' to 'config.json' and fill in your account details.")
+    config_path = "config.json"
+    if not os.path.exists(config_path):
+        log.warning(f"{config_path} not found!")
+        log.info(f"Please copy 'config.example.json' to '{config_path}' and fill in your account details.")
         return
     try:
-        with open("config.json", "r", encoding="utf‑8") as fh:
+        with open(config_path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
+
+        # --- CONFIG MIGRATION LOGIC ---
+        config_updated = False
+        accounts = data.get("accounts", [])
+        for account in accounts:
+            if 'active' not in account:
+                account['active'] = False
+                config_updated = True
+                log.info(f"Configuration Update: Added 'active: false' to account '{account.get('username')}'.")
+
+            if 'proxy' not in account or not isinstance(account.get('proxy'), dict):
+                account['proxy'] = {
+                    "ip": "", "port": "",
+                    "username": "", "password": ""
+                }
+                config_updated = True
+                log.info(f"Configuration Update: Added default proxy object to account '{account.get('username')}'.")
+        
+        # --- END MIGRATION LOGIC ---
+
         with state_lock:
-            BOT_STATE["accounts"] = data.get("accounts", [])
+            BOT_STATE["accounts"] = accounts
             BOT_STATE["build_queues"] = data.get("build_queues", {})
             BOT_STATE["training_queues"] = data.get("training_queues", {})
-            BOT_STATE["build_templates"].update(data.get("build_templates", {})) 
+            BOT_STATE["build_templates"].update(data.get("build_templates", {}))
             if "village_data" not in BOT_STATE:
                 BOT_STATE["village_data"] = {}
             if "training_data" not in BOT_STATE:
                 BOT_STATE["training_data"] = {}
+        
+        if config_updated:
+            log.info("Configuration was updated with new fields. Saving changes...")
+            save_config()
 
         log.info("Configuration loaded ✔")
     except Exception as exc:
-        log.warning("Could not read config.json → %s", exc)
+        log.warning(f"Could not read {config_path} → {exc}")
 
 def save_config() -> None:
     with state_lock:
+        # Create a deep copy to avoid modifying the state during serialization
         payload = {
-            "accounts": BOT_STATE["accounts"],
-            "build_queues": BOT_STATE["build_queues"],
-            "training_queues": BOT_STATE["training_queues"],
-            "build_templates": BOT_STATE.get("build_templates", {})
+            "accounts": [acc.copy() for acc in BOT_STATE["accounts"]],
+            "build_queues": BOT_STATE["build_queues"].copy(),
+            "training_queues": BOT_STATE["training_queues"].copy(),
+            "build_templates": BOT_STATE.get("build_templates", {}).copy()
         }
     with open("config.json", "w", encoding="utf‑8") as fh:
         json.dump(payload, fh, indent=4)

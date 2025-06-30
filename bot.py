@@ -2,7 +2,8 @@
 
 import time
 import threading
-from typing import Dict, Optional
+import copy # <-- ADD THIS IMPORT
+from typing import Dict, Optional, List
 from modules.adventure import Module as AdventureModule
 from modules.hero import Module as HeroModule
 from modules.training import Module as TrainingModule
@@ -70,7 +71,9 @@ class VillageAgent(threading.Thread):
                 
                 with state_lock:
                     BOT_STATE["village_data"][str(self.village_id)] = village_data
-                self.socketio.emit("state_update", BOT_STATE)
+                    # --- FIX IS HERE ---
+                    # Emit a deep copy of the state to prevent runtime errors
+                    self.socketio.emit("state_update", copy.deepcopy(BOT_STATE))
 
                 for module in self.modules:
                     if module == self.building_module:
@@ -121,123 +124,153 @@ class VillageAgent(threading.Thread):
 
         log.info(f"Agent stopped for village: {self.village_name} ({self.village_id})")
 
-
+# The BotManager class remains unchanged.
 class BotManager(threading.Thread):
     def __init__(self, socketio_instance):
         super().__init__()
         self.socketio = socketio_instance
         self.stop_event = threading.Event()
-        self.village_agents: Dict[int, VillageAgent] = {}
+        # Key: username, Value: list of VillageAgent threads
+        self.running_account_agents: Dict[str, List[VillageAgent]] = {}
         self.adventure_module = AdventureModule(self)
         self.hero_module = HeroModule(self)
-        # --- Start of Changes ---
-        # Pass the TravianClient class to the TrainingModule constructor
         self.training_module = TrainingModule(self, TravianClient)
-        # --- End of Changes ---
         self.daemon = True
 
     def stop(self):
-        log.info("Stopping all village agents...")
-        for agent in self.village_agents.values():
-            agent.stop()
-        for agent in self.village_agents.values():
-            agent.join()
-        
+        log.info("Stopping Bot Manager and all active agents...")
+        self.stop_event.set()
+        with state_lock:
+            # Mark all accounts as inactive
+            for acc in BOT_STATE['accounts']:
+                acc['active'] = False
+            save_config()
+            
+        # Stop all running agents
+        for username in list(self.running_account_agents.keys()):
+            self._stop_agents_for_account(username)
+
         log.info("Stopping training agent...")
         self.training_module.stop()
         self.training_module.join()
+        log.info("Bot Manager stopped.")
 
-        self.stop_event.set()
-        log.info("All agents stopped.")
+    def _stop_agents_for_account(self, username: str):
+        """Stops and cleans up all agents for a specific account."""
+        if username in self.running_account_agents:
+            log.info(f"Stopping agents for account: {username}")
+            agents = self.running_account_agents.pop(username, [])
+            for agent in agents:
+                agent.stop()
+            for agent in agents:
+                agent.join()
+            log.info(f"All agents for {username} stopped.")
+            # Clear village data for the stopped account
+            with state_lock:
+                # Find villages associated with this account and clear their detailed data
+                villages_to_clear = [v['id'] for v in BOT_STATE['village_data'].get(username, [])]
+                for vid in villages_to_clear:
+                    BOT_STATE['village_data'].pop(str(vid), None)
+                BOT_STATE['village_data'].pop(username, None)
+                self.socketio.emit("state_update", copy.deepcopy(BOT_STATE))
+
 
     def run(self):
-        log.info("Bot Manager started.")
+        log.info("Bot Manager thread started and is now monitoring accounts.")
         log.info("Starting independent training agent...")
         self.training_module.start()
 
         while not self.stop_event.is_set():
-            with state_lock:
-                accounts = BOT_STATE["accounts"][:]
-            
-            if not accounts:
-                self.stop_event.wait(15)
-                continue
+            try:
+                with state_lock:
+                    accounts = [acc.copy() for acc in BOT_STATE["accounts"]]
 
-            for account in accounts:
-                if self.stop_event.is_set():
-                    break
+                # Check for accounts that should be running but aren't
+                for account in accounts:
+                    username = account['username']
+                    if account.get('active') and username not in self.running_account_agents:
+                        self.start_agents_for_account(account)
 
-                log.info(f"Processing account: {account['username']}")
-                temp_client = TravianClient(
-                    account["username"],
-                    account["password"],
-                    account["server_url"],
-                    account.get("proxy")
-                )
-
-                log.info(f"[{account['username']}] Attempting API login to Vardom server...")
-                if not temp_client.login():
-                    log.error(f"[{account['username']}] Login failed, skipping account for this cycle.")
-                    self.stop_event.wait(60)
-                    continue
-                log.info(f"[{account['username']}] Logged in successfully ✔")
+                # Check for accounts that are running but shouldn't be
+                for username in list(self.running_account_agents.keys()):
+                    account_is_active = any(
+                        acc['username'] == username and acc.get('active') for acc in accounts
+                    )
+                    if not account_is_active:
+                        self._stop_agents_for_account(username)
                 
-                try:
-                    resp = temp_client.sess.get(f"{temp_client.server_url}/dorf1.php", timeout=15)
-                    sidebar_data = temp_client.parse_village_page(resp.text, "dorf1")
-                    villages = sidebar_data.get("villages", [])
-
-                    with state_lock:
-                        BOT_STATE["village_data"][account['username']] = villages
-                        if 'training_queues' not in BOT_STATE:
-                            BOT_STATE['training_queues'] = {}
-                        
-                        config_updated = False
-                        for v in villages:
-                            if str(v['id']) not in BOT_STATE['training_queues']:
-                                log.info(f"Creating default (disabled) training config for new village {v['name']}")
-                                BOT_STATE['training_queues'][str(v['id'])] = {
-                                    "enabled": False, "min_queue_duration_minutes": 15,
-                                    "buildings": {
-                                        "barracks": {"gid":19,"enabled":False,"troop_name":""},
-                                        "stable": {"gid":20,"enabled":False,"troop_name":""},
-                                        "workshop": {"gid":21,"enabled":False,"troop_name":""},
-                                        "great_barracks": {"gid":29,"enabled":False,"troop_name":""},
-                                        "great_stable": {"gid":30,"enabled":False,"troop_name":""},
-                                    }
-                                }
-                                config_updated = True
-                        if config_updated:
-                            save_config()
-
-                    current_village_ids = {v['id'] for v in villages}
-                    for vid in list(self.village_agents.keys()):
-                        if vid not in current_village_ids:
-                            self.village_agents.pop(vid).stop()
-                            log.info(f"Stopped and removed agent for stale village ID: {vid}")
-
-                    for village in villages:
-                        if village['id'] not in self.village_agents:
-                            log.info(f"Creating new agent for {village['name']}")
-                            agent = VillageAgent(account, village, self.socketio)
-                            self.village_agents[village['id']] = agent
-                            agent.start()
+                # Run account-level modules (adventure, hero) for active accounts
+                for account in accounts:
+                     if account.get('active'):
+                        temp_client = TravianClient(
+                            account["username"], account["password"],
+                            account["server_url"], account.get("proxy")
+                        )
+                        if temp_client.login():
+                            try:
+                                self.adventure_module.tick(temp_client)
+                                time.sleep(1) 
+                                self.hero_module.tick(temp_client)
+                            except Exception as e:
+                                log.error(f"Error in account-level module for {account['username']}: {e}", exc_info=True)
                         else:
-                            existing_agent = self.village_agents[village['id']]
-                            existing_agent.use_dual_queue = account.get("use_dual_queue", False)
-                            existing_agent.use_hero_resources = account.get("use_hero_resources", False)
+                            log.error(f"[{account['username']}] Login failed for account-level module check.")
 
-                except Exception as exc:
-                    log.error(f"Failed to manage village agents for {account['username']}: {exc}", exc_info=True)
-                    continue
 
-                try:
-                    self.adventure_module.tick(temp_client)
-                    time.sleep(1) 
-                    self.hero_module.tick(temp_client)
-                except Exception as e:
-                    log.error(f"Error in an account-level module for {account['username']}: {e}", exc_info=True)
+            except Exception as e:
+                log.error(f"Critical error in BotManager loop: {e}", exc_info=True)
 
-            self.stop_event.wait(30)
-            
-        log.info("Bot Manager stopped.")
+            self.stop_event.wait(10) # Check status every 10 seconds
+
+    def start_agents_for_account(self, account_info: Dict):
+        username = account_info['username']
+        log.info(f"Attempting to start agents for account: {username}")
+        
+        temp_client = TravianClient(
+            account_info["username"], account_info["password"],
+            account_info["server_url"], account_info.get("proxy")
+        )
+
+        if not temp_client.login():
+            log.error(f"[{username}] Login failed. Cannot start agents for this account.")
+            with state_lock: # Mark as inactive again if login fails
+                for acc in BOT_STATE['accounts']:
+                    if acc['username'] == username:
+                        acc['active'] = False
+                        break
+            save_config()
+            return
+
+        try:
+            resp = temp_client.sess.get(f"{temp_client.server_url}/dorf1.php", timeout=15)
+            sidebar_data = temp_client.parse_village_page(resp.text, "dorf1")
+            villages = sidebar_data.get("villages", [])
+
+            with state_lock:
+                BOT_STATE["village_data"][username] = villages
+                if 'training_queues' not in BOT_STATE: BOT_STATE['training_queues'] = {}
+                config_updated = False
+                for v in villages:
+                    if str(v['id']) not in BOT_STATE['training_queues']:
+                        log.info(f"Creating default (disabled) training config for new village {v['name']}")
+                        BOT_STATE['training_queues'][str(v['id'])] = {
+                            "enabled": False, "min_queue_duration_minutes": 15,
+                            "buildings": {
+                                "barracks": {"gid":19,"enabled":False,"troop_name":""}, "stable": {"gid":20,"enabled":False,"troop_name":""},
+                                "workshop": {"gid":21,"enabled":False,"troop_name":""}, "great_barracks": {"gid":29,"enabled":False,"troop_name":""},
+                                "great_stable": {"gid":30,"enabled":False,"troop_name":""},
+                            }
+                        }
+                        config_updated = True
+                if config_updated: save_config()
+
+            self.running_account_agents[username] = []
+            for village in villages:
+                log.info(f"Creating new agent for village {village['name']} under account {username}")
+                agent = VillageAgent(account_info, village, self.socketio)
+                self.running_account_agents[username].append(agent)
+                agent.start()
+
+        except Exception as exc:
+            log.error(f"Failed to start village agents for {username}: {exc}", exc_info=True)
+            self.running_account_agents.pop(username, None) # Cleanup on failure

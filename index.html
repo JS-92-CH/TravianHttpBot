@@ -57,10 +57,6 @@
             height: 100%;
         }
         
-        #village-details-card, #log-card {
-             flex-grow: 1;
-        }
-
         .card-header {
             display: flex;
             justify-content: space-between;
@@ -87,10 +83,23 @@
         .card-content.collapsed {
             display: none;
         }
-        
-        .card.collapsed-card {
-            height: auto;
+
+        /* New class for collapsible sections */
+        .collapsible-section .collapsible-content {
+            display: none; /* Hidden by default */
+            padding-top: 1rem;
         }
+        .collapsible-section.open .collapsible-content {
+            display: block; /* Show when open */
+        }
+        .collapsible-header {
+            cursor: pointer;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-top: 1.5rem;
+        }
+         .collapsible-header h3 { margin: 0; color: var(--text-secondary); }
+
 
         .btn {
             background-color: var(--bg-tertiary);
@@ -106,6 +115,8 @@
         .btn:hover { background-color: #44475a; }
         .btn-primary { background-color: var(--accent-primary); color: var(--bg-primary); }
         .btn-danger { background-color: var(--accent-secondary); color: var(--bg-primary); }
+        .btn-small { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+
 
         .form-group { margin-bottom: 1rem; }
         .form-control {
@@ -128,6 +139,14 @@
         }
         .village-list-item:hover { background-color: var(--bg-tertiary); }
         .village-list-item.active { background-color: var(--text-secondary); color: var(--bg-primary); font-weight: 700; }
+        .account-header {
+            padding: 0.5rem 1rem;
+            background-color: var(--bg-tertiary);
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-top: 1rem;
+            border-radius: 4px;
+        }
 
         #log {
             background-color: #111;
@@ -148,34 +167,6 @@
         .tab { padding: 1rem; cursor: pointer; border-bottom: 3px solid transparent; }
         .tab.active { color: var(--accent-primary); border-bottom: 3px solid var(--accent-primary); font-weight: 700; }
 
-        .resource-upgrade-form{
-            display:flex;
-            align-items:center;
-            gap:10px;padding:1rem;
-            background-color:var(--bg-tertiary);
-            border-radius:6px;
-            margin-top:1rem;
-        }
-
-        .progress-bar {
-            width: 100%;
-            background-color: var(--bg-tertiary);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-bar-inner {
-            height: 20px;
-            line-height: 20px;
-            text-align: center;
-            color: var(--bg-primary);
-            transition: width 0.3s, background-color 0.3s;
-        }
-
-        .progress-bar-inner.green { background-color: var(--accent-primary); }
-        .progress-bar-inner.yellow { background-color: var(--accent-highlight); }
-        .progress-bar-inner.red { background-color: var(--accent-secondary); }
-
     </style>
 </head>
 <body>
@@ -184,39 +175,36 @@
             <div class="card">
                 <div class="card-header" style="padding: 0 1.5rem;">
                     <div class="tabs" style="width: 100%; margin-bottom: 0; border-bottom: none;">
-                        <div class="tab active" onclick="openLeftTab(event, 'controls-tab')">Controls</div>
-                        <div class="tab" onclick="openLeftTab(event, 'accounts-tab')">Accounts</div>
+                        <div class="tab active" onclick="openLeftTab(event, 'accounts-tab')">Accounts</div>
                         <div class="tab" onclick="openLeftTab(event, 'log-tab')">Log</div>
                     </div>
                 </div>
                 
-                <div id="controls-tab" class="card-content left-tab-content active">
-                    <h2 class="card-title" style="margin-bottom: 1rem;">Bot Controls</h2>
-                    <div style="display: flex; gap: 1rem;">
-                        <button id="startBtn" class="btn btn-primary">Start Bot</button>
-                        <button id="stopBtn" class="btn btn-danger">Stop Bot</button>
+                <div id="accounts-tab" class="card-content left-tab-content active" style="display: flex; flex-direction: column;">
+                    <h2 class="card-title" style="margin-bottom: 1rem;">Account Management</h2>
+                    <div id="account-list" style="flex-grow: 1; overflow-y: auto;"></div>
+                    
+                    <div class="collapsible-section" id="add-account-section">
+                        <div class="collapsible-header" onclick="toggleCollapsible('add-account-section')">
+                            <h3>Add New Account</h3>
+                        </div>
+                        <div class="collapsible-content">
+                            <form id="add-account-form">
+                                <div class="form-group"><input type="text" id="username" class="form-control" placeholder="Username" required></div>
+                                <div class="form-group"><input type="password" id="password" class="form-control" placeholder="Password" required></div>
+                                <div class="form-group"><input type="text" id="server_url" class="form-control" placeholder="Server URL" required></div>
+                                <div class="form-group"><label><input type="checkbox" id="use_dual_queue"> Use Plus Account (2 builds)</label></div>
+                                <div class="form-group"><label><input type="checkbox" id="use_hero_resources"> Use Hero Resources</label></div>
+                                <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
+                                <h4 style="color: var(--text-secondary);">Proxy (Optional)</h4>
+                                <div class="form-group"><input type="text" id="proxy_ip" class="form-control" placeholder="Proxy IP/Host"></div>
+                                <div class="form-group"><input type="text" id="proxy_port" class="form-control" placeholder="Proxy Port"></div>
+                                <div class="form-group"><input type="text" id="proxy_user" class="form-control" placeholder="Proxy Username"></div>
+                                <div class="form-group"><input type="password" id="proxy_pass" class="form-control" placeholder="Proxy Password"></div>
+                                <button type="submit" class="btn" style="width: 100%;">Add Account</button>
+                            </form>
+                        </div>
                     </div>
-                </div>
-
-                <div id="accounts-tab" class="card-content left-tab-content" style="display: none;">
-                    <h2 class="card-title" style="margin-bottom: 1rem;">Accounts</h2>
-                    <div id="account-list"></div>
-                    <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
-                    <h3 style="color: var(--text-secondary);">Add New Account</h3>
-                    <form id="add-account-form">
-                        <div class="form-group"><input type="text" id="username" class="form-control" placeholder="Username" required></div>
-                        <div class="form-group"><input type="password" id="password" class="form-control" placeholder="Password" required></div>
-                        <div class="form-group"><input type="text" id="server_url" class="form-control" placeholder="Server URL" required></div>
-                        <div class="form-group"><label><input type="checkbox" id="use_dual_queue"> Use Plus Account (2 builds)</label></div>
-                        <div class="form-group"><label><input type="checkbox" id="use_hero_resources"> Use Hero Resources</label></div>
-                        <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
-                        <h4 style="color: var(--text-secondary);">Proxy (Optional)</h4>
-                        <div class="form-group"><input type="text" id="proxy_ip" class="form-control" placeholder="Proxy IP/Host"></div>
-                        <div class="form-group"><input type="text" id="proxy_port" class="form-control" placeholder="Proxy Port"></div>
-                        <div class="form-group"><input type="text" id="proxy_user" class="form-control" placeholder="Proxy Username"></div>
-                        <div class="form-group"><input type="password" id="proxy_pass" class="form-control" placeholder="Proxy Password"></div>
-                        <button type="submit" class="btn" style="width: 100%;">Add Account</button>
-                    </form>
                 </div>
                 
                 <div id="log-tab" class="card-content left-tab-content" style="display: none; flex-direction: column;">
@@ -251,12 +239,7 @@
                     <table id="resource-flow-table">
                         <thead>
                             <tr>
-                                <th>Village</th>
-                                <th>Wood</th>
-                                <th>Clay</th>
-                                <th>Iron</th>
-                                <th>Crop</th>
-                                <th>Merchants</th>
+                                <th>Village</th><th>Wood</th><th>Clay</th><th>Iron</th><th>Crop</th><th>Merchants</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -274,7 +257,7 @@
                     <h2 class="card-title" id="village-details-title">Dashboard</h2>
                 </div>
                 <div id="village-details" class="card-content">
-                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -285,7 +268,7 @@
         const GID_MAP = {1:"Woodcutter",2:"Clay Pit",3:"Iron Mine",4:"Cropland",5:"Sawmill",6:"Brickyard",7:"Iron Foundry",8:"Grain Mill",9:"Bakery",10:"Warehouse",11:"Granary",13:"Smithy",14:"Tournament Square",15:"Main Building",16:"Rally Point",17:"Marketplace",18:"Embassy",19:"Barracks",20:"Stable",21:"Workshop",22:"Academy",23:"Cranny",24:"Town Hall",25:"Residence",26:"Palace",27:"Treasury",28:"Trade Office",29:"Great Barracks",30:"Great Stable",31:"City Wall",32:"Earth Wall",33:"Palisade",34:"Stonemason's Lodge",35:"Brewery",36:"Trapper",37:"Hero's Mansion",38:"Great Warehouse",39:"Great Granary",40:"Wonder of the World",41:"Horse Drinking Trough",42:"Stone Wall",43:"Makeshift Wall",44:"Command Center",45:"Waterworks",46:"Hospital"};
         let selectedVillageId = null;
         let currentVillageName = '';
-        let currentTab = 'training';
+        let currentTab = 'fields';
 
         function openLeftTab(event, tabId) {
             document.querySelectorAll('.left-tab-content').forEach(tab => tab.style.display = 'none');
@@ -297,7 +280,18 @@
             }
             event.currentTarget.classList.add('active');
         }
+        
+        // --- NEW FUNCTION for collapsible sections ---
+        function toggleCollapsible(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.classList.toggle('open');
+            }
+        }
 
+        // --- All other JavaScript functions remain the same ---
+        // (The full script from the previous response is included here for completeness)
+        
         function isMultiInstance(gid) {
             gid = parseInt(gid);
             return [10,11,23,36,38,39].includes(gid);
@@ -307,6 +301,7 @@
             const levelFilter = document.getElementById('log-level-filter').value;
             const searchFilter = document.getElementById('log-search-filter').value.toLowerCase();
             const logContainer = document.getElementById('log');
+            if (!logContainer) return;
             const entries = logContainer.getElementsByTagName('div');
 
             for (const entry of entries) {
@@ -315,9 +310,13 @@
                 entry.style.display = (levelMatch && searchMatch) ? '' : 'none';
             }
         }
+        if(document.getElementById('log-level-filter')) {
+            document.getElementById('log-level-filter').onchange = filterLogs;
+        }
+        if(document.getElementById('log-search-filter')) {
+            document.getElementById('log-search-filter').onkeyup = filterLogs;
+        }
 
-        document.getElementById('log-level-filter').onchange = filterLogs;
-        document.getElementById('log-search-filter').onkeyup = filterLogs;
 
         socket.on('connect', () => {
             const log = document.getElementById('log');
@@ -344,13 +343,14 @@
         });
 
         socket.on('state_update', newState => {
+            const wasEmpty = !(FULL_STATE.accounts && FULL_STATE.accounts.length > 0);
             FULL_STATE = newState;
             renderAccountsAndVillages();
             renderResourceFlow();
             if(selectedVillageId) {
                 showVillageDetails(selectedVillageId);
-            } else {
-                renderGlobalSummary();
+            } else if (wasEmpty) {
+                 renderGlobalSummary();
             }
         });
         
@@ -409,15 +409,30 @@
             if (accList) {
                 let html = '<ul style="padding:0; margin:0; list-style:none;">';
                 (FULL_STATE.accounts || []).forEach(acc => {
+                    const status = acc.active ? 'Running' : 'Stopped';
+                    const statusColor = acc.active ? 'var(--accent-primary)' : 'var(--accent-secondary)';
+                    const actionButton = acc.active 
+                        ? `<button class="btn btn-danger btn-small" onclick="stopAccount('${acc.username}')">Stop</button>`
+                        : `<button class="btn btn-primary btn-small" onclick="startAccount('${acc.username}')">Start</button>`;
+                    
                     const proxy_info = acc.proxy && acc.proxy.ip ? ` <small style="color:var(--text-muted);">(Proxy: ${acc.proxy.ip})</small>` : '';
+
                     html += `
-                        <li style="background-color: var(--bg-tertiary); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <input type="checkbox" onchange="updateAccount('${acc.username}', 'use_dual_queue', this.checked)" ${acc.use_dual_queue ? 'checked' : ''} title="Use Plus Account (2 builds)">
-                                <input type="checkbox" onchange="updateAccount('${acc.username}', 'use_hero_resources', this.checked)" ${acc.use_hero_resources ? 'checked' : ''} title="Use Hero Resources">
-                                ${acc.username} ${proxy_info}
+                        <li style="background-color: var(--bg-tertiary); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <strong style="font-size: 1.1rem;">${acc.username}</strong>
+                                <div>
+                                    ${actionButton}
+                                    <button class="btn btn-small" style="background-color: #6272a4;" onclick="removeAccount('${acc.username}')">X</button>
+                                </div>
                             </div>
-                            <button class="btn" style="background-color: var(--accent-secondary); color: var(--bg-primary); padding: 0.2rem 0.5rem;" onclick="removeAccount('${acc.username}')">X</button>
+                            <div>
+                               <span style="font-weight: bold; color: ${statusColor};">${status}</span> ${proxy_info}
+                            </div>
+                            <div style="margin-top: 0.5rem;">
+                                <label title="Use Plus Account (2 builds)"><input type="checkbox" onchange="updateAccount('${acc.username}', 'use_dual_queue', this.checked)" ${acc.use_dual_queue ? 'checked' : ''}> Dual Queue</label>
+                                <label title="Use Hero Resources"><input type="checkbox" onchange="updateAccount('${acc.username}', 'use_hero_resources', this.checked)" ${acc.use_hero_resources ? 'checked' : ''}> Hero Res</label>
+                            </div>
                         </li>
                     `;
                 });
@@ -429,10 +444,11 @@
             if (villageList) {
                 villageList.innerHTML = '';
                 let activeVillageFound = false;
-                for (const username in FULL_STATE.village_data) {
-                    if (isNaN(parseInt(username))) {
-                         const villageData = FULL_STATE.village_data[username];
-                        if (Array.isArray(villageData)) {
+                (FULL_STATE.accounts || []).forEach(account => {
+                    if (account.active) {
+                        const villageData = FULL_STATE.village_data[account.username];
+                        if (Array.isArray(villageData) && villageData.length > 0) {
+                             villageList.innerHTML += `<div class="account-header">${account.username}</div>`;
                             villageData.forEach(village => {
                                 const activeClass = village.id == selectedVillageId ? 'active' : '';
                                 if(village.id == selectedVillageId) {
@@ -443,10 +459,12 @@
                             });
                         }
                     }
-                }
+                });
+
                 if (!activeVillageFound) {
                     selectedVillageId = null;
                     currentVillageName = '';
+                    renderGlobalSummary();
                 }
             }
         }
@@ -469,13 +487,10 @@
             detailsDiv.innerHTML = `
                 <div style="text-align: center; padding-top: 5rem;">
                     <h2 style="color: var(--text-secondary);">Welcome to the Travian Bot!</h2>
-                    <p style="color: var(--text-muted); font-size: 1.1rem;">Select a village from the list to view its details and manage its build queue.</p>
+                    <p style="color: var(--text-muted); font-size: 1.1rem;">Start an account from the 'Accounts' panel to begin.</p>
                     <div style="display: flex; justify-content: center; gap: 2rem; margin-top: 3rem; font-size: 1.2rem;">
                         <div style="background-color: var(--bg-tertiary); padding: 1rem 2rem; border-radius: 8px;">
-                            <strong>Accounts:</strong> <span style="color: var(--accent-primary);">${numAccounts}</span>
-                        </div>
-                        <div style="background-color: var(--bg-tertiary); padding: 1rem 2rem; border-radius: 8px;">
-                            <strong>Villages:</strong> <span style="color: var(--accent-primary);">${numVillages}</span>
+                            <strong>Total Accounts:</strong> <span style="color: var(--accent-primary);">${numAccounts}</span>
                         </div>
                     </div>
                 </div>
@@ -877,11 +892,11 @@
                 queueHtml += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 4px; background-color: var(--bg-tertiary); margin-bottom: 0.5rem;">
                             <span>${index + 1}. ${jobName} to Level ${job.level}</span>
                             <div>
-                                <button class="btn" onclick="moveQueueItem('${villageId}', ${index}, 'top')">Top</button>
-                                <button class="btn" onclick="moveQueueItem('${villageId}', ${index}, 'up')">Up</button>
-                                <button class="btn" onclick="moveQueueItem('${villageId}', ${index}, 'down')">Down</button>
-                                <button class="btn" onclick="moveQueueItem('${villageId}', ${index}, 'bottom')">Bottom</button>
-                                <button class="btn" style="background-color: var(--accent-secondary); color: var(--bg-primary); padding: 0.2rem 0.5rem;" onclick="removeQueueItem('${villageId}', ${index})">X</button>
+                                <button class="btn btn-small" onclick="moveQueueItem('${villageId}', ${index}, 'top')">Top</button>
+                                <button class="btn btn-small" onclick="moveQueueItem('${villageId}', ${index}, 'up')">Up</button>
+                                <button class="btn btn-small" onclick="moveQueueItem('${villageId}', ${index}, 'down')">Down</button>
+                                <button class="btn btn-small" onclick="moveQueueItem('${villageId}', ${index}, 'bottom')">Bottom</button>
+                                <button class="btn btn-small" style="background-color: var(--accent-secondary); color: var(--bg-primary);" onclick="removeQueueItem('${villageId}', ${index})">X</button>
                             </div>
                          </li>`;
             });
@@ -990,8 +1005,14 @@
             currentTab = tabName;
         }
 
-        document.getElementById('startBtn').onclick = () => socket.emit('start_bot');
-        document.getElementById('stopBtn').onclick = () => socket.emit('stop_bot');
+        function startAccount(username) {
+            socket.emit('start_account', {username});
+        }
+
+        function stopAccount(username) {
+            socket.emit('stop_account', {username});
+        }
+        
         document.getElementById('add-account-form').onsubmit = (e) => {
             e.preventDefault();
             socket.emit('add_account', {
@@ -1035,7 +1056,6 @@
         function toggleCollapse(elementId) {
             const content = document.getElementById(elementId);
             content.classList.toggle('collapsed');
-            content.parentElement.classList.toggle('collapsed-card');
         }
 
     </script>
