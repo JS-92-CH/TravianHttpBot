@@ -233,7 +233,7 @@ class Module(threading.Thread):
                         break
                     else:
                         log.info(f"[TrainingAgent] Not all queues in {village_name} are full. Waiting 5 seconds before re-checking...")
-                        self.stop_event.wait(5)
+                        self.stop_event.wait(20)
 
                 self.village_cycle_index += 1
 
