@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 from dashboard import app, socketio
 from config import load_config, log
 

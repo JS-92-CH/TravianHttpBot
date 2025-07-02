@@ -52,7 +52,7 @@ class VillageAgent(threading.Thread):
                     self.stop_event.wait(1)
                     continue
 
-                log.info(f"[{self.village_name}] Refreshing village data...")
+                log.info(f"[{self.village_name}] Refreshing village data for logic loop...")
                 village_data = self.client.fetch_and_parse_village(self.village_id)
 
                 if not village_data or not village_data.get("buildings"):
@@ -89,21 +89,24 @@ class VillageAgent(threading.Thread):
                 
                 if self.building_module:
                     while not self.stop_event.is_set():
-                        current_village_data = self.client.fetch_and_parse_village(self.village_id)
-                        if not current_village_data:
+                        # Fetch another copy right before the build attempt for maximum freshness
+                        current_village_data_for_build = self.client.fetch_and_parse_village(self.village_id)
+                        if not current_village_data_for_build:
                             log.warning(f"[{self.village_name}] Could not fetch village data for building loop. Waiting a moment.")
                             time.sleep(15)
                             continue
 
                         max_queue_length = 2 if self.use_dual_queue else 1
-                        current_queue_length = len(current_village_data.get("queue", []))
+                        current_queue_length = len(current_village_data_for_build.get("queue", []))
 
                         if current_queue_length >= max_queue_length:
                             log.info(f"[{self.village_name}] Server build queue is full ({current_queue_length}/{max_queue_length}).")
                             break
 
                         log.info(f"[{self.village_name}] Queue has open slot ({current_queue_length}/{max_queue_length}). Attempting to build.")
-                        build_eta = self.building_module.tick(current_village_data)
+                        
+                        # Pass the freshest data to the building module
+                        build_eta = self.building_module.tick(current_village_data_for_build)
 
                         if build_eta <= 0:
                             log.info(f"[{self.village_name}] No more buildings to queue or an error occurred. Exiting build loop.")

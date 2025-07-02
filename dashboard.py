@@ -3,13 +3,13 @@
 from flask import Flask, render_template_string
 from flask_socketio import SocketIO
 import copy
-
+import time
 from config import BOT_STATE, state_lock, save_config, log, setup_logging
 from bot import BotManager
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "8b8e2d43‐dashboard‐secret"
-socketio = SocketIO(app, async_mode="threading")
+socketio = SocketIO(app, async_mode="eventlet")
 
 # Setup logging to include the socketio handler
 setup_logging(socketio)
@@ -60,6 +60,40 @@ def handle_stop_account(data):
                 break
     save_config()
 
+# dashboard.py
+
+@socketio.on('add_build_task')
+def handle_add_build_task(data):
+    """
+    Handles adding a single new build task from the UI and nudges the
+    corresponding agent to act on it immediately.
+    """
+    village_id = data.get('villageId')
+    task = data.get('task')
+    if not village_id or not task:
+        return
+
+    log.info(f"UI request to ADD build task for village {village_id}: {task}")
+    with state_lock:
+        if str(village_id) not in BOT_STATE['build_queues']:
+            BOT_STATE['build_queues'][str(village_id)] = []
+        BOT_STATE['build_queues'][str(village_id)].append(task)
+    save_config()
+
+    # Find the running agent and wake it up by setting its next check time to now.
+    if bot_manager_thread and bot_manager_thread.is_alive():
+        with state_lock:
+            agents_found = False
+            for username, agents in bot_manager_thread.running_account_agents.items():
+                for agent in agents:
+                    if str(agent.village_id) == str(village_id):
+                        log.info(f"Nudging agent for village {agent.village_name} to check new build task.")
+                        # This now works because the `time` module is imported
+                        agent.next_check_time = time.time()
+                        agents_found = True
+                        break
+                if agents_found:
+                    break
 
 @socketio.on('add_account')
 def handle_add_account(data):

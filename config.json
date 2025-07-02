@@ -6,7 +6,7 @@
             "server_url": "https://x200.vardom.net",
             "tribe": "roman",
             "use_dual_queue": true,
-            "use_hero_resources": false,
+            "use_hero_resources": true,
             "building_logic": "default",
             "active": true,
             "proxy": {
@@ -1587,15 +1587,447 @@
         "69203": [],
         "69603": [],
         "70406": [],
-        "69602": [],
-        "70004": [],
+        "69602": [
+            {
+                "type": "building",
+                "location": 27,
+                "gid": 30,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 28,
+                "gid": 21,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 22,
+                "gid": 22,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 19,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 20,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 23,
+                "gid": 13,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 29,
+                "gid": 46,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 31,
+                "gid": 14,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 40,
+                "gid": 31,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 32,
+                "gid": 17,
+                "level": 20
+            }
+        ],
+        "70004": [
+            {
+                "type": "building",
+                "location": 27,
+                "gid": 30,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 28,
+                "gid": 21,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 22,
+                "gid": 22,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 19,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 20,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 23,
+                "gid": 13,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 29,
+                "gid": 46,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 31,
+                "gid": 14,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 40,
+                "gid": 31,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 32,
+                "gid": 17,
+                "level": 20
+            }
+        ],
         "70405": [],
         "70407": [],
-        "70807": [],
+        "70807": [
+            {
+                "type": "building",
+                "location": 22,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 24,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 25,
+                "gid": 11,
+                "level": 20
+            }
+        ],
         "70808": [],
         "70408": [],
-        "70806": [],
-        "71208": []
+        "70806": [
+            {
+                "type": "building",
+                "location": 40,
+                "gid": 31,
+                "level": 20
+            }
+        ],
+        "71208": [],
+        "70002": [
+            {
+                "type": "building",
+                "location": 27,
+                "gid": 30,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 28,
+                "gid": 21,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 22,
+                "gid": 22,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 19,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 20,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 23,
+                "gid": 13,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 29,
+                "gid": 46,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 31,
+                "gid": 14,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 40,
+                "gid": 31,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 32,
+                "gid": 17,
+                "level": 20
+            }
+        ],
+        "69202": [
+            {
+                "type": "building",
+                "location": 27,
+                "gid": 30,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 28,
+                "gid": 21,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 22,
+                "gid": 22,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 19,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 20,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 23,
+                "gid": 13,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 29,
+                "gid": 46,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 31,
+                "gid": 14,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 40,
+                "gid": 31,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 32,
+                "gid": 17,
+                "level": 20
+            }
+        ],
+        "68802": [
+            {
+                "type": "building",
+                "location": 27,
+                "gid": 30,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 28,
+                "gid": 21,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 22,
+                "gid": 22,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 19,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 20,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 23,
+                "gid": 13,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 29,
+                "gid": 46,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 31,
+                "gid": 14,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 40,
+                "gid": 31,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 32,
+                "gid": 17,
+                "level": 20
+            }
+        ],
+        "69201": [
+            {
+                "type": "building",
+                "location": 27,
+                "gid": 30,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 28,
+                "gid": 21,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 22,
+                "gid": 22,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 19,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 20,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 23,
+                "gid": 13,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 29,
+                "gid": 46,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 31,
+                "gid": 14,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 40,
+                "gid": 31,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 32,
+                "gid": 17,
+                "level": 20
+            }
+        ]
     },
     "demolish_queues": {
         "69604": [],
@@ -2688,8 +3120,8 @@
             }
         },
         "70005": {
-            "enabled": true,
-            "min_queue_duration_minutes": 1830,
+            "enabled": false,
+            "min_queue_duration_minutes": 2650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2704,7 +3136,7 @@
                 "workshop": {
                     "gid": 21,
                     "enabled": true,
-                    "troop_name": "Ram"
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
@@ -2720,8 +3152,8 @@
             "max_training_time": "03.07.2025 15:00"
         },
         "69604": {
-            "enabled": true,
-            "min_queue_duration_minutes": 1840,
+            "enabled": false,
+            "min_queue_duration_minutes": 2650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2736,7 +3168,7 @@
                 "workshop": {
                     "gid": 21,
                     "enabled": true,
-                    "troop_name": "Ram"
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
@@ -2752,8 +3184,8 @@
             "max_training_time": "03.07.2025 15:00"
         },
         "69203": {
-            "enabled": true,
-            "min_queue_duration_minutes": 1840,
+            "enabled": false,
+            "min_queue_duration_minutes": 2650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2768,7 +3200,7 @@
                 "workshop": {
                     "gid": 21,
                     "enabled": true,
-                    "troop_name": "Ram"
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
@@ -2784,40 +3216,8 @@
             "max_training_time": "03.07.2025 15:00"
         },
         "69603": {
-            "enabled": true,
-            "min_queue_duration_minutes": 1840,
-            "buildings": {
-                "barracks": {
-                    "gid": 19,
-                    "enabled": true,
-                    "troop_name": "Slave Militia"
-                },
-                "stable": {
-                    "gid": 20,
-                    "enabled": true,
-                    "troop_name": "Sopdu Explorer"
-                },
-                "workshop": {
-                    "gid": 21,
-                    "enabled": true,
-                    "troop_name": "Ram"
-                },
-                "great_barracks": {
-                    "gid": 29,
-                    "enabled": true,
-                    "troop_name": "Slave Militia"
-                },
-                "great_stable": {
-                    "gid": 30,
-                    "enabled": true,
-                    "troop_name": "Sopdu Explorer"
-                }
-            },
-            "max_training_time": "03.07.2025 15:00"
-        },
-        "70406": {
-            "enabled": true,
-            "min_queue_duration_minutes": 1840,
+            "enabled": false,
+            "min_queue_duration_minutes": 2650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2832,7 +3232,39 @@
                 "workshop": {
                     "gid": 21,
                     "enabled": true,
-                    "troop_name": "Ram"
+                    "troop_name": "Stone Catapult"
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": true,
+                    "troop_name": "Khopesh Warrior"
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": true,
+                    "troop_name": "Resheph Chariot"
+                }
+            },
+            "max_training_time": "03.07.2025 15:00"
+        },
+        "70406": {
+            "enabled": false,
+            "min_queue_duration_minutes": 2650,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": true,
+                    "troop_name": "Khopesh Warrior"
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": true,
+                    "troop_name": "Resheph Chariot"
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": true,
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
@@ -2910,8 +3342,8 @@
             }
         },
         "70405": {
-            "enabled": true,
-            "min_queue_duration_minutes": 1840,
+            "enabled": false,
+            "min_queue_duration_minutes": 2650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2926,7 +3358,7 @@
                 "workshop": {
                     "gid": 21,
                     "enabled": true,
-                    "troop_name": "Ram"
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
@@ -2942,8 +3374,8 @@
             "max_training_time": "03.07.2025 15:00"
         },
         "70407": {
-            "enabled": true,
-            "min_queue_duration_minutes": 1830,
+            "enabled": false,
+            "min_queue_duration_minutes": 2650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2958,7 +3390,7 @@
                 "workshop": {
                     "gid": 21,
                     "enabled": true,
-                    "troop_name": "Ram"
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
@@ -2974,8 +3406,8 @@
             "max_training_time": "03.07.2025 15:00"
         },
         "70807": {
-            "enabled": true,
-            "min_queue_duration_minutes": 1820,
+            "enabled": false,
+            "min_queue_duration_minutes": 2650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2990,7 +3422,7 @@
                 "workshop": {
                     "gid": 21,
                     "enabled": true,
-                    "troop_name": "Ram"
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
@@ -3006,8 +3438,8 @@
             "max_training_time": "03.07.2025 15:00"
         },
         "70808": {
-            "enabled": true,
-            "min_queue_duration_minutes": 1800,
+            "enabled": false,
+            "min_queue_duration_minutes": 2620,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3022,7 +3454,7 @@
                 "workshop": {
                     "gid": 21,
                     "enabled": true,
-                    "troop_name": "Ram"
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
@@ -3038,13 +3470,13 @@
             "max_training_time": "03.07.2025 15:00"
         },
         "70408": {
-            "enabled": true,
-            "min_queue_duration_minutes": 1810,
+            "enabled": false,
+            "min_queue_duration_minutes": 2650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
                     "enabled": true,
-                    "troop_name": "Slave Militia"
+                    "troop_name": "Khopesh Warrior"
                 },
                 "stable": {
                     "gid": 20,
@@ -3054,12 +3486,12 @@
                 "workshop": {
                     "gid": 21,
                     "enabled": true,
-                    "troop_name": "Ram"
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
                     "enabled": true,
-                    "troop_name": "Slave Militia"
+                    "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
@@ -3070,13 +3502,13 @@
             "max_training_time": "03.07.2025 15:00"
         },
         "70806": {
-            "enabled": true,
-            "min_queue_duration_minutes": 1800,
+            "enabled": false,
+            "min_queue_duration_minutes": 2650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
                     "enabled": true,
-                    "troop_name": "Slave Militia"
+                    "troop_name": "Khopesh Warrior"
                 },
                 "stable": {
                     "gid": 20,
@@ -3086,12 +3518,12 @@
                 "workshop": {
                     "gid": 21,
                     "enabled": true,
-                    "troop_name": "Ram"
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
                     "enabled": true,
-                    "troop_name": "Slave Militia"
+                    "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
@@ -3102,41 +3534,165 @@
             "max_training_time": "03.07.2025 15:00"
         },
         "71208": {
-            "enabled": true,
-            "min_queue_duration_minutes": 1800,
+            "enabled": false,
+            "min_queue_duration_minutes": 2650,
             "buildings": {
                 "barracks": {
                     "gid": 19,
                     "enabled": true,
-                    "troop_name": "Slave Militia"
+                    "troop_name": "Khopesh Warrior"
                 },
                 "stable": {
                     "gid": 20,
                     "enabled": true,
-                    "troop_name": "Sopdu Explorer"
+                    "troop_name": "Resheph Chariot"
                 },
                 "workshop": {
                     "gid": 21,
                     "enabled": true,
-                    "troop_name": "Ram"
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
                     "enabled": true,
-                    "troop_name": "Slave Militia"
+                    "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
                     "enabled": true,
-                    "troop_name": "Sopdu Explorer"
+                    "troop_name": "Resheph Chariot"
                 }
             },
             "max_training_time": "03.07.2025 15:00"
+        },
+        "70002": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "69202": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "68802": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
+        },
+        "69201": {
+            "enabled": false,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            }
         }
     },
     "smithy_upgrades": {
         "70005": {
-            "enabled": true,
+            "enabled": false,
             "priority": [
                 "Khopesh Warrior",
                 "Resheph Chariot",
@@ -3149,7 +3705,7 @@
             ]
         },
         "69604": {
-            "enabled": true,
+            "enabled": false,
             "priority": [
                 "Khopesh Warrior",
                 "Resheph Chariot",
@@ -3162,7 +3718,7 @@
             ]
         },
         "69203": {
-            "enabled": true,
+            "enabled": false,
             "priority": [
                 "Khopesh Warrior",
                 "Resheph Chariot",
@@ -3175,121 +3731,145 @@
             ]
         },
         "69603": {
-            "enabled": true,
+            "enabled": false,
             "priority": [
-                "Slave Militia",
-                "Sopdu Explorer",
-                "Ash Warden",
-                "Anhur Guard",
+                "Khopesh Warrior",
                 "Resheph Chariot",
                 "Ram",
-                "Khopesh Warrior",
-                "Stone Catapult"
+                "Stone Catapult",
+                "Slave Militia",
+                "Ash Warden",
+                "Sopdu Explorer",
+                "Anhur Guard"
             ]
         },
         "70406": {
-            "enabled": true,
+            "enabled": false,
             "priority": [
                 "Khopesh Warrior",
                 "Resheph Chariot",
+                "Ram",
+                "Stone Catapult",
                 "Slave Militia",
                 "Ash Warden",
                 "Sopdu Explorer",
-                "Anhur Guard",
-                "Ram",
-                "Stone Catapult"
+                "Anhur Guard"
             ]
         },
         "70405": {
-            "enabled": true,
+            "enabled": false,
             "priority": [
                 "Khopesh Warrior",
                 "Resheph Chariot",
+                "Ram",
+                "Stone Catapult",
                 "Slave Militia",
                 "Ash Warden",
                 "Sopdu Explorer",
-                "Anhur Guard",
-                "Ram",
-                "Stone Catapult"
+                "Anhur Guard"
             ]
         },
         "70407": {
-            "enabled": true,
+            "enabled": false,
             "priority": [
                 "Khopesh Warrior",
                 "Resheph Chariot",
+                "Ram",
+                "Stone Catapult",
                 "Slave Militia",
                 "Ash Warden",
                 "Sopdu Explorer",
-                "Anhur Guard",
-                "Ram",
-                "Stone Catapult"
+                "Anhur Guard"
             ]
         },
         "70807": {
-            "enabled": true,
+            "enabled": false,
             "priority": [
                 "Khopesh Warrior",
                 "Resheph Chariot",
+                "Ram",
+                "Stone Catapult",
                 "Slave Militia",
                 "Ash Warden",
                 "Sopdu Explorer",
-                "Anhur Guard",
-                "Ram",
-                "Stone Catapult"
+                "Anhur Guard"
             ]
         },
         "70808": {
-            "enabled": true,
+            "enabled": false,
             "priority": [
                 "Khopesh Warrior",
                 "Resheph Chariot",
+                "Ram",
+                "Stone Catapult",
                 "Slave Militia",
                 "Ash Warden",
                 "Sopdu Explorer",
-                "Anhur Guard",
-                "Ram",
-                "Stone Catapult"
+                "Anhur Guard"
             ]
         },
         "70408": {
-            "enabled": true,
+            "enabled": false,
             "priority": [
-                "Slave Militia",
+                "Khopesh Warrior",
                 "Resheph Chariot",
                 "Ram",
+                "Stone Catapult",
+                "Slave Militia",
                 "Ash Warden",
                 "Sopdu Explorer",
-                "Khopesh Warrior",
-                "Anhur Guard",
-                "Stone Catapult"
+                "Anhur Guard"
             ]
         },
         "70806": {
-            "enabled": true,
+            "enabled": false,
             "priority": [
-                "Slave Militia",
+                "Khopesh Warrior",
                 "Resheph Chariot",
                 "Ram",
+                "Stone Catapult",
+                "Slave Militia",
                 "Ash Warden",
-                "Khopesh Warrior",
                 "Sopdu Explorer",
-                "Anhur Guard",
-                "Stone Catapult"
+                "Anhur Guard"
             ]
         },
         "71208": {
-            "enabled": true,
+            "enabled": false,
             "priority": [
-                "Slave Militia",
-                "Sopdu Explorer",
+                "Khopesh Warrior",
                 "Resheph Chariot",
                 "Ram",
+                "Stone Catapult",
+                "Slave Militia",
                 "Ash Warden",
-                "Khopesh Warrior",
-                "Anhur Guard",
-                "Stone Catapult"
+                "Sopdu Explorer",
+                "Anhur Guard"
             ]
+        },
+        "70004": {
+            "enabled": false,
+            "priority": []
+        },
+        "69602": {
+            "enabled": false,
+            "priority": []
+        },
+        "70002": {
+            "enabled": false,
+            "priority": []
+        },
+        "69202": {
+            "enabled": false,
+            "priority": []
+        },
+        "68802": {
+            "enabled": false,
+            "priority": []
+        },
+        "69201": {
+            "enabled": false,
+            "priority": []
         }
     },
     "build_templates": {
@@ -3809,6 +4389,142 @@
                 "type": "building",
                 "location": 23,
                 "gid": 11,
+                "level": 20
+            }
+        ],
+        "200x": [
+            {
+                "type": "building",
+                "location": 26,
+                "gid": 15,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 1
+            },
+            {
+                "type": "building",
+                "location": 19,
+                "gid": 10,
+                "level": 5
+            },
+            {
+                "type": "building",
+                "location": 20,
+                "gid": 11,
+                "level": 5
+            },
+            {
+                "type": "building",
+                "location": 21,
+                "gid": 19,
+                "level": 3
+            },
+            {
+                "type": "building",
+                "location": 24,
+                "gid": 22,
+                "level": 10
+            },
+            {
+                "type": "building",
+                "location": 27,
+                "gid": 13,
+                "level": 3
+            },
+            {
+                "type": "building",
+                "location": 21,
+                "gid": 19,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 28,
+                "gid": 20,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 29,
+                "gid": 29,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 30,
+                "gid": 30,
+                "level": 20
+            }
+        ],
+        "200 teil2": [
+            {
+                "type": "building",
+                "location": 27,
+                "gid": 30,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 28,
+                "gid": 21,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 22,
+                "gid": 22,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 19,
+                "gid": 10,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 20,
+                "gid": 11,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 23,
+                "gid": 13,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 39,
+                "gid": 16,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 29,
+                "gid": 46,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 31,
+                "gid": 14,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 40,
+                "gid": 31,
+                "level": 20
+            },
+            {
+                "type": "building",
+                "location": 32,
+                "gid": 17,
                 "level": 20
             }
         ]
