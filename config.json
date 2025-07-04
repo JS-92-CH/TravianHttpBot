@@ -15,6 +15,22 @@
                 "username": "",
                 "password": ""
             }
+        },
+        {
+            "username": "hardy",
+            "password": "22222222",
+            "server_url": "https://x100.vardom.net",
+            "tribe": "roman",
+            "use_dual_queue": true,
+            "use_hero_resources": false,
+            "building_logic": "default",
+            "active": true,
+            "proxy": {
+                "ip": "",
+                "port": "",
+                "username": "",
+                "password": ""
+            }
         }
     ],
     "build_queues": {
@@ -1582,452 +1598,30 @@
         "53560": [],
         "54363": [],
         "53970": [],
-        "70005": [],
+        "70005": [
+            {
+                "type": "resource_plan",
+                "level": 18
+            }
+        ],
         "69604": [],
         "69203": [],
         "69603": [],
         "70406": [],
-        "69602": [
-            {
-                "type": "building",
-                "location": 27,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "gid": 21,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 22,
-                "gid": 22,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 23,
-                "gid": 13,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "gid": 46,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "gid": 14,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "gid": 17,
-                "level": 20
-            }
-        ],
-        "70004": [
-            {
-                "type": "building",
-                "location": 27,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "gid": 21,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 22,
-                "gid": 22,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 23,
-                "gid": 13,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "gid": 46,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "gid": 14,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "gid": 17,
-                "level": 20
-            }
-        ],
+        "69602": [],
+        "70004": [],
         "70405": [],
         "70407": [],
-        "70807": [
-            {
-                "type": "building",
-                "location": 22,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 24,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 25,
-                "gid": 11,
-                "level": 20
-            }
-        ],
+        "70807": [],
         "70808": [],
         "70408": [],
-        "70806": [
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            }
-        ],
+        "70806": [],
         "71208": [],
-        "70002": [
-            {
-                "type": "building",
-                "location": 27,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "gid": 21,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 22,
-                "gid": 22,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 23,
-                "gid": 13,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "gid": 46,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "gid": 14,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "gid": 17,
-                "level": 20
-            }
-        ],
-        "69202": [
-            {
-                "type": "building",
-                "location": 27,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "gid": 21,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 22,
-                "gid": 22,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 23,
-                "gid": 13,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "gid": 46,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "gid": 14,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "gid": 17,
-                "level": 20
-            }
-        ],
-        "68802": [
-            {
-                "type": "building",
-                "location": 27,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "gid": 21,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 22,
-                "gid": 22,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 23,
-                "gid": 13,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "gid": 46,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "gid": 14,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "gid": 17,
-                "level": 20
-            }
-        ],
-        "69201": [
-            {
-                "type": "building",
-                "location": 27,
-                "gid": 30,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 28,
-                "gid": 21,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 22,
-                "gid": 22,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 19,
-                "gid": 10,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 20,
-                "gid": 11,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 23,
-                "gid": 13,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 39,
-                "gid": 16,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 29,
-                "gid": 46,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 31,
-                "gid": 14,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 40,
-                "gid": 31,
-                "level": 20
-            },
-            {
-                "type": "building",
-                "location": 32,
-                "gid": 17,
-                "level": 20
-            }
-        ]
+        "70002": [],
+        "69202": [],
+        "68802": [],
+        "69201": [],
+        "68785": []
     },
     "demolish_queues": {
         "69604": [],
@@ -2041,7 +1635,14 @@
         "70808": [],
         "70408": [],
         "70806": [],
-        "71208": []
+        "71208": [],
+        "70004": [],
+        "69602": [],
+        "70002": [],
+        "69202": [],
+        "68802": [],
+        "69201": [],
+        "68785": []
     },
     "training_queues": {
         "53965": {
@@ -3120,8 +2721,8 @@
             }
         },
         "70005": {
-            "enabled": false,
-            "min_queue_duration_minutes": 2650,
+            "enabled": true,
+            "min_queue_duration_minutes": 610,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3149,11 +2750,11 @@
                     "troop_name": "Resheph Chariot"
                 }
             },
-            "max_training_time": "03.07.2025 15:00"
+            "max_training_time": "06.07.2025 15:00"
         },
         "69604": {
-            "enabled": false,
-            "min_queue_duration_minutes": 2650,
+            "enabled": true,
+            "min_queue_duration_minutes": 600,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3172,20 +2773,20 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Resheph Chariot"
                 }
             },
-            "max_training_time": "03.07.2025 15:00"
+            "max_training_time": "06.07.2025 15:00"
         },
         "69203": {
-            "enabled": false,
-            "min_queue_duration_minutes": 2650,
+            "enabled": true,
+            "min_queue_duration_minutes": 590,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3204,30 +2805,30 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Resheph Chariot"
                 }
             },
-            "max_training_time": "03.07.2025 15:00"
+            "max_training_time": "06.07.2025 15:00"
         },
         "69603": {
-            "enabled": false,
-            "min_queue_duration_minutes": 2650,
+            "enabled": true,
+            "min_queue_duration_minutes": 580,
             "buildings": {
                 "barracks": {
                     "gid": 19,
                     "enabled": true,
-                    "troop_name": "Khopesh Warrior"
+                    "troop_name": "Slave Militia"
                 },
                 "stable": {
                     "gid": 20,
                     "enabled": true,
-                    "troop_name": "Resheph Chariot"
+                    "troop_name": "Sopdu Explorer"
                 },
                 "workshop": {
                     "gid": 21,
@@ -3236,20 +2837,20 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Resheph Chariot"
                 }
             },
-            "max_training_time": "03.07.2025 15:00"
+            "max_training_time": "06.07.2025 15:00"
         },
         "70406": {
-            "enabled": false,
-            "min_queue_duration_minutes": 2650,
+            "enabled": true,
+            "min_queue_duration_minutes": 580,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3268,82 +2869,84 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Resheph Chariot"
                 }
             },
-            "max_training_time": "03.07.2025 15:00"
+            "max_training_time": "06.07.2025 15:00"
         },
         "69602": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 570,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Khopesh Warrior"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Resheph Chariot"
                 },
                 "workshop": {
                     "gid": 21,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
                     "enabled": false,
-                    "troop_name": ""
+                    "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
                     "enabled": false,
-                    "troop_name": ""
+                    "troop_name": "Resheph Chariot"
                 }
-            }
+            },
+            "max_training_time": "06.07.2025 15:00"
         },
         "70004": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 570,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Khopesh Warrior"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Resheph Chariot"
                 },
                 "workshop": {
                     "gid": 21,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
                     "enabled": false,
-                    "troop_name": ""
+                    "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
                     "enabled": false,
-                    "troop_name": ""
+                    "troop_name": "Resheph Chariot"
                 }
-            }
+            },
+            "max_training_time": "06.07.2025 15:00"
         },
         "70405": {
-            "enabled": false,
-            "min_queue_duration_minutes": 2650,
+            "enabled": true,
+            "min_queue_duration_minutes": 690,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3362,20 +2965,20 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Resheph Chariot"
                 }
             },
-            "max_training_time": "03.07.2025 15:00"
+            "max_training_time": "06.07.2025 15:00"
         },
         "70407": {
-            "enabled": false,
-            "min_queue_duration_minutes": 2650,
+            "enabled": true,
+            "min_queue_duration_minutes": 690,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3394,20 +2997,20 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Resheph Chariot"
                 }
             },
-            "max_training_time": "03.07.2025 15:00"
+            "max_training_time": "06.07.2025 15:00"
         },
         "70807": {
-            "enabled": false,
-            "min_queue_duration_minutes": 2650,
+            "enabled": true,
+            "min_queue_duration_minutes": 690,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3426,20 +3029,20 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Resheph Chariot"
                 }
             },
-            "max_training_time": "03.07.2025 15:00"
+            "max_training_time": "06.07.2025 15:00"
         },
         "70808": {
-            "enabled": false,
-            "min_queue_duration_minutes": 2620,
+            "enabled": true,
+            "min_queue_duration_minutes": 690,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3458,25 +3061,25 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Resheph Chariot"
                 }
             },
-            "max_training_time": "03.07.2025 15:00"
+            "max_training_time": "06.07.2025 15:00"
         },
         "70408": {
-            "enabled": false,
-            "min_queue_duration_minutes": 2650,
+            "enabled": true,
+            "min_queue_duration_minutes": 880,
             "buildings": {
                 "barracks": {
                     "gid": 19,
                     "enabled": true,
-                    "troop_name": "Khopesh Warrior"
+                    "troop_name": "Slave Militia"
                 },
                 "stable": {
                     "gid": 20,
@@ -3490,25 +3093,25 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Resheph Chariot"
                 }
             },
-            "max_training_time": "03.07.2025 15:00"
+            "max_training_time": "06.07.2025 15:00"
         },
         "70806": {
-            "enabled": false,
-            "min_queue_duration_minutes": 2650,
+            "enabled": true,
+            "min_queue_duration_minutes": 880,
             "buildings": {
                 "barracks": {
                     "gid": 19,
                     "enabled": true,
-                    "troop_name": "Khopesh Warrior"
+                    "troop_name": "Slave Militia"
                 },
                 "stable": {
                     "gid": 20,
@@ -3522,20 +3125,52 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Resheph Chariot"
                 }
             },
-            "max_training_time": "03.07.2025 15:00"
+            "max_training_time": "06.07.2025 15:00"
         },
         "71208": {
-            "enabled": false,
-            "min_queue_duration_minutes": 2650,
+            "enabled": true,
+            "min_queue_duration_minutes": 880,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": true,
+                    "troop_name": "Slave Militia"
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": true,
+                    "troop_name": "Sopdu Explorer"
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": true,
+                    "troop_name": "Stone Catapult"
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": "Khopesh Warrior"
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": "Resheph Chariot"
+                }
+            },
+            "max_training_time": "06.07.2025 15:00"
+        },
+        "70002": {
+            "enabled": true,
+            "min_queue_duration_minutes": 570,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3554,111 +3189,146 @@
                 },
                 "great_barracks": {
                     "gid": 29,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
-                    "enabled": true,
+                    "enabled": false,
                     "troop_name": "Resheph Chariot"
                 }
             },
-            "max_training_time": "03.07.2025 15:00"
-        },
-        "70002": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
-            "buildings": {
-                "barracks": {
-                    "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
-                },
-                "stable": {
-                    "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
-                },
-                "workshop": {
-                    "gid": 21,
-                    "enabled": false,
-                    "troop_name": ""
-                },
-                "great_barracks": {
-                    "gid": 29,
-                    "enabled": false,
-                    "troop_name": ""
-                },
-                "great_stable": {
-                    "gid": 30,
-                    "enabled": false,
-                    "troop_name": ""
-                }
-            }
+            "max_training_time": "06.07.2025 15:00"
         },
         "69202": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 570,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Khopesh Warrior"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Resheph Chariot"
                 },
                 "workshop": {
                     "gid": 21,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
                     "enabled": false,
-                    "troop_name": ""
+                    "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
                     "enabled": false,
-                    "troop_name": ""
+                    "troop_name": "Resheph Chariot"
                 }
-            }
+            },
+            "max_training_time": "06.07.2025 15:00"
         },
         "68802": {
-            "enabled": false,
-            "min_queue_duration_minutes": 15,
+            "enabled": true,
+            "min_queue_duration_minutes": 570,
             "buildings": {
                 "barracks": {
                     "gid": 19,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Khopesh Warrior"
                 },
                 "stable": {
                     "gid": 20,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Resheph Chariot"
                 },
                 "workshop": {
                     "gid": 21,
-                    "enabled": false,
-                    "troop_name": ""
+                    "enabled": true,
+                    "troop_name": "Stone Catapult"
                 },
                 "great_barracks": {
                     "gid": 29,
                     "enabled": false,
-                    "troop_name": ""
+                    "troop_name": "Khopesh Warrior"
                 },
                 "great_stable": {
                     "gid": 30,
                     "enabled": false,
-                    "troop_name": ""
+                    "troop_name": "Resheph Chariot"
                 }
-            }
+            },
+            "max_training_time": "06.07.2025 15:00"
         },
         "69201": {
+            "enabled": true,
+            "min_queue_duration_minutes": 570,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": true,
+                    "troop_name": "Khopesh Warrior"
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": true,
+                    "troop_name": "Resheph Chariot"
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": true,
+                    "troop_name": "Stone Catapult"
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": "Khopesh Warrior"
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": "Resheph Chariot"
+                }
+            },
+            "max_training_time": "06.07.2025 15:00"
+        },
+        "68785": {
+            "enabled": true,
+            "min_queue_duration_minutes": 15,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": true,
+                    "troop_name": "Clubswinger"
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": true,
+                    "troop_name": "Teutonic Knight"
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": true,
+                    "troop_name": "Catapult"
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": true,
+                    "troop_name": "Clubswinger"
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": true,
+                    "troop_name": "Teutonic Knight"
+                }
+            },
+            "max_training_time": "04.07.2025 17:00"
+        },
+        "68784": {
             "enabled": false,
             "min_queue_duration_minutes": 15,
             "buildings": {
@@ -3848,26 +3518,97 @@
             ]
         },
         "70004": {
-            "enabled": false,
-            "priority": []
+            "enabled": true,
+            "priority": [
+                "Sopdu Explorer",
+                "Anhur Guard",
+                "Stone Catapult",
+                "Khopesh Warrior",
+                "Resheph Chariot",
+                "Slave Militia",
+                "Ash Warden",
+                "Ram"
+            ]
         },
         "69602": {
-            "enabled": false,
-            "priority": []
+            "enabled": true,
+            "priority": [
+                "Sopdu Explorer",
+                "Anhur Guard",
+                "Stone Catapult",
+                "Khopesh Warrior",
+                "Resheph Chariot",
+                "Slave Militia",
+                "Ash Warden",
+                "Ram"
+            ]
         },
         "70002": {
-            "enabled": false,
-            "priority": []
+            "enabled": true,
+            "priority": [
+                "Sopdu Explorer",
+                "Anhur Guard",
+                "Stone Catapult",
+                "Khopesh Warrior",
+                "Resheph Chariot",
+                "Slave Militia",
+                "Ash Warden",
+                "Ram"
+            ]
         },
         "69202": {
-            "enabled": false,
-            "priority": []
+            "enabled": true,
+            "priority": [
+                "Sopdu Explorer",
+                "Anhur Guard",
+                "Stone Catapult",
+                "Khopesh Warrior",
+                "Resheph Chariot",
+                "Slave Militia",
+                "Ash Warden",
+                "Ram"
+            ]
         },
         "68802": {
-            "enabled": false,
-            "priority": []
+            "enabled": true,
+            "priority": [
+                "Sopdu Explorer",
+                "Anhur Guard",
+                "Stone Catapult",
+                "Khopesh Warrior",
+                "Resheph Chariot",
+                "Slave Militia",
+                "Ash Warden",
+                "Ram"
+            ]
         },
         "69201": {
+            "enabled": true,
+            "priority": [
+                "Sopdu Explorer",
+                "Anhur Guard",
+                "Stone Catapult",
+                "Khopesh Warrior",
+                "Resheph Chariot",
+                "Slave Militia",
+                "Ash Warden",
+                "Ram"
+            ]
+        },
+        "68785": {
+            "enabled": true,
+            "priority": [
+                "Clubswinger",
+                "Teutonic Knight",
+                "Catapult",
+                "Ram",
+                "Scout",
+                "Paladin",
+                "Spearman",
+                "Axeman"
+            ]
+        },
+        "68784": {
             "enabled": false,
             "priority": []
         }
