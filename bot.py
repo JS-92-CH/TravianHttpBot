@@ -71,10 +71,13 @@ class VillageAgent(threading.Thread):
                             if training_page_data:
                                 BOT_STATE['training_data'][str(self.village_id)][str(gid)] = training_page_data
 
-                    if any(b['gid'] == 13 for b in village_data.get('buildings', [])):
-                        smithy_page_data = self.client.get_smithy_page(self.village_id)
+                    # Check if a smithy (gid 13) exists before fetching its page
+                    if any(b.get('gid') == 13 for b in village_data.get('buildings', [])):
+                        # Call with village_id and the smithy's gid
+                        smithy_page_data = self.client.get_smithy_page(self.village_id, 13)
                         if smithy_page_data:
-                            BOT_STATE['smithy_data'][str(self.village_id)] = smithy_page_data
+                            with state_lock:
+                                BOT_STATE['smithy_data'][str(self.village_id)] = smithy_page_data
                 
                 with state_lock:
                     BOT_STATE["village_data"][str(self.village_id)] = village_data

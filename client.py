@@ -905,10 +905,11 @@ class TravianClient:
         
     # In client.py
 
-    def get_smithy_page(self, village_id: int, location_id: int) -> Optional[Dict]:
-        """Fetches and parses the smithy page (GID 13) given its location."""
+    def get_smithy_page(self, village_id: int, gid: int) -> Optional[Dict]:
+        """Fetches and parses a building page using its GID."""
         try:
-            url = f"{self.server_url}/build.php?newdid={village_id}&id={location_id}"
+            # Construct the URL using gid instead of the specific location id
+            url = f"{self.server_url}/build.php?newdid={village_id}&gid={gid}"
             resp = self.sess.get(url, timeout=15)
             soup = BeautifulSoup(resp.text, 'html.parser')
 
@@ -926,14 +927,14 @@ class TravianClient:
                 level = 0
                 if level_span:
                     level_text = level_span.text
-                    level_match = re.search(r'\d+', level_text)
+                    level_match = re.search(r'\\d+', level_text)
                     if level_match:
                         level = int(level_match.group(0))
 
                 upgrade_url = None
                 button = research_div.select_one('.cta button.green')
                 if button and button.has_attr('onclick'):
-                    match = re.search(r"window\.location\.href = '(.+?)'", button['onclick'])
+                    match = re.search(r"window\\.location\\.href = '(.+?)'", button['onclick'])
                     if match:
                         upgrade_url = urljoin(self.server_url, match.group(1).replace('&amp;', '&'))
 

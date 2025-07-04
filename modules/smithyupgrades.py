@@ -62,7 +62,17 @@ class Module(threading.Thread):
                         continue
 
                     log.info(f"[SmithyAgent] Checking smithy for {village['name']}...")
-                    smithy_info = client.get_smithy_page(village['id'])
+                    # Check if a smithy exists in the first place for this village
+                    with state_lock:
+                        village_full_data = BOT_STATE.get("village_data", {}).get(village_id_str, {})
+                    
+                    if not any(b.get('gid') == 13 for b in village_full_data.get('buildings', [])):
+                        log.debug(f"[SmithyAgent] No smithy found in {village['name']}. Skipping.")
+                        self.next_check_times[village_id_str] = time.time() + 900 # Check again in 15 mins
+                        continue
+
+                    # Call get_smithy_page with the GID for the smithy
+                    smithy_info = client.get_smithy_page(village['id'], 13)
 
                     if not smithy_info:
                         log.warning(f"[SmithyAgent] Could not retrieve smithy info for {village['name']}. Retrying in 5 mins.")
