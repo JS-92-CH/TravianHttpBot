@@ -15,25 +15,6 @@
                 "username": "",
                 "password": ""
             }
-        },
-        {
-            "username": "zero_Axik",
-            "password": "22222222",
-            "server_url": "https://x200.vardom.net",
-            "is_sitter": true,
-            "sitter_for": "Axik",
-            "login_username": "zero",
-            "tribe": "roman",
-            "use_dual_queue": true,
-            "use_hero_resources": false,
-            "building_logic": "default",
-            "active": false,
-            "proxy": {
-                "ip": "",
-                "port": "",
-                "username": "",
-                "password": ""
-            }
         }
     ],
     "build_queues": {
@@ -2725,7 +2706,7 @@
         },
         "70005": {
             "enabled": true,
-            "min_queue_duration_minutes": 770,
+            "min_queue_duration_minutes": 780,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2757,7 +2738,7 @@
         },
         "69604": {
             "enabled": true,
-            "min_queue_duration_minutes": 760,
+            "min_queue_duration_minutes": 770,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2789,7 +2770,7 @@
         },
         "69203": {
             "enabled": true,
-            "min_queue_duration_minutes": 750,
+            "min_queue_duration_minutes": 760,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2821,7 +2802,7 @@
         },
         "69603": {
             "enabled": true,
-            "min_queue_duration_minutes": 740,
+            "min_queue_duration_minutes": 750,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2853,7 +2834,7 @@
         },
         "70406": {
             "enabled": true,
-            "min_queue_duration_minutes": 730,
+            "min_queue_duration_minutes": 740,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2917,7 +2898,7 @@
         },
         "70004": {
             "enabled": true,
-            "min_queue_duration_minutes": 700,
+            "min_queue_duration_minutes": 710,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2949,7 +2930,7 @@
         },
         "70405": {
             "enabled": true,
-            "min_queue_duration_minutes": 840,
+            "min_queue_duration_minutes": 850,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2981,7 +2962,7 @@
         },
         "70407": {
             "enabled": true,
-            "min_queue_duration_minutes": 840,
+            "min_queue_duration_minutes": 850,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3013,7 +2994,7 @@
         },
         "70807": {
             "enabled": true,
-            "min_queue_duration_minutes": 840,
+            "min_queue_duration_minutes": 850,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3045,7 +3026,7 @@
         },
         "70808": {
             "enabled": true,
-            "min_queue_duration_minutes": 840,
+            "min_queue_duration_minutes": 850,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3077,7 +3058,7 @@
         },
         "70408": {
             "enabled": true,
-            "min_queue_duration_minutes": 1030,
+            "min_queue_duration_minutes": 1040,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3109,7 +3090,7 @@
         },
         "70806": {
             "enabled": true,
-            "min_queue_duration_minutes": 1030,
+            "min_queue_duration_minutes": 1040,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3141,7 +3122,7 @@
         },
         "71208": {
             "enabled": true,
-            "min_queue_duration_minutes": 1030,
+            "min_queue_duration_minutes": 1040,
             "buildings": {
                 "barracks": {
                     "gid": 19,
