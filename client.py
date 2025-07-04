@@ -927,14 +927,14 @@ class TravianClient:
                 level = 0
                 if level_span:
                     level_text = level_span.text
-                    level_match = re.search(r'\\d+', level_text)
+                    level_match = re.search(r'\d+', level_text)
                     if level_match:
                         level = int(level_match.group(0))
 
                 upgrade_url = None
                 button = research_div.select_one('.cta button.green')
                 if button and button.has_attr('onclick'):
-                    match = re.search(r"window\\.location\\.href = '(.+?)'", button['onclick'])
+                    match = re.search(r"window\.location\.href\s*=\s*'([^']+)'", button['onclick'])
                     if match:
                         upgrade_url = urljoin(self.server_url, match.group(1).replace('&amp;', '&'))
 

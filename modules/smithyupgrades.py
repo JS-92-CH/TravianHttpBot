@@ -1,5 +1,4 @@
 # modules/smithyupgrades.py
-
 import time
 import re
 import threading
@@ -7,53 +6,51 @@ from bs4 import BeautifulSoup
 from config import log, BOT_STATE, state_lock, save_config
 
 class Module(threading.Thread):
-    def __init__(self, bot_manager, client_class):
+    def __init__(self, account_info, client_class):
         super().__init__()
         self.stop_event = threading.Event()
         self.daemon = True
+        self.account_info = account_info
         self.client_class = client_class
-        # Tracks the next time we should check a specific village
         self.next_check_times = {}
 
     def stop(self):
         self.stop_event.set()
 
     def run(self):
-        log.info("[SmithyAgent] Thread started.")
+        username = self.account_info['username']
+        log.info(f"[SmithyAgent][{username}] Thread started.")
         self.stop_event.wait(30)
 
+        client = self.client_class(
+            username,
+            self.account_info['password'],
+            self.account_info['server_url'],
+            self.account_info.get('proxy')
+        )
+        if not client.login():
+            log.error(f"[SmithyAgent][{username}] Initial login failed. Agent will stop.")
+            return
+
         while not self.stop_event.is_set():
-            active_account = None
             try:
                 with state_lock:
-                    active_account = next((acc for acc in BOT_STATE.get("accounts", []) if acc.get('active')), None)
-                    if not active_account:
-                        self.stop_event.wait(60)
-                        continue
-
                     all_village_data = BOT_STATE.get("village_data", {})
                     upgrade_queues = BOT_STATE.get("smithy_upgrades", {})
 
-                client = self.client_class(active_account['username'], active_account['password'], active_account['server_url'], active_account.get('proxy'))
-                if not client.login():
-                    log.error(f"[SmithyAgent] Login failed for {active_account['username']}. Retrying in 1 minute.")
-                    self.stop_event.wait(60)
-                    continue
-
-                villages_for_account = all_village_data.get(active_account['username'], [])
+                villages_for_account = all_village_data.get(username, [])
 
                 for village in villages_for_account:
                     if self.stop_event.is_set(): break
 
                     village_id_str = str(village['id'])
                     
-                    # Check if it's time to process this specific village
                     if time.time() < self.next_check_times.get(village_id_str, 0):
                         continue
 
                     config = upgrade_queues.get(village_id_str)
                     if not config or not config.get("enabled"):
-                        self.next_check_times[village_id_str] = time.time() + 300 # Check disabled villages every 5 mins
+                        self.next_check_times[village_id_str] = time.time() + 300
                         continue
 
                     priority_list = config.get("priority", [])
@@ -61,21 +58,22 @@ class Module(threading.Thread):
                         self.next_check_times[village_id_str] = time.time() + 300
                         continue
 
-                    log.info(f"[SmithyAgent] Checking smithy for {village['name']}...")
-                    # Check if a smithy exists in the first place for this village
+                    log.info(f"[SmithyAgent][{username}] Checking smithy for {village['name']}...")
+                    
                     with state_lock:
                         village_full_data = BOT_STATE.get("village_data", {}).get(village_id_str, {})
                     
-                    if not any(b.get('gid') == 13 for b in village_full_data.get('buildings', [])):
-                        log.debug(f"[SmithyAgent] No smithy found in {village['name']}. Skipping.")
-                        self.next_check_times[village_id_str] = time.time() + 900 # Check again in 15 mins
+                    smithy_building = next((b for b in village_full_data.get('buildings', []) if b.get('gid') == 13), None)
+
+                    if not smithy_building:
+                        log.debug(f"[SmithyAgent][{username}] No smithy found in {village['name']}. Skipping.")
+                        self.next_check_times[village_id_str] = time.time() + 900
                         continue
 
-                    # Call get_smithy_page with the GID for the smithy
                     smithy_info = client.get_smithy_page(village['id'], 13)
 
                     if not smithy_info:
-                        log.warning(f"[SmithyAgent] Could not retrieve smithy info for {village['name']}. Retrying in 5 mins.")
+                        log.warning(f"[SmithyAgent][{username}] Could not retrieve smithy info for {village['name']}. Retrying in 5 mins.")
                         self.next_check_times[village_id_str] = time.time() + 300
                         continue
                     
@@ -87,38 +85,35 @@ class Module(threading.Thread):
 
                     if len(current_queue) >= max_queue:
                         earliest_eta = min(item['eta'] for item in current_queue) if current_queue else 300
-                        wait_time = max(2, earliest_eta + 1) # Wait 1s after completion
-                        log.info(f"[SmithyAgent] Smithy queue is full for {village['name']}. Next check in {wait_time:.0f}s.")
+                        wait_time = max(2, earliest_eta + 1)
+                        log.info(f"[SmithyAgent][{username}] Smithy queue is full for {village['name']}. Next check in {wait_time:.0f}s.")
                         self.next_check_times[village_id_str] = time.time() + wait_time
                         continue
 
-                    # If we reach here, there's a free slot. Let's try to fill it.
                     upgrade_triggered = False
                     for unit_name in priority_list:
-                        unit_to_upgrade = next((u for u in smithy_info.get("researches", []) if u['name'] == unit_name and u.get("upgrade_url")), None)
-                        if unit_to_upgrade:
-                            log.info(f"[SmithyAgent] Found unit to upgrade in {village['name']}: {unit_name}")
-                            if client.upgrade_unit(village['id'], unit_to_upgrade['upgrade_url']):
-                                log.info(f"[SmithyAgent] Sent upgrade request for {unit_name} in {village['name']}.")
-                                # Set a very short delay to re-check immediately for dual queue
-                                self.next_check_times[village_id_str] = time.time() + 3
-                                upgrade_triggered = True
-                            else:
-                                log.error(f"[SmithyAgent] Failed to send upgrade request for {unit_name}.")
-                                self.next_check_times[village_id_str] = time.time() + 60 
-                            break 
+                        research_details = next((u for u in smithy_info.get("researches", []) if u['name'] == unit_name), None)
+                        
+                        if research_details and research_details.get('level', 0) < 20:
+                            if research_details.get("upgrade_url"):
+                                log.info(f"[SmithyAgent][{username}] Found unit to upgrade in {village['name']}: {unit_name}")
+                                if client.upgrade_unit(village['id'], research_details['upgrade_url']):
+                                    log.info(f"[SmithyAgent][{username}] Sent upgrade request for {unit_name} in {village['name']}.")
+                                    self.next_check_times[village_id_str] = time.time() + 3
+                                    upgrade_triggered = True
+                                else:
+                                    log.error(f"[SmithyAgent][{username}] Failed to send upgrade request for {unit_name}.")
+                                    self.next_check_times[village_id_str] = time.time() + 60 
+                                break
                     
                     if not upgrade_triggered:
-                        log.info(f"[SmithyAgent] No units from the priority list were available to upgrade in {village['name']}. Checking again in 0.5 min.")
+                        log.info(f"[SmithyAgent][{username}] No units from the priority list were available to upgrade in {village['name']}. Checking again in 30s.")
                         self.next_check_times[village_id_str] = time.time() + 30
                     
-                    # Small delay between processing each village in the main loop
                     self.stop_event.wait(0.5)
 
             except Exception as e:
-                log.error(f"[SmithyAgent] CRITICAL ERROR in main loop: {e}", exc_info=True)
+                log.error(f"[SmithyAgent][{username}] CRITICAL ERROR in main loop: {e}", exc_info=True)
                 self.stop_event.wait(300)
             
-            # This is the agent's main loop delay, preventing it from spinning too fast
-            # if all villages have long ETAs.
             self.stop_event.wait(1)

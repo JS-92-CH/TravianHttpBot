@@ -7,6 +7,7 @@ from typing import Dict, Optional, List
 from modules.adventure import Module as AdventureModule
 from modules.hero import Module as HeroModule
 from modules.training import Module as TrainingModule
+# We still import it to use it
 from modules.demolish import Module as DemolishModule
 from modules.smithyupgrades import Module as SmithyModule
 from client import TravianClient
@@ -14,6 +15,7 @@ from config import log, BOT_STATE, state_lock, save_config
 from modules import load_modules
 
 class VillageAgent(threading.Thread):
+    # ... (no changes in this class)
     def __init__(self, account_info: Dict, village_info: Dict, socketio_instance):
         super().__init__()
         self.client = TravianClient(
@@ -71,9 +73,11 @@ class VillageAgent(threading.Thread):
                             if training_page_data:
                                 BOT_STATE['training_data'][str(self.village_id)][str(gid)] = training_page_data
 
-                    # Check if a smithy (gid 13) exists before fetching its page
-                    if any(b.get('gid') == 13 for b in village_data.get('buildings', [])):
-                        # Call with village_id and the smithy's gid
+                    # Check if a smithy (gid 13) exists in the village
+                    smithy_building = next((b for b in village_data.get('buildings', []) if b.get('gid') == 13), None)
+
+                    if smithy_building:
+                        # Call with the correct GID, not the location ID
                         smithy_page_data = self.client.get_smithy_page(self.village_id, 13)
                         if smithy_page_data:
                             with state_lock:
@@ -140,15 +144,20 @@ class BotManager(threading.Thread):
         self.socketio = socketio_instance
         self.stop_event = threading.Event()
         self.running_account_agents: Dict[str, List[VillageAgent]] = {}
+        self.running_training_agents: Dict[str, TrainingModule] = {}
+        self.running_smithy_agents: Dict[str, SmithyModule] = {}
+        # --- START OF CHANGES ---
+        # Keep track of demolish agents on a per-account basis
+        self.running_demolish_agents: Dict[str, DemolishModule] = {}
+        # --- END OF CHANGES ---
         self.adventure_module = AdventureModule(self)
         self.hero_module = HeroModule(self)
-        self.training_module = TrainingModule(self, TravianClient)
-        self.demolish_module = DemolishModule(self, TravianClient)
-        self.smithy_module = SmithyModule(self, TravianClient)
+        # --- REMOVE the central demolish module ---
         self.daemon = True
         self._ui_updater_thread = threading.Thread(target=self._ui_updater, daemon=True)
 
     def _ui_updater(self):
+        # ... (no changes here)
         log.info("UI Updater thread started.")
         while not self.stop_event.is_set():
             with state_lock:
@@ -171,17 +180,7 @@ class BotManager(threading.Thread):
         for username in list(self.running_account_agents.keys()):
             self._stop_agents_for_account(username)
 
-        log.info("Stopping training agent...")
-        self.training_module.stop()
-        self.training_module.join()
-
-        log.info("Stopping demolish agent...")
-        self.demolish_module.stop()
-        self.demolish_module.join()
-
-        log.info("Stopping smithy agent...")
-        self.smithy_module.stop()             
-        self.smithy_module.join()
+        # --- REMOVE stopping the central demolish agent ---
         
         if self._ui_updater_thread.is_alive():
             self._ui_updater_thread.join()
@@ -189,14 +188,38 @@ class BotManager(threading.Thread):
         log.info("Bot Manager stopped.")
 
     def _stop_agents_for_account(self, username: str):
+        if username in self.running_training_agents:
+            log.info(f"Stopping training agent for account: {username}")
+            training_agent = self.running_training_agents.pop(username, None)
+            if training_agent:
+                training_agent.stop()
+                training_agent.join()
+
+        if username in self.running_smithy_agents:
+            log.info(f"Stopping smithy agent for account: {username}")
+            smithy_agent = self.running_smithy_agents.pop(username, None)
+            if smithy_agent:
+                smithy_agent.stop()
+                smithy_agent.join()
+
+        # --- START OF CHANGES ---
+        # Stop the demolish agent associated with this account
+        if username in self.running_demolish_agents:
+            log.info(f"Stopping demolish agent for account: {username}")
+            demolish_agent = self.running_demolish_agents.pop(username, None)
+            if demolish_agent:
+                demolish_agent.stop()
+                demolish_agent.join()
+        # --- END OF CHANGES ---
+
         if username in self.running_account_agents:
-            log.info(f"Stopping agents for account: {username}")
+            log.info(f"Stopping village agents for account: {username}")
             agents = self.running_account_agents.pop(username, [])
             for agent in agents:
                 agent.stop()
             for agent in agents:
                 agent.join()
-            log.info(f"All agents for {username} stopped.")
+            log.info(f"All village agents for {username} stopped.")
             with state_lock:
                 villages_to_clear = [v['id'] for v in BOT_STATE['village_data'].get(username, [])]
                 for vid in villages_to_clear:
@@ -205,12 +228,7 @@ class BotManager(threading.Thread):
 
     def run(self):
         log.info("Bot Manager thread started and is now monitoring accounts.")
-        log.info("Starting independent training agent...")
-        self.training_module.start()
-        log.info("Starting independent demolish agent...")
-        self.demolish_module.start()
-        log.info("Starting independent smithy agent...")
-        self.smithy_module.start() 
+        # --- REMOVE starting the central demolish agent ---
         self._ui_updater_thread.start()
 
         while not self.stop_event.is_set():
@@ -275,7 +293,6 @@ class BotManager(threading.Thread):
             sidebar_data = temp_client.parse_village_page(resp.text, "dorf1")
             villages = sidebar_data.get("villages", [])
 
-            # ADD THIS LINE to send an immediate update
             self.socketio.emit('villages_discovered', {'username': username, 'villages': villages})
 
             with state_lock:
@@ -303,6 +320,24 @@ class BotManager(threading.Thread):
                         }
                         config_updated = True
                 if config_updated: save_config()
+            
+            log.info(f"Starting dedicated training agent for {username}")
+            training_agent = TrainingModule(account_info, TravianClient)
+            self.running_training_agents[username] = training_agent
+            training_agent.start()
+
+            log.info(f"Starting dedicated smithy agent for {username}")
+            smithy_agent = SmithyModule(account_info, TravianClient)
+            self.running_smithy_agents[username] = smithy_agent
+            smithy_agent.start()
+            
+            # --- START OF CHANGES ---
+            # Start a new demolish agent for this specific account
+            log.info(f"Starting dedicated demolish agent for {username}")
+            demolish_agent = DemolishModule(account_info, TravianClient)
+            self.running_demolish_agents[username] = demolish_agent
+            demolish_agent.start()
+            # --- END OF CHANGES ---
 
             self.running_account_agents[username] = []
             for village in villages:

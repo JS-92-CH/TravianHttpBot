@@ -8,52 +8,57 @@ from config import log, BOT_STATE, state_lock, save_config
 
 class Module(threading.Thread):
     """
-    An independent agent thread that handles queuing troops in all villages.
+    An independent agent thread that handles queuing troops for a single account.
     It moves the hero between villages and queues troops based on configuration.
     """
-    def __init__(self, bot_manager, client_class):
+    def __init__(self, account_info, client_class):
         super().__init__()
         self.stop_event = threading.Event()
         self.daemon = True
-        self.village_cycle_index = 0
+        self.account_info = account_info
         self.client_class = client_class
+        self.village_cycle_index = 0
         self.current_hero_location_id = None
 
     def stop(self):
         self.stop_event.set()
 
     def run(self):
-        log.info("[TrainingAgent] Thread started. Waiting for initial data population...")
+        username = self.account_info['username']
+        log.info(f"[TrainingAgent][{username}] Thread started. Waiting for initial data population...")
         self.stop_event.wait(10)
 
-        # Map building types to their corresponding helmet typeIds, from best to worst.
+        # Create the client instance ONCE for the agent's entire lifecycle
+        client = self.client_class(
+            self.account_info['username'],
+            self.account_info['password'],
+            self.account_info['server_url'],
+            self.account_info.get('proxy')
+        )
+
+        # Log in ONCE at the beginning of the run method
+        if not client.login():
+            log.error(f"[TrainingAgent][{username}] Initial login failed. Agent will stop.")
+            return
+
         HELMET_TYPE_IDS = {
-            "barracks": [15, 14, 13],  # 20%, 15%, 10%
-            "stable":   [12, 11, 10],    # 20%, 15%, 10%
+            "barracks": [15, 14, 13],
+            "stable":   [12, 11, 10],
         }
 
         while not self.stop_event.is_set():
             try:
+                # The agent now works on its own account using its persistent client
                 with state_lock:
-                    accounts = BOT_STATE.get("accounts", [])
                     all_village_data = BOT_STATE.get("village_data", {})
                     training_configs = BOT_STATE.get("training_queues", {})
 
-                if not accounts:
-                    self.stop_event.wait(60)
-                    continue
-
-                account = accounts[0]
-                client = self.client_class(account['username'], account['password'], account['server_url'], account.get('proxy'))
-
-                if not client.login():
-                    log.error("[TrainingAgent] Login failed. Retrying in 5 minutes.")
-                    self.stop_event.wait(300)
-                    continue
-
-                active_training_villages = [v for v in all_village_data.get(account['username'], []) if str(v['id']) in training_configs and training_configs.get(str(v['id']), {}).get('enabled')]
+                active_training_villages = [
+                    v for v in all_village_data.get(username, [])
+                    if str(v['id']) in training_configs and training_configs.get(str(v['id']), {}).get('enabled')
+                ]
                 if not active_training_villages:
-                    log.info("[TrainingAgent] No villages are enabled for training. Waiting...")
+                    log.info(f"[TrainingAgent][{username}] No villages are enabled for training. Waiting...")
                     self.stop_event.wait(60)
                     continue
 
@@ -65,28 +70,30 @@ class Module(threading.Thread):
                 village_name = target_village['name']
                 config = training_configs.get(str(target_village_id), {})
 
-                log.info(f"--- [TrainingAgent] Starting Cycle for Village: {village_name} ({target_village_id}) ---")
+                log.info(f"--- [TrainingAgent][{username}] Starting Cycle for Village: {village_name} ({target_village_id}) ---")
 
                 if self.current_hero_location_id is None:
-                    log.info("[TrainingAgent] Hero location is unknown. Performing a full search...")
-                    all_player_villages = all_village_data.get(account['username'], [])
+                    log.info(f"[TrainingAgent][{username}] Hero location is unknown. Performing a full search...")
+                    all_player_villages = all_village_data.get(username, [])
                     for village_to_check in all_player_villages:
                         found_in_id = client.find_hero_in_rally_point(village_to_check['id'])
                         if found_in_id:
                             self.current_hero_location_id = found_in_id
-                            log.info(f"[TrainingAgent] Hero found in {village_to_check['name']} ({found_in_id}).")
+                            log.info(f"[TrainingAgent][{username}] Hero found in {village_to_check['name']} ({found_in_id}).")
                             break
                         self.stop_event.wait(0.5)
 
                     if self.current_hero_location_id is None:
-                        log.warning("[TrainingAgent] Could not find hero in any village. Hero may be moving. Retrying in 1 minutes.")
+                        log.warning(f"[TrainingAgent][{username}] Could not find hero in any village. Hero may be moving. Retrying in 1 minutes.")
                         self.stop_event.wait(60)
                         continue
 
                 if self.current_hero_location_id != target_village_id:
-                    log.info(f"[TrainingAgent] Hero is at {self.current_hero_location_id}, needs to be at {village_name} ({target_village_id}).")
+                    log.info(f"[TrainingAgent][{username}] Hero is at {self.current_hero_location_id}, needs to be at {village_name} ({target_village_id}).")
 
-                    target_village_details = all_village_data.get(str(target_village_id))
+                    with state_lock:
+                        target_village_details = BOT_STATE.get("village_data", {}).get(str(target_village_id))
+                    
                     if not target_village_details or 'coords' not in target_village_details:
                         target_village_details = client.fetch_and_parse_village(target_village_id)
 
@@ -96,19 +103,19 @@ class Module(threading.Thread):
                         move_success, travel_time = client.send_hero(self.current_hero_location_id, int(target_coords['x']), int(target_coords['y']))
                         if move_success:
                             wait_time = travel_time + 0.5
-                            log.info(f"[TrainingAgent] Hero reinforcement to {village_name} initiated. Waiting {wait_time:.1f}s for arrival.")
+                            log.info(f"[TrainingAgent][{username}] Hero reinforcement to {village_name} initiated. Waiting {wait_time:.1f}s for arrival.")
                             self.stop_event.wait(wait_time)
                             self.current_hero_location_id = target_village_id
                         else:
-                            log.error(f"[TrainingAgent] Failed to send hero to {village_name}. Resetting hero location for next cycle. Waiting 60s.")
+                            log.error(f"[TrainingAgent][{username}] Failed to send hero to {village_name}. Resetting hero location for next cycle. Waiting 60s.")
                             self.current_hero_location_id = None
                             self.stop_event.wait(60)
                     else:
-                        log.warning(f"[TrainingAgent] Target village {village_name} missing coordinates. Skipping.")
+                        log.warning(f"[TrainingAgent][{username}] Target village {village_name} missing coordinates. Skipping.")
 
                     continue
 
-                log.info(f"[TrainingAgent] Hero is confirmed to be in {village_name}. Starting aggressive training loop.")
+                log.info(f"[TrainingAgent][{username}] Hero is confirmed to be in {village_name}. Starting aggressive training loop.")
 
                 while not self.stop_event.is_set():
                     all_queues_filled_for_this_village = True
@@ -150,7 +157,6 @@ class Module(threading.Thread):
                         if not b_config.get('enabled') or not b_config.get('troop_name'):
                             continue
 
-                        # Determine the helmet category (e.g., 'barracks' or 'stable')
                         helmet_category = None
                         if building_type_key in ["barracks", "great_barracks"]:
                             helmet_category = "barracks"
@@ -160,24 +166,22 @@ class Module(threading.Thread):
                         if helmet_category:
                             preferred_type_ids = HELMET_TYPE_IDS.get(helmet_category, [])
                             
-                            # Find the best helmet we own for this category
                             best_helmet_owned = None
                             for type_id in preferred_type_ids:
                                 found = next((item for item in hero_inventory.get('inventory', []) if item.get('typeId') == type_id), None)
                                 if found:
                                     best_helmet_owned = found
-                                    break # Stop at the first (and best) one found
+                                    break
 
                             if best_helmet_owned:
                                 equipped_helmet = next((item for item in hero_inventory.get('equipped', []) if item.get('slot') == 'helmet'), None)
                                 
-                                # If we don't have the best helmet equipped, switch to it
                                 if not equipped_helmet or equipped_helmet.get('id') != best_helmet_owned.get('id'):
                                     log.info(f"[TrainingAgent] Equipping best {helmet_category} helmet: {best_helmet_owned.get('name')}")
                                     if client.equip_item(best_helmet_owned.get('id')):
                                         log.info("[TrainingAgent] Successfully equipped helmet. Pausing and refreshing inventory.")
                                         self.stop_event.wait(2)
-                                        hero_inventory = client.get_hero_inventory() # Refresh inventory after equipping
+                                        hero_inventory = client.get_hero_inventory()
                                     else:
                                         log.error("[TrainingAgent] Failed to equip helmet. Skipping.")
                                         continue
@@ -242,16 +246,16 @@ class Module(threading.Thread):
                             if str(target_village_id) in BOT_STATE['training_queues']:
                                 BOT_STATE['training_queues'][str(target_village_id)]['min_queue_duration_minutes'] = new_duration
                                 save_config()
-                        log.info(f"--- [TrainingAgent] All queues in {village_name} are filled. Moving to next village. ---")
+                        log.info(f"--- [TrainingAgent][{username}] All queues in {village_name} are filled. Moving to next village. ---")
                         break
                     else:
-                        log.info(f"[TrainingAgent] Not all queues in {village_name} are full. Waiting 5 seconds before re-checking...")
+                        log.info(f"[TrainingAgent][{username}] Not all queues in {village_name} are full. Waiting 20 seconds before re-checking...")
                         self.stop_event.wait(20)
 
                 self.village_cycle_index += 1
 
             except Exception as e:
-                log.error(f"[TrainingAgent] CRITICAL ERROR in training cycle: {e}", exc_info=True)
+                log.error(f"[TrainingAgent][{username}] CRITICAL ERROR in training cycle: {e}", exc_info=True)
                 self.village_cycle_index += 1
 
             self.stop_event.wait(4)
