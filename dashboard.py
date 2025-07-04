@@ -98,20 +98,33 @@ def handle_add_build_task(data):
 @socketio.on('add_account')
 def handle_add_account(data):
     log.info("Adding account: %s", data['username'])
+    
+    is_sitter = data.get("is_sitter", False)
+    sitter_for = data.get("sitter_for", "")
+    username = data["username"]
+
+    if is_sitter and sitter_for:
+        # Create a unique username for the sitter account
+        username = f"{username}_{sitter_for}"
+
     with state_lock:
-        if any(a['username'] == data['username'] for a in BOT_STATE['accounts']):
-            log.warning("Account %s already exists.", data['username'])
+        # Make the check case-insensitive to avoid duplicates like "zero" and "Zero"
+        if any(a['username'].lower() == username.lower() for a in BOT_STATE['accounts']):
+            log.warning("Account %s already exists.", username)
             return
         
         new_account = {
-            "username": data["username"],
+            "username": username, # Use the potentially new username
             "password": data["password"],
             "server_url": data["server_url"],
+            "is_sitter": is_sitter,
+            "sitter_for": sitter_for,
+            "login_username": data["username"], # Store the original username for login
             "tribe": data.get("tribe", "roman"),
             "use_dual_queue": data.get("use_dual_queue", False),
             "use_hero_resources": data.get("use_hero_resources", False),
             "building_logic": data.get("building_logic", "default"),
-            "active": False,  # Accounts are inactive by default
+            "active": False,
             "proxy": {
                 "ip": data.get('proxy_ip', ''),
                 "port": data.get('proxy_port', ''),

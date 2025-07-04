@@ -200,10 +200,17 @@
                         <div class="collapsible-content">
                             <form id="add-account-form">
                                 <div class="form-group"><input type="text" id="username" class="form-control" placeholder="Username" required></div>
+                                <small>For sitter accounts, this will be combined with the sitter name (e.g., username_sitter).</small>
                                 <div class="form-group"><input type="password" id="password" class="form-control" placeholder="Password" required></div>
                                 <div class="form-group"><input type="text" id="server_url" class="form-control" placeholder="Server URL" required></div>
                                 <div class="form-group"><label><input type="checkbox" id="use_dual_queue"> Use Plus Account (2 builds)</label></div>
                                 <div class="form-group"><label><input type="checkbox" id="use_hero_resources"> Use Hero Resources</label></div>
+                                <div class="form-group">
+                                <label><input type="checkbox" id="is_sitter"> Is this a sitter account?</label>
+                                </div>
+                                 <div class="form-group">
+                                <input type="text" id="sitter_for" class="form-control" placeholder="Account you are sitting for">
+                                </div>
                                 <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
                                 <h4 style="color: var(--text-secondary);">Proxy (Optional)</h4>
                                 <div class="form-group"><input type="text" id="proxy_ip" class="form-control" placeholder="Proxy IP/Host"></div>
@@ -1277,6 +1284,8 @@
                 username: document.getElementById('username').value,
                 password: document.getElementById('password').value,
                 server_url: document.getElementById('server_url').value,
+                is_sitter: document.getElementById('is_sitter').checked,
+                sitter_for: document.getElementById('sitter_for').value,
                 use_dual_queue: document.getElementById('use_dual_queue').checked,
                 use_hero_resources: document.getElementById('use_hero_resources').checked,
                 proxy_ip: document.getElementById('proxy_ip').value,

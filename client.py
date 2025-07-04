@@ -53,7 +53,7 @@ from typing import Dict, Any, Optional, List, Tuple
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, parse_qs, urlencode
 
-from config import log, gid_name, NAME_TO_GID
+from config import log, gid_name, NAME_TO_GID, state_lock, BOT_STATE
 
 class TravianClient:
     """Lightweight HTTP wrapper around the Travian *HTML* and JSON endpoints."""
@@ -222,7 +222,14 @@ class TravianClient:
             return False
 
     def login(self) -> bool:
-        log.info("[%s] Attempting API login to Vardom server...", self.username)
+        with state_lock:
+            account_config = next((acc for acc in BOT_STATE.get("accounts", []) if acc['username'] == self.username), None)
+
+        login_username = self.username
+        if account_config and account_config.get("is_sitter"):
+            login_username = account_config.get("login_username", self.username)
+        
+        log.info("[%s] Attempting API login to Vardom server...", login_username)
         try:
             login_page_url = f"{self.server_url}/"
             login_page_resp = self.sess.get(login_page_url, timeout=15)
@@ -233,13 +240,17 @@ class TravianClient:
             else: self.server_version = "2554.3"
             api_url = f"{self.server_url}/api/v1/auth/login"
             headers = {'X-Version': self.server_version, 'X-Requested-With': 'XMLHttpRequest'}
-            payload = {"name": self.username, "password": self.password, "w": "1920:1080", "mobileOptimizations": False}
+            payload = {"name": login_username, "password": self.password, "w": "1920:1080", "mobileOptimizations": False}
             resp = self.sess.post(api_url, json=payload, headers=headers, timeout=15)
             if resp.json().get("redirectTo") == "dorf1.php":
-                log.info("[%s] Logged in successfully ✔", self.username)
+                log.info("[%s] Logged in successfully ✔", login_username)
+
+                if account_config and account_config.get("is_sitter") and account_config.get("sitter_for"):
+                    return self.switch_to_sitter(account_config["sitter_for"])
+
                 return True
         except Exception as exc:
-            log.error("[%s] Login process failed with an exception: %s", self.username, exc)
+            log.error("[%s] Login process failed with an exception: %s", login_username, exc)
         return False
 
     def initiate_build(self, village_id: int, slot_id: int, gid: int, is_new_build: bool) -> Dict[str, Any]:
@@ -975,4 +986,61 @@ class TravianClient:
             return resp.status_code == 200
         except Exception as e:
             log.error(f"[{self.username}] Failed to execute unit upgrade: {e}", exc_info=True)
+            return False
+        
+    def switch_to_sitter(self, sitter_for_name):
+        """
+        Switches to a sitter account after logging in.
+        """
+        log.info(f"[{self.username}] Attempting to switch to sitter account for: {sitter_for_name}")
+        try:
+            # 1. Get sittings info
+            graphql_url = f"{self.server_url}/api/v1/graphql"
+            graphql_payload = {
+                "query": "query{account{sittings{sittingId player{id name}loggedIn loginIsPossible}}}"
+            }
+            headers = {
+                'X-Version': self.server_version,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json; charset=UTF-8'
+            }
+            sittings_resp = self.sess.post(graphql_url, json=graphql_payload, headers=headers, timeout=15)
+            sittings_data = sittings_resp.json()
+
+            sittings = sittings_data.get("data", {}).get("account", {}).get("sittings", [])
+            target_sitter = next((s for s in sittings if s.get("player", {}).get("name", "").lower() == sitter_for_name.lower()), None)
+
+            if not target_sitter:
+                log.error(f"[{self.username}] Could not find sitter information for '{sitter_for_name}'.")
+                return False
+
+            if not target_sitter.get("loginIsPossible"):
+                log.error(f"[{self.username}] Login to sitter account '{sitter_for_name}' is not possible at this time.")
+                return False
+
+            player_id_to_switch = target_sitter.get("player", {}).get("id")
+
+            # 2. Initiate the switch
+            switch_url = f"{self.server_url}/api/v1/auth/switch"
+            switch_payload = {"uid": player_id_to_switch, "w": "1920:1080"}
+            switch_resp = self.sess.post(switch_url, json=switch_payload, headers=headers, timeout=15)
+            switch_data = switch_resp.json()
+
+            if "redirectTo" not in switch_data:
+                log.error(f"[{self.username}] Failed to get redirection URL for sitter switch.")
+                return False
+
+            # 3. Finalize the switch
+            redirect_url = f"{self.server_url}{switch_data['redirectTo']}"
+            final_resp = self.sess.get(redirect_url, timeout=15)
+
+            if final_resp.status_code == 200:
+                log.info(f"[{self.username}] Successfully switched to sitter account for: {sitter_for_name}")
+                return True
+            else:
+                log.error(f"[{self.username}] Failed to finalize sitter switch. Status code: {final_resp.status_code}")
+                return False
+
+        except Exception as e:
+            log.error(f"[{self.username}] An error occurred while switching to sitter account: {e}", exc_info=True)
             return False

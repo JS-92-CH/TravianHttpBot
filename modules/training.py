@@ -26,9 +26,11 @@ class Module(threading.Thread):
         log.info("[TrainingAgent] Thread started. Waiting for initial data population...")
         self.stop_event.wait(10)
 
-        # Hardcoded helmet IDs
-        INFANTRY_HELMET_ID = 1126
-        CAVALRY_HELMET_ID = 1018
+        # Map building types to their corresponding helmet typeIds, from best to worst.
+        HELMET_TYPE_IDS = {
+            "barracks": [15, 14, 13],  # 20%, 15%, 10%
+            "stable":   [12, 11, 10],    # 20%, 15%, 10%
+        }
 
         while not self.stop_event.is_set():
             try:
@@ -83,7 +85,7 @@ class Module(threading.Thread):
 
                 if self.current_hero_location_id != target_village_id:
                     log.info(f"[TrainingAgent] Hero is at {self.current_hero_location_id}, needs to be at {village_name} ({target_village_id}).")
-                    
+
                     target_village_details = all_village_data.get(str(target_village_id))
                     if not target_village_details or 'coords' not in target_village_details:
                         target_village_details = client.fetch_and_parse_village(target_village_id)
@@ -103,7 +105,7 @@ class Module(threading.Thread):
                             self.stop_event.wait(60)
                     else:
                         log.warning(f"[TrainingAgent] Target village {village_name} missing coordinates. Skipping.")
-                    
+
                     continue
 
                 log.info(f"[TrainingAgent] Hero is confirmed to be in {village_name}. Starting aggressive training loop.")
@@ -132,74 +134,85 @@ class Module(threading.Thread):
                         log.warning("[TrainingAgent] Could not refresh hero inventory. Retrying in 3 minutes.")
                         self.stop_event.wait(180)
                         break
-                    
+
                     processing_order = ['barracks', 'great_barracks', 'stable', 'great_stable', 'workshop']
-                    
+
                     buildings_config = config.get('buildings', {})
                     sorted_buildings = sorted(
-                        buildings_config.items(), 
+                        buildings_config.items(),
                         key=lambda item: processing_order.index(item[0]) if item[0] in processing_order else len(processing_order)
                     )
 
-                    for building_type, b_config in sorted_buildings:
+                    for building_type_key, b_config in sorted_buildings:
                         if self.stop_event.is_set(): break
 
-                        log.info(f"[TrainingAgent] Checking: {building_type.replace('_', ' ').title()}")
+                        log.info(f"[TrainingAgent] Checking: {building_type_key.replace('_', ' ').title()}")
                         if not b_config.get('enabled') or not b_config.get('troop_name'):
                             continue
 
-                        required_helmet_id = None
-                        if building_type in ["barracks", "great_barracks"]:
-                            required_helmet_id = INFANTRY_HELMET_ID
-                        elif building_type in ["stable", "great_stable"]:
-                            required_helmet_id = CAVALRY_HELMET_ID
+                        # Determine the helmet category (e.g., 'barracks' or 'stable')
+                        helmet_category = None
+                        if building_type_key in ["barracks", "great_barracks"]:
+                            helmet_category = "barracks"
+                        elif building_type_key in ["stable", "great_stable"]:
+                            helmet_category = "stable"
 
-                        if required_helmet_id:
-                            equipped_helmet = next((item for item in hero_inventory.get('equipped', []) if item.get('slot') == 'helmet'), None)
-                            if not equipped_helmet or equipped_helmet.get('id') != required_helmet_id:
-                                log.info(f"[TrainingAgent] Incorrect helmet equipped for {building_type}. Switching...")
-                                helmet_to_equip = next((item for item in hero_inventory.get('inventory', []) if item.get('id') == required_helmet_id), None)
+                        if helmet_category:
+                            preferred_type_ids = HELMET_TYPE_IDS.get(helmet_category, [])
+                            
+                            # Find the best helmet we own for this category
+                            best_helmet_owned = None
+                            for type_id in preferred_type_ids:
+                                found = next((item for item in hero_inventory.get('inventory', []) if item.get('typeId') == type_id), None)
+                                if found:
+                                    best_helmet_owned = found
+                                    break # Stop at the first (and best) one found
 
-                                if helmet_to_equip:
-                                    if client.equip_item(helmet_to_equip['id']):
-                                        log.info(f"[TrainingAgent] Successfully equipped helmet for {building_type}. Pausing and refreshing inventory.")
-                                        self.stop_event.wait(0.25)
-                                        hero_inventory = client.get_hero_inventory()
+                            if best_helmet_owned:
+                                equipped_helmet = next((item for item in hero_inventory.get('equipped', []) if item.get('slot') == 'helmet'), None)
+                                
+                                # If we don't have the best helmet equipped, switch to it
+                                if not equipped_helmet or equipped_helmet.get('id') != best_helmet_owned.get('id'):
+                                    log.info(f"[TrainingAgent] Equipping best {helmet_category} helmet: {best_helmet_owned.get('name')}")
+                                    if client.equip_item(best_helmet_owned.get('id')):
+                                        log.info("[TrainingAgent] Successfully equipped helmet. Pausing and refreshing inventory.")
+                                        self.stop_event.wait(2)
+                                        hero_inventory = client.get_hero_inventory() # Refresh inventory after equipping
                                     else:
-                                        log.error(f"[TrainingAgent] Failed to equip helmet for {building_type}. Skipping.")
+                                        log.error("[TrainingAgent] Failed to equip helmet. Skipping.")
                                         continue
-                                else:
-                                    log.warning(f"[TrainingAgent] Required helmet (ID: {required_helmet_id}) not found in inventory. Skipping {building_type}.")
-                                    continue
+                            else:
+                                log.info(f"[TrainingAgent] No suitable {helmet_category} helmet found in inventory. Proceeding without one.")
+
 
                         gid = b_config['gid']
                         page_data = client.get_training_page(target_village_id, gid)
 
                         if not page_data or not page_data.get('trainable'):
                             continue
-                        
+
                         current_queue_duration = page_data['queue_duration_seconds']
-                        
+
                         if current_queue_duration >= (remaining_time_cap * 0.98):
-                            log.info(f"[TrainingAgent] - {building_type} queue ({current_queue_duration}s) is at 98% of the max training time limit. Skipping.")
+                            log.info(f"[TrainingAgent] - {building_type_key} queue ({current_queue_duration}s) is at 98% of the max training time limit. Skipping.")
                             continue
 
                         if current_queue_duration < (min_queue_seconds * 0.95):
                             all_queues_filled_for_this_village = False
-                            log.info(f"[TrainingAgent] - {building_type} queue ({current_queue_duration}s) is less than 95% of target ({min_queue_seconds}s).")
+                            log.info(f"[TrainingAgent] - {building_type_key} queue ({current_queue_duration}s) is less than 95% of target ({min_queue_seconds}s).")
 
                             troop_to_train = next((t for t in page_data['trainable'] if t['name'] == b_config['troop_name']), None)
                             if not troop_to_train or troop_to_train['time_per_unit'] <= 0:
                                 continue
 
                             time_to_fill = min(min_queue_seconds - current_queue_duration, remaining_time_cap - current_queue_duration)
-                            
+
                             if time_to_fill <= 0:
                                 continue
 
                             amount_based_on_time = int(time_to_fill / troop_to_train['time_per_unit'])
                             max_possible_by_res = troop_to_train.get('max_trainable', 0)
-                            
+
                             if amount_based_on_time <= 0:
                                 log.info(f"[TrainingAgent] - Not enough time remaining in the configured 'max_training_time' to queue even one {troop_to_train['name']}. (Time needed: {troop_to_train['time_per_unit']:.2f}s, Time available: {time_to_fill:.2f}s)")
                                 continue
@@ -207,7 +220,7 @@ class Module(threading.Thread):
                             if max_possible_by_res <= 0:
                                 log.info(f"[TrainingAgent] - Not enough resources to queue even one {troop_to_train['name']} according to the game's training page.")
                                 continue
-                            
+
                             amount_to_queue = min(amount_based_on_time, max_possible_by_res)
 
                             if amount_to_queue > 0:
@@ -218,14 +231,14 @@ class Module(threading.Thread):
                                 else:
                                     log.error(f"[TrainingAgent] Failed to queue troops.")
                         else:
-                            log.info(f"[TrainingAgent] - {building_type} queue is sufficient.")
+                            log.info(f"[TrainingAgent] - {building_type_key} queue is sufficient.")
 
                     if all_queues_filled_for_this_village:
                         with state_lock:
                             current_duration = config.get('min_queue_duration_minutes', 15)
                             new_duration = current_duration + 10
                             log.info(f"[TrainingAgent] Increasing max queue duration for {village_name} to {new_duration} minutes for the next cycle.")
-                            
+
                             if str(target_village_id) in BOT_STATE['training_queues']:
                                 BOT_STATE['training_queues'][str(target_village_id)]['min_queue_duration_minutes'] = new_duration
                                 save_config()

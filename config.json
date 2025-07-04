@@ -17,9 +17,12 @@
             }
         },
         {
-            "username": "hardy",
+            "username": "zero_Axik",
             "password": "22222222",
-            "server_url": "https://x100.vardom.net",
+            "server_url": "https://x200.vardom.net",
+            "is_sitter": true,
+            "sitter_for": "Axik",
+            "login_username": "zero",
             "tribe": "roman",
             "use_dual_queue": true,
             "use_hero_resources": false,
@@ -2722,7 +2725,7 @@
         },
         "70005": {
             "enabled": true,
-            "min_queue_duration_minutes": 730,
+            "min_queue_duration_minutes": 770,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2754,7 +2757,7 @@
         },
         "69604": {
             "enabled": true,
-            "min_queue_duration_minutes": 720,
+            "min_queue_duration_minutes": 760,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2786,7 +2789,7 @@
         },
         "69203": {
             "enabled": true,
-            "min_queue_duration_minutes": 710,
+            "min_queue_duration_minutes": 750,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2818,7 +2821,7 @@
         },
         "69603": {
             "enabled": true,
-            "min_queue_duration_minutes": 710,
+            "min_queue_duration_minutes": 740,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2850,7 +2853,7 @@
         },
         "70406": {
             "enabled": true,
-            "min_queue_duration_minutes": 700,
+            "min_queue_duration_minutes": 730,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2882,7 +2885,7 @@
         },
         "69602": {
             "enabled": true,
-            "min_queue_duration_minutes": 690,
+            "min_queue_duration_minutes": 700,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2914,7 +2917,7 @@
         },
         "70004": {
             "enabled": true,
-            "min_queue_duration_minutes": 690,
+            "min_queue_duration_minutes": 700,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2946,7 +2949,7 @@
         },
         "70405": {
             "enabled": true,
-            "min_queue_duration_minutes": 810,
+            "min_queue_duration_minutes": 840,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2978,7 +2981,7 @@
         },
         "70407": {
             "enabled": true,
-            "min_queue_duration_minutes": 810,
+            "min_queue_duration_minutes": 840,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3010,7 +3013,7 @@
         },
         "70807": {
             "enabled": true,
-            "min_queue_duration_minutes": 810,
+            "min_queue_duration_minutes": 840,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3042,7 +3045,7 @@
         },
         "70808": {
             "enabled": true,
-            "min_queue_duration_minutes": 810,
+            "min_queue_duration_minutes": 840,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3074,7 +3077,7 @@
         },
         "70408": {
             "enabled": true,
-            "min_queue_duration_minutes": 1000,
+            "min_queue_duration_minutes": 1030,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3106,7 +3109,7 @@
         },
         "70806": {
             "enabled": true,
-            "min_queue_duration_minutes": 1000,
+            "min_queue_duration_minutes": 1030,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3138,7 +3141,7 @@
         },
         "71208": {
             "enabled": true,
-            "min_queue_duration_minutes": 1000,
+            "min_queue_duration_minutes": 1030,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3358,6 +3361,161 @@
                     "troop_name": ""
                 }
             }
+        },
+        "64755": {
+            "enabled": false,
+            "min_queue_duration_minutes": 25,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": true,
+                    "troop_name": "Praetorian"
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            },
+            "max_training_time": "04.07.2025 15:00"
+        },
+        "68368": {
+            "enabled": true,
+            "min_queue_duration_minutes": 25,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": true,
+                    "troop_name": "Imperian"
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": true,
+                    "troop_name": "Fire Catapult"
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": true,
+                    "troop_name": "Imperian"
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
+                }
+            },
+            "max_training_time": "06.07.2025 15:00"
+        },
+        "68367": {
+            "enabled": true,
+            "min_queue_duration_minutes": 25,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": true,
+                    "troop_name": "Praetorian"
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            },
+            "max_training_time": "06.07.2025 15:00"
+        },
+        "67966": {
+            "enabled": true,
+            "min_queue_duration_minutes": 35,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": true,
+                    "troop_name": "Praetorian"
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            },
+            "max_training_time": "06.07.2025 15:00"
+        },
+        "67566": {
+            "enabled": true,
+            "min_queue_duration_minutes": 25,
+            "buildings": {
+                "barracks": {
+                    "gid": 19,
+                    "enabled": true,
+                    "troop_name": "Praetorian"
+                },
+                "stable": {
+                    "gid": 20,
+                    "enabled": true,
+                    "troop_name": "Equites Caesaris"
+                },
+                "workshop": {
+                    "gid": 21,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_barracks": {
+                    "gid": 29,
+                    "enabled": false,
+                    "troop_name": ""
+                },
+                "great_stable": {
+                    "gid": 30,
+                    "enabled": false,
+                    "troop_name": ""
+                }
+            },
+            "max_training_time": "06.07.2025 15:00"
         }
     },
     "smithy_upgrades": {
@@ -3609,6 +3767,26 @@
             ]
         },
         "68784": {
+            "enabled": false,
+            "priority": []
+        },
+        "64755": {
+            "enabled": false,
+            "priority": []
+        },
+        "68368": {
+            "enabled": false,
+            "priority": []
+        },
+        "68367": {
+            "enabled": false,
+            "priority": []
+        },
+        "67966": {
+            "enabled": false,
+            "priority": []
+        },
+        "67566": {
             "enabled": false,
             "priority": []
         }
