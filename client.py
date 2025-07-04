@@ -903,19 +903,11 @@ class TravianClient:
             log.error(f"[{self.username}] Failed to execute demolition: {e}", exc_info=True)
             return 0
         
-    def get_smithy_page(self, village_id: int) -> Optional[Dict]:
-        """Fetches and parses the smithy page (GID 13)."""
+    # In client.py
+
+    def get_smithy_page(self, village_id: int, location_id: int) -> Optional[Dict]:
+        """Fetches and parses the smithy page (GID 13) given its location."""
         try:
-            # First, find the location ID of the smithy in the village
-            village_details = self.fetch_and_parse_village(village_id)
-            if not village_details: return None
-            
-            smithy_building = next((b for b in village_details.get('buildings', []) if b.get('gid') == 13), None)
-            if not smithy_building:
-                # This is not an error, the village just doesn't have a smithy
-                return None
-            
-            location_id = smithy_building.get('id')
             url = f"{self.server_url}/build.php?newdid={village_id}&id={location_id}"
             resp = self.sess.get(url, timeout=15)
             soup = BeautifulSoup(resp.text, 'html.parser')
@@ -931,7 +923,6 @@ class TravianClient:
                 name = name_anchor.text.strip()
                 level_span = title_div.select_one('.level')
                 
-                # Robustly parse level, handling "level 13 + 1"
                 level = 0
                 if level_span:
                     level_text = level_span.text
@@ -948,12 +939,11 @@ class TravianClient:
 
                 researches.append({'name': name, 'level': level, 'upgrade_url': upgrade_url})
             
-            # Parse the list of currently researching units
             research_queue = []
             if queue_table := soup.find('table', class_='under_progress'):
                 for row in queue_table.select('tbody tr'):
                     name_cell = row.find('td', class_='desc')
-                    duration_cell = row.find('td', class_='fin') # 'fin' contains the timer
+                    duration_cell = row.find('td', class_='fin')
                     if name_cell and duration_cell:
                         name = name_cell.get_text(strip=True).split('level')[0].strip()
                         timer = duration_cell.find('span', class_='timer')
@@ -961,7 +951,6 @@ class TravianClient:
                             eta = int(timer['value'])
                             research_queue.append({'name': name, 'eta': eta})
             
-            # Robustly check for Plus account by seeing if the second queue slot container exists
             plus_account = soup.select_one('.upgradeButtonsContainer .section2') is not None
 
             return {

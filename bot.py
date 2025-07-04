@@ -272,6 +272,9 @@ class BotManager(threading.Thread):
             sidebar_data = temp_client.parse_village_page(resp.text, "dorf1")
             villages = sidebar_data.get("villages", [])
 
+            # ADD THIS LINE to send an immediate update
+            self.socketio.emit('villages_discovered', {'username': username, 'villages': villages})
+
             with state_lock:
                 BOT_STATE["village_data"][username] = villages
                 if 'training_queues' not in BOT_STATE: BOT_STATE['training_queues'] = {}
