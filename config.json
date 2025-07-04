@@ -24,7 +24,7 @@
             "use_dual_queue": true,
             "use_hero_resources": false,
             "building_logic": "default",
-            "active": true,
+            "active": false,
             "proxy": {
                 "ip": "",
                 "port": "",
@@ -2722,7 +2722,7 @@
         },
         "70005": {
             "enabled": true,
-            "min_queue_duration_minutes": 610,
+            "min_queue_duration_minutes": 730,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2754,7 +2754,7 @@
         },
         "69604": {
             "enabled": true,
-            "min_queue_duration_minutes": 600,
+            "min_queue_duration_minutes": 720,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2786,7 +2786,7 @@
         },
         "69203": {
             "enabled": true,
-            "min_queue_duration_minutes": 590,
+            "min_queue_duration_minutes": 710,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2818,7 +2818,7 @@
         },
         "69603": {
             "enabled": true,
-            "min_queue_duration_minutes": 580,
+            "min_queue_duration_minutes": 710,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2850,7 +2850,7 @@
         },
         "70406": {
             "enabled": true,
-            "min_queue_duration_minutes": 580,
+            "min_queue_duration_minutes": 700,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2882,7 +2882,7 @@
         },
         "69602": {
             "enabled": true,
-            "min_queue_duration_minutes": 570,
+            "min_queue_duration_minutes": 690,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2914,7 +2914,7 @@
         },
         "70004": {
             "enabled": true,
-            "min_queue_duration_minutes": 570,
+            "min_queue_duration_minutes": 690,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2946,7 +2946,7 @@
         },
         "70405": {
             "enabled": true,
-            "min_queue_duration_minutes": 690,
+            "min_queue_duration_minutes": 810,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -2978,7 +2978,7 @@
         },
         "70407": {
             "enabled": true,
-            "min_queue_duration_minutes": 690,
+            "min_queue_duration_minutes": 810,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3010,7 +3010,7 @@
         },
         "70807": {
             "enabled": true,
-            "min_queue_duration_minutes": 690,
+            "min_queue_duration_minutes": 810,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3042,7 +3042,7 @@
         },
         "70808": {
             "enabled": true,
-            "min_queue_duration_minutes": 690,
+            "min_queue_duration_minutes": 810,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3074,7 +3074,7 @@
         },
         "70408": {
             "enabled": true,
-            "min_queue_duration_minutes": 880,
+            "min_queue_duration_minutes": 1000,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3106,7 +3106,7 @@
         },
         "70806": {
             "enabled": true,
-            "min_queue_duration_minutes": 880,
+            "min_queue_duration_minutes": 1000,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3138,7 +3138,7 @@
         },
         "71208": {
             "enabled": true,
-            "min_queue_duration_minutes": 880,
+            "min_queue_duration_minutes": 1000,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3170,7 +3170,7 @@
         },
         "70002": {
             "enabled": true,
-            "min_queue_duration_minutes": 570,
+            "min_queue_duration_minutes": 690,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3202,7 +3202,7 @@
         },
         "69202": {
             "enabled": true,
-            "min_queue_duration_minutes": 570,
+            "min_queue_duration_minutes": 690,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3234,7 +3234,7 @@
         },
         "68802": {
             "enabled": true,
-            "min_queue_duration_minutes": 570,
+            "min_queue_duration_minutes": 690,
             "buildings": {
                 "barracks": {
                     "gid": 19,
@@ -3266,7 +3266,7 @@
         },
         "69201": {
             "enabled": true,
-            "min_queue_duration_minutes": 570,
+            "min_queue_duration_minutes": 690,
             "buildings": {
                 "barracks": {
                     "gid": 19,
