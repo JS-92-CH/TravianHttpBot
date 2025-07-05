@@ -1034,3 +1034,22 @@ class TravianClient:
         except Exception as e:
             log.error(f"[{self.username}] An error occurred while switching to sitter account: {e}", exc_info=True)
             return False
+        
+    def get_infobox_html(self) -> Optional[str]:
+        """
+        Fetches the HTML content of the sidebar's infobox.
+        """
+        log.info(f"[{self.username}] Fetching infobox HTML...")
+        try:
+            # The infobox is typically on dorf1
+            resp = self.sess.get(f"{self.server_url}/dorf1.php", timeout=15)
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            infobox = soup.find(id="sidebarBoxInfobox")
+            if infobox:
+                return str(infobox)
+            else:
+                log.warning(f"[{self.username}] Could not find infobox on page.")
+                return None
+        except Exception as e:
+            log.error(f"[{self.username}] An error occurred while fetching infobox HTML: {e}", exc_info=True)
+            return None

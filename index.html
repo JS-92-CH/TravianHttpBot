@@ -254,6 +254,17 @@
             }
         });
 
+        function setToLowestTrainingTime(villageId) {
+        if (confirm('This will find the fastest training unit and set the queue time. Are you sure?')) {
+            socket.emit('set_lowest_training_time', { villageId: villageId });
+        }
+        }
+
+        function setEndTimeFromInfobox(villageId) {
+            const timeType = document.getElementById(`infobox-time-select-${villageId}`).value;
+            socket.emit('set_end_time_from_infobox', { villageId: villageId, timeType: timeType });
+        }
+
         socket.on('connect', () => {
             const log = document.getElementById('log');
             if(log) log.innerHTML += '<div data-log-level="INFO" style="color:var(--accent-primary)">Dashboard connected.</div>';
@@ -463,15 +474,36 @@
             buildingsContent += '</tbody></table></div>';
             
             let trainingContent = `<div id="training" class="tab-content"><h3>Troop Training Configuration</h3>`;
-            trainingContent += `<div style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px;">
-                                    <button onclick="saveTrainingSettings('${villageId}')" class="btn btn-primary">Save Settings</button>
-                                    <div id="training-copy-container" style="display:contents;"></div>
-                                </div>`;
-            trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px;">
-                                    <label><input type="checkbox" id="training-enabled-${villageId}" ${trainingSettingsForVillage.enabled ? 'checked' : ''}> Enable Training Agent</label>
-                                    <label style="display: block; margin-top: 1rem;">Min Queue (minutes): <input type="number" id="min-queue-duration-${villageId}" class="form-control" style="width: 100px; display: inline-block;" value="${trainingSettingsForVillage.min_queue_duration_minutes || 15}"></label>
-                                    <label style="display: block; margin-top: 1rem;">End Time (dd.mm.yyyy hh:mm): <input type="text" id="max-training-time-${villageId}" class="form-control" style="width: 250px; display: inline-block;" value="${trainingSettingsForVillage.max_training_time || ''}"></label>
-                                </div>`;
+trainingContent += `<div style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px;">
+                        <button onclick="saveTrainingSettings('${villageId}')" class="btn btn-primary">Save Settings</button>
+                        <div id="training-copy-container" style="display:contents;"></div>
+                    </div>`;
+
+trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                        <label><input type="checkbox" id="training-enabled-${villageId}" ${trainingSettingsForVillage.enabled ? 'checked' : ''}> Enable Training Agent</label>
+                        
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 1rem;">
+                            <label for="min-queue-duration-${villageId}">Min Queue (minutes):</label>
+                            <input type="number" id="min-queue-duration-${villageId}" class="form-control" style="width: 100px;" value="${trainingSettingsForVillage.min_queue_duration_minutes || 15}">
+                            <button onclick="setToLowestTrainingTime('${villageId}')" class="btn btn-small" title="Set to the lowest training time of any enabled unit in this village.">Set to Lowest</button>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 1rem;">
+                            <label><input type="checkbox" id="auto-increment-enabled-${villageId}" ${trainingSettingsForVillage.auto_increment_enabled ? 'checked' : ''}> Auto-increment queue time</label>
+                            <label for="auto-increment-step-size-${villageId}">by</label>
+                            <input type="number" id="auto-increment-step-size-${villageId}" class="form-control" style="width: 80px;" value="${trainingSettingsForVillage.auto_increment_step_size || 10}">
+                            <span>minutes.</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 1rem;">
+                           <label for="max-training-time-${villageId}">End Time (dd.mm.yyyy hh:mm):</label>
+                           <input type="text" id="max-training-time-${villageId}" class="form-control" style="width: 200px;" value="${trainingSettingsForVillage.max_training_time || ''}">
+                           <select id="infobox-time-select-${villageId}" class="form-control" style="width: auto;">
+                               <option value="ww">WW Plans</option>
+                               <option value="artefacts">Artifacts</option>
+                           </select>
+                           <button onclick="setEndTimeFromInfobox('${villageId}')" class="btn btn-small">Set</button>
+                        </div>
+                    </div>`;
 
             const buildingTypes = {
                 barracks: { gid: 19, name: 'Barracks' }, stable: { gid: 20, name: 'Stable' },
@@ -634,7 +666,30 @@
         function removeAccount(username) { if(confirm(`Are you sure you want to remove account: ${username}?`)) { socket.emit('remove_account', {username}); } }
         function moveQueueItem(villageId, index, direction) { socket.emit('move_build_queue_item', { villageId, index, direction }); }
         function removeQueueItem(villageId, index) { const q = FULL_STATE.build_queues[villageId] || []; q.splice(index, 1); socket.emit('update_build_queue', { villageId, queue: q }); }
-        function saveTrainingSettings(villageId) { const settings = { enabled: document.getElementById(`training-enabled-${villageId}`).checked, min_queue_duration_minutes: parseInt(document.getElementById(`min-queue-duration-${villageId}`).value, 10), max_training_time: document.getElementById(`max-training-time-${villageId}`).value, buildings: {} }; const buildingTypes = ["barracks", "stable", "workshop", "great_barracks", "great_stable"]; const gids = [19, 20, 21, 29, 30]; buildingTypes.forEach((key, index) => { const enableCheckbox = document.getElementById(`train-enabled-${villageId}-${key}`); const troopSelect = document.getElementById(`train-select-${villageId}-${key}`); if(enableCheckbox && troopSelect){ settings.buildings[key] = { gid: gids[index], enabled: enableCheckbox.checked, troop_name: troopSelect.value }; } }); socket.emit('update_training_queues', { villageId: villageId, settings: settings }); }
+        function saveTrainingSettings(villageId) {
+    const settings = {
+        enabled: document.getElementById(`training-enabled-${villageId}`).checked,
+        min_queue_duration_minutes: parseInt(document.getElementById(`min-queue-duration-${villageId}`).value, 10),
+        max_training_time: document.getElementById(`max-training-time-${villageId}`).value,
+        auto_increment_enabled: document.getElementById(`auto-increment-enabled-${villageId}`).checked,
+        auto_increment_step_size: parseInt(document.getElementById(`auto-increment-step-size-${villageId}`).value, 10),
+        buildings: {}
+    };
+    const buildingTypes = ["barracks", "stable", "workshop", "great_barracks", "great_stable"];
+    const gids = [19, 20, 21, 29, 30];
+    buildingTypes.forEach((key, index) => {
+        const enableCheckbox = document.getElementById(`train-enabled-${villageId}-${key}`);
+        const troopSelect = document.getElementById(`train-select-${villageId}-${key}`);
+        if(enableCheckbox && troopSelect){
+            settings.buildings[key] = {
+                gid: gids[index],
+                enabled: enableCheckbox.checked,
+                troop_name: troopSelect.value
+            };
+        }
+    });
+    socket.emit('update_training_queues', { villageId: villageId, settings: settings });
+}
         function copySettings(sourceVillageId, settingType) { const targetSelect = document.getElementById(`${settingType}-copy-target-select`); const targetVillageId = targetSelect.value; if (!targetVillageId) return; if (confirm(`Copy ${settingType} settings to ${targetVillageId === '__ALL__' ? 'all other villages' : 'the selected village'}?`)) { socket.emit('copy_settings', { source_village_id: sourceVillageId, target_village_id: targetVillageId, setting_type: settingType }); } }
         function getMaxLevel(gid) { gid = parseInt(gid); if ([1,2,3,4].includes(gid)) return 50; if (gid === 40) return 100; if (gid === 23) return 10; if ([5,6,7,8,9].includes(gid)) return 5; return 20; }
         function getWallGid(villageData) { const wallGids = [31,32,33,42,43]; const slot40 = villageData.buildings.find(b => b.id === 40 && wallGids.includes(b.gid)); if (slot40) return slot40.gid; const existing = villageData.buildings.find(b => wallGids.includes(b.gid)); if (existing) return existing.gid; return 31; }

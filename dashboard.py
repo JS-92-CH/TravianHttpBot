@@ -6,6 +6,12 @@ import copy
 import time
 from config import BOT_STATE, state_lock, save_config, log, setup_logging
 from bot import BotManager
+# Add this line to import the necessary classes
+from client import TravianClient
+from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
+import re
+
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "8b8e2d43‐dashboard‐secret"
@@ -353,3 +359,113 @@ def handle_copy_settings(data):
 
     save_config()
     log.info(f"Finished copying {setting_type} settings.")
+
+@socketio.on('set_lowest_training_time')
+def handle_set_lowest_training_time(data):
+    village_id = data.get('villageId')
+    log.info(f"UI request to set lowest training time for village {village_id}")
+
+    # Find the relevant account info to create a temporary client
+    with state_lock:
+        account_info = None
+        for acc in BOT_STATE.get("accounts", []):
+            villages = BOT_STATE.get("village_data", {}).get(acc['username'], [])
+            if any(str(v['id']) == village_id for v in villages):
+                account_info = acc
+                break
+    
+    if not account_info:
+        log.error(f"Could not find account for village {village_id}")
+        return
+
+    client = TravianClient(
+        account_info['username'],
+        account_info['password'],
+        account_info['server_url'],
+        account_info.get('proxy')
+    )
+    if not client.login():
+        log.error(f"Failed to log in for {account_info['username']}")
+        return
+
+    lowest_queue_duration_seconds = float('inf')
+    
+    with state_lock:
+        village_config = BOT_STATE.get('training_queues', {}).get(str(village_id), {})
+        buildings = village_config.get('buildings', {})
+
+    for key, b_config in buildings.items():
+        if b_config.get('enabled'):
+            gid = b_config['gid']
+            page_data = client.get_training_page(int(village_id), gid)
+            if page_data and 'queue_duration_seconds' in page_data:
+                lowest_queue_duration_seconds = min(lowest_queue_duration_seconds, page_data['queue_duration_seconds'])
+
+    if lowest_queue_duration_seconds != float('inf'):
+        # Convert seconds to minutes, rounding down to be safe
+        lowest_time_minutes = int(lowest_queue_duration_seconds / 60)
+        log.info(f"Lowest queue duration found: {lowest_queue_duration_seconds:.2f}s. Setting min queue to {lowest_time_minutes} minutes.")
+        with state_lock:
+            BOT_STATE['training_queues'][str(village_id)]['min_queue_duration_minutes'] = lowest_time_minutes
+        save_config()
+
+
+@socketio.on('set_end_time_from_infobox')
+def handle_set_end_time_from_infobox(data):
+    village_id = data.get('villageId')
+    time_type = data.get('timeType') # 'ww' or 'artefacts'
+    log.info(f"UI request to set end time from infobox ({time_type}) for village {village_id}")
+
+    with state_lock:
+        account_info = None
+        for acc in BOT_STATE.get("accounts", []):
+            villages = BOT_STATE.get("village_data", {}).get(acc['username'], [])
+            if any(str(v['id']) == village_id for v in villages):
+                account_info = acc
+                break
+
+    if not account_info:
+        log.error(f"Could not find account for village {village_id}")
+        return
+
+    client = TravianClient(
+        account_info['username'],
+        account_info['password'],
+        account_info['server_url'],
+        account_info.get('proxy')
+    )
+    if not client.login():
+        log.error(f"Failed to log in for {account_info['username']}")
+        return
+        
+    infobox_html = client.get_infobox_html()
+    if not infobox_html:
+        log.error("Failed to retrieve infobox HTML.")
+        return
+
+    soup = BeautifulSoup(infobox_html, 'html.parser')
+    
+    search_text = "WW plans" if time_type == 'ww' else "Artifacts"
+    
+    target_timer = None
+    all_list_items = soup.select('ul > li')
+    for item in all_list_items:
+        if search_text in item.get_text():
+            target_timer = item.find('span', class_='timer')
+            break
+
+    if target_timer and 'value' in target_timer.attrs:
+        try:
+            seconds_to_add = int(target_timer['value'])
+            end_time = datetime.now() + timedelta(seconds=seconds_to_add)
+            formatted_end_time = end_time.strftime('%d.%m.%Y %H:%M')
+            
+            log.info(f"Found timer value: {seconds_to_add}s. Calculated end time: {formatted_end_time}")
+            
+            with state_lock:
+                BOT_STATE['training_queues'][str(village_id)]['max_training_time'] = formatted_end_time
+            save_config()
+        except (ValueError, TypeError):
+            log.error("Could not parse timer value from infobox.")
+    else:
+        log.warning(f"Could not find a timer for '{search_text}' in the infobox.")

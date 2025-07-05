@@ -92,8 +92,10 @@ class Module(threading.Thread):
                     log.info(f"[TrainingAgent][{username}] Hero is at {self.current_hero_location_id}, needs to be at {village_name} ({target_village_id}).")
 
                     with state_lock:
+                        # Attempt to get details from the global state first
                         target_village_details = BOT_STATE.get("village_data", {}).get(str(target_village_id))
                     
+                    # If not found or incomplete, fetch from the server
                     if not target_village_details or 'coords' not in target_village_details:
                         target_village_details = client.fetch_and_parse_village(target_village_id)
 
@@ -119,6 +121,7 @@ class Module(threading.Thread):
 
                 while not self.stop_event.is_set():
                     all_queues_filled_for_this_village = True
+                    troops_were_queued = False
                     min_queue_seconds = config.get('min_queue_duration_minutes', 15) * 60
 
                     max_time_str = config.get('max_training_time')
@@ -230,30 +233,45 @@ class Module(threading.Thread):
                             if amount_to_queue > 0:
                                 log.info(f"[TrainingAgent] Attempting to queue {amount_to_queue} x {troop_to_train['name']}.")
                                 if client.train_troops(target_village_id, page_data['build_id'], page_data['form_data'], {troop_to_train['id']: amount_to_queue}):
-                                    log.info(f"[TrainingAgent] Successfully queued troops.")
+                                    log.info(f"[TrainingAgent] Successfully queued troops. Re-checking village.")
                                     self.stop_event.wait(2)
+                                    troops_were_queued = True
+                                    break # Exit the building check loop to re-evaluate immediately
                                 else:
                                     log.error(f"[TrainingAgent] Failed to queue troops.")
                         else:
                             log.info(f"[TrainingAgent] - {building_type_key} queue is sufficient.")
 
-                    if all_queues_filled_for_this_village:
-                        with state_lock:
-                            current_duration = config.get('min_queue_duration_minutes', 15)
-                            new_duration = current_duration + 10
-                            log.info(f"[TrainingAgent] Increasing max queue duration for {village_name} to {new_duration} minutes for the next cycle.")
+                    # If we queued troops, restart the loop for this village immediately
+                    if troops_were_queued:
+                        continue
 
-                            if str(target_village_id) in BOT_STATE['training_queues']:
-                                BOT_STATE['training_queues'][str(target_village_id)]['min_queue_duration_minutes'] = new_duration
-                                save_config()
+                    # If all queues are full, move to the next village
+                    if all_queues_filled_for_this_village:
+                        auto_increment_enabled = config.get('auto_increment_enabled', False)
+                        
+                        if auto_increment_enabled:
+                            with state_lock:
+                                current_duration = config.get('min_queue_duration_minutes', 15)
+                                step_size = config.get('auto_increment_step_size', 10)
+                                new_duration = current_duration + step_size
+                                
+                                log.info(f"[TrainingAgent] Increasing max queue duration for {village_name} by {step_size} to {new_duration} minutes for the next cycle.")
+
+                                if str(target_village_id) in BOT_STATE['training_queues']:
+                                    BOT_STATE['training_queues'][str(target_village_id)]['min_queue_duration_minutes'] = new_duration
+                                    save_config()
+                        else:
+                            log.info(f"[TrainingAgent] Auto-increment is disabled for {village_name}. Keeping queue time the same.")
+                        
                         log.info(f"--- [TrainingAgent][{username}] All queues in {village_name} are filled. Moving to next village. ---")
-                        break
+                        break # Exit the aggressive training loop for this village
                     else:
-                        log.info(f"[TrainingAgent][{username}] Not all queues in {village_name} are full. Waiting 20 seconds before re-checking...")
+                        # This part is now only reached if queues aren't full but no action could be taken (e.g., lack of resources)
+                        log.info(f"[TrainingAgent][{username}] Not all queues in {village_name} are full, but no action could be taken. Waiting 20 seconds before re-checking...")
                         self.stop_event.wait(20)
 
                 self.village_cycle_index += 1
-
             except Exception as e:
                 log.error(f"[TrainingAgent][{username}] CRITICAL ERROR in training cycle: {e}", exc_info=True)
                 self.village_cycle_index += 1
