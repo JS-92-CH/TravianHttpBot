@@ -84,7 +84,7 @@ class Module(threading.Thread):
                         self.stop_event.wait(0.5)
 
                     if self.current_hero_location_id is None:
-                        log.warning(f"[TrainingAgent][{username}] Could not find hero in any village. Hero may be moving. Retrying in 1 minutes.")
+                        log.warning(f"[{username}] Could not find hero in any village. Hero may be moving. Retrying in 1 minutes.")
                         self.stop_event.wait(60)
                         continue
 
@@ -245,6 +245,41 @@ class Module(threading.Thread):
                     # If we queued troops, restart the loop for this village immediately
                     if troops_were_queued:
                         continue
+
+                    # --- START OF CHANGES ---
+                    # If a max training time is set, check if all enabled buildings have reached it.
+                    if max_time_str and remaining_time_cap < float('inf'):
+                        all_enabled_buildings_at_max_time = True
+                        is_any_building_enabled = False
+
+                        # Re-check all buildings with fresh data to confirm they are all at the end time.
+                        for building_type_key, b_config in sorted_buildings:
+                            if b_config.get('enabled'):
+                                is_any_building_enabled = True
+                                gid = b_config['gid']
+                                page_data = client.get_training_page(target_village_id, gid)
+                                
+                                if not page_data:
+                                    # To be safe, if we can't get data, assume it's not at the max time.
+                                    all_enabled_buildings_at_max_time = False
+                                    break
+                                
+                                current_queue_duration = page_data.get('queue_duration_seconds', 0)
+                                
+                                # If any enabled building's queue is not yet at the time limit, the village is not finished.
+                                if current_queue_duration < (remaining_time_cap * 0.98):
+                                    all_enabled_buildings_at_max_time = False
+                                    break
+                        
+                        if is_any_building_enabled and all_enabled_buildings_at_max_time:
+                            log.info(f"[TrainingAgent] All enabled buildings in {village_name} have reached the end time duration. Disabling training for this village.")
+                            with state_lock:
+                                if str(target_village_id) in BOT_STATE['training_queues']:
+                                    BOT_STATE['training_queues'][str(target_village_id)]['enabled'] = False
+                                    save_config()
+                            # Exit the aggressive training loop for this village as it's now disabled.
+                            break
+                    # --- END OF CHANGES ---
 
                     # If all queues are full, move to the next village
                     if all_queues_filled_for_this_village:
