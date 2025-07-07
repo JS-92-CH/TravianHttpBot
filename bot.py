@@ -13,9 +13,10 @@ from modules.smithyupgrades import Module as SmithyModule
 from client import TravianClient
 from config import log, BOT_STATE, state_lock, save_config
 from modules import load_modules
+from proxy_util import test_proxy
 
 class VillageAgent(threading.Thread):
-    # ... (no changes in this class)
+    # ... (this class is unchanged)
     def __init__(self, account_info: Dict, village_info: Dict, socketio_instance):
         super().__init__()
         self.client = TravianClient(
@@ -146,18 +147,18 @@ class BotManager(threading.Thread):
         self.running_account_agents: Dict[str, List[VillageAgent]] = {}
         self.running_training_agents: Dict[str, TrainingModule] = {}
         self.running_smithy_agents: Dict[str, SmithyModule] = {}
-        # --- START OF CHANGES ---
-        # Keep track of demolish agents on a per-account basis
         self.running_demolish_agents: Dict[str, DemolishModule] = {}
+        # --- START OF CHANGES ---
+        # This dictionary will hold the single, reusable, logged-in client for each account.
+        self.running_account_clients: Dict[str, TravianClient] = {}
         # --- END OF CHANGES ---
         self.adventure_module = AdventureModule(self)
         self.hero_module = HeroModule(self)
-        # --- REMOVE the central demolish module ---
         self.daemon = True
         self._ui_updater_thread = threading.Thread(target=self._ui_updater, daemon=True)
 
     def _ui_updater(self):
-        # ... (no changes here)
+        # ... (this method is unchanged)
         log.info("UI Updater thread started.")
         while not self.stop_event.is_set():
             with state_lock:
@@ -170,6 +171,7 @@ class BotManager(threading.Thread):
         log.info("UI Updater thread stopped.")
 
     def stop(self):
+        # ... (this method is unchanged)
         log.info("Stopping Bot Manager and all active agents...")
         self.stop_event.set()
         with state_lock:
@@ -180,7 +182,6 @@ class BotManager(threading.Thread):
         for username in list(self.running_account_agents.keys()):
             self._stop_agents_for_account(username)
 
-        # --- REMOVE stopping the central demolish agent ---
         
         if self._ui_updater_thread.is_alive():
             self._ui_updater_thread.join()
@@ -188,6 +189,13 @@ class BotManager(threading.Thread):
         log.info("Bot Manager stopped.")
 
     def _stop_agents_for_account(self, username: str):
+        # --- START OF CHANGES ---
+        # Remove the persistent client for the stopped account
+        if username in self.running_account_clients:
+            log.info(f"Removing persistent client for account: {username}")
+            self.running_account_clients.pop(username, None)
+        # --- END OF CHANGES ---
+
         if username in self.running_training_agents:
             log.info(f"Stopping training agent for account: {username}")
             training_agent = self.running_training_agents.pop(username, None)
@@ -202,15 +210,12 @@ class BotManager(threading.Thread):
                 smithy_agent.stop()
                 smithy_agent.join()
 
-        # --- START OF CHANGES ---
-        # Stop the demolish agent associated with this account
         if username in self.running_demolish_agents:
             log.info(f"Stopping demolish agent for account: {username}")
             demolish_agent = self.running_demolish_agents.pop(username, None)
             if demolish_agent:
                 demolish_agent.stop()
                 demolish_agent.join()
-        # --- END OF CHANGES ---
 
         if username in self.running_account_agents:
             log.info(f"Stopping village agents for account: {username}")
@@ -228,7 +233,6 @@ class BotManager(threading.Thread):
 
     def run(self):
         log.info("Bot Manager thread started and is now monitoring accounts.")
-        # --- REMOVE starting the central demolish agent ---
         self._ui_updater_thread.start()
 
         while not self.stop_event.is_set():
@@ -236,33 +240,34 @@ class BotManager(threading.Thread):
                 with state_lock:
                     accounts = [acc.copy() for acc in BOT_STATE["accounts"]]
 
-                for account in accounts:
-                    username = account['username']
-                    if account.get('active') and username not in self.running_account_agents:
-                        self.start_agents_for_account(account)
+                active_usernames = {acc['username'] for acc in accounts if acc.get('active')}
+                running_usernames = set(self.running_account_agents.keys())
 
-                for username in list(self.running_account_agents.keys()):
-                    account_is_active = any(
-                        acc['username'] == username and acc.get('active') for acc in accounts
-                    )
-                    if not account_is_active:
-                        self._stop_agents_for_account(username)
+                # Start agents and clients for new accounts
+                for username_to_start in active_usernames - running_usernames:
+                    account_info = next((acc for acc in accounts if acc['username'] == username_to_start), None)
+                    if account_info:
+                        self.start_agents_for_account(account_info)
+
+                # Stop agents and clients for deactivated accounts
+                for username_to_stop in running_usernames - active_usernames:
+                    self._stop_agents_for_account(username_to_stop)
                 
-                for account in accounts:
-                     if account.get('active'):
-                        temp_client = TravianClient(
-                            account["username"], account["password"],
-                            account["server_url"], account.get("proxy")
-                        )
-                        if temp_client.login():
-                            try:
-                                self.adventure_module.tick(temp_client)
-                                time.sleep(1) 
-                                self.hero_module.tick(temp_client)
-                            except Exception as e:
-                                log.error(f"Error in account-level module for {account['username']}: {e}", exc_info=True)
-                        else:
-                            log.error(f"[{account['username']}] Login failed for account-level module check.")
+                # --- START OF CHANGES ---
+                # Use the persistent, logged-in clients for general tasks
+                for username in active_usernames:
+                    client = self.running_account_clients.get(username)
+                    if client:
+                        try:
+                            self.adventure_module.tick(client)
+                            time.sleep(1) 
+                            self.hero_module.tick(client)
+                        except Exception as e:
+                            log.error(f"Error in account-level module for {username}: {e}", exc_info=True)
+                    else:
+                        # This can happen briefly while an account is starting up
+                        log.debug(f"No active client found for running account {username}. It may be starting.")
+                # --- END OF CHANGES ---
 
             except Exception as e:
                 log.error(f"Critical error in BotManager loop: {e}", exc_info=True)
@@ -273,12 +278,26 @@ class BotManager(threading.Thread):
         username = account_info['username']
         log.info(f"Attempting to start agents for account: {username}")
         
-        temp_client = TravianClient(
+        proxy_settings = account_info.get("proxy")
+        if proxy_settings and proxy_settings.get('ip'):
+            if not test_proxy(proxy_settings):
+                log.error(f"[{username}] Proxy check failed. Aborting agent startup for this account.")
+                with state_lock:
+                    for acc in BOT_STATE['accounts']:
+                        if acc['username'] == username:
+                            acc['active'] = False
+                            break
+                save_config()
+                return
+        
+        # --- START OF CHANGES ---
+        # Create the single client instance that will be reused
+        persistent_client = TravianClient(
             account_info["username"], account_info["password"],
             account_info["server_url"], account_info.get("proxy")
         )
 
-        if not temp_client.login():
+        if not persistent_client.login():
             log.error(f"[{username}] Login failed. Cannot start agents for this account.")
             with state_lock:
                 for acc in BOT_STATE['accounts']:
@@ -288,9 +307,14 @@ class BotManager(threading.Thread):
             save_config()
             return
 
+        # Store the successfully logged-in client for reuse
+        self.running_account_clients[username] = persistent_client
+        # --- END OF CHANGES ---
+
         try:
-            resp = temp_client.sess.get(f"{temp_client.server_url}/dorf1.php", timeout=15)
-            sidebar_data = temp_client.parse_village_page(resp.text, "dorf1")
+            # Use the new persistent client to fetch initial data
+            resp = persistent_client.sess.get(f"{persistent_client.server_url}/dorf1.php", timeout=15)
+            sidebar_data = persistent_client.parse_village_page(resp.text, "dorf1")
             villages = sidebar_data.get("villages", [])
 
             self.socketio.emit('villages_discovered', {'username': username, 'villages': villages})
@@ -331,13 +355,10 @@ class BotManager(threading.Thread):
             self.running_smithy_agents[username] = smithy_agent
             smithy_agent.start()
             
-            # --- START OF CHANGES ---
-            # Start a new demolish agent for this specific account
             log.info(f"Starting dedicated demolish agent for {username}")
             demolish_agent = DemolishModule(account_info, TravianClient)
             self.running_demolish_agents[username] = demolish_agent
             demolish_agent.start()
-            # --- END OF CHANGES ---
 
             self.running_account_agents[username] = []
             for village in villages:
@@ -348,4 +369,6 @@ class BotManager(threading.Thread):
 
         except Exception as exc:
             log.error(f"Failed to start village agents for {username}: {exc}", exc_info=True)
+            # Clean up if startup fails midway
+            self.running_account_clients.pop(username, None)
             self.running_account_agents.pop(username, None)

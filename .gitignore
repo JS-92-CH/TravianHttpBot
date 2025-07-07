@@ -118,3 +118,4 @@ dmypy.json
 
 # Personal
 config.json
+proxies.txt

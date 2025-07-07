@@ -185,6 +185,14 @@
                             <div class="form-group"><input type="text" id="proxy_port" class="form-control" placeholder="Proxy Port"></div>
                             <div class="form-group"><input type="text" id="proxy_user" class="form-control" placeholder="Proxy Username"></div>
                             <div class="form-group"><input type="password" id="proxy_pass" class="form-control" placeholder="Proxy Password"></div>
+                            <div class="form-group">
+    <button type="button" class="btn" onclick="fetchProxies()">Fetch Fastest Proxies</button>
+</div>
+<div class="form-group">
+    <select id="proxy_dropdown" class="form-control" onchange="selectProxy()">
+        <option value="">-- Select a Proxy --</option>
+    </select>
+</div>
                             <button type="submit" class="btn" style="width: 100%;">Add Account</button>
                         </form>
                     </div>
@@ -264,6 +272,31 @@
             const timeType = document.getElementById(`infobox-time-select-${villageId}`).value;
             socket.emit('set_end_time_from_infobox', { villageId: villageId, timeType: timeType });
         }
+
+        function fetchProxies() {
+    socket.emit('fetch_proxies');
+}
+
+socket.on('proxy_results', function(data) {
+    const proxyDropdown = document.getElementById('proxy_dropdown');
+    proxyDropdown.innerHTML = '<option value="">-- Select a Proxy --</option>'; // Clear existing options
+    data.proxies.forEach(function(proxy, index) {
+        const option = document.createElement('option');
+        option.value = JSON.stringify(proxy);
+        option.textContent = `Proxy ${index + 1}: ${proxy.ip}:${proxy.port}`;
+        proxyDropdown.appendChild(option);
+    });
+});
+
+function selectProxy() {
+    const proxyDropdown = document.getElementById('proxy_dropdown');
+    const selectedProxy = JSON.parse(proxyDropdown.value);
+
+    document.getElementById('proxy_ip').value = selectedProxy.ip;
+    document.getElementById('proxy_port').value = selectedProxy.port;
+    document.getElementById('proxy_user').value = selectedProxy.username;
+    document.getElementById('proxy_pass').value = selectedProxy.password;
+}
 
         socket.on('connect', () => {
             const log = document.getElementById('log');
@@ -656,7 +689,27 @@ trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px so
             html += `</select><button onclick="loadTemplate('${villageId}')" class="btn">Load</button><button onclick="deleteTemplate()" class="btn btn-danger">Delete</button>`;
             container.innerHTML = html;
         }
-        document.getElementById('add-account-form').onsubmit = (e) => { e.preventDefault(); socket.emit('add_account', { username: document.getElementById('username').value, password: document.getElementById('password').value, server_url: document.getElementById('server_url').value, is_sitter: document.getElementById('is_sitter').checked, sitter_for: document.getElementById('sitter_for').value, use_dual_queue: document.getElementById('use_dual_queue').checked, use_hero_resources: document.getElementById('use_hero_resources').checked, proxy_ip: document.getElementById('proxy_ip').value, proxy_port: document.getElementById('proxy_port').value, proxy_user: document.getElementById('proxy_user').value, proxy_pass: document.getElementById('proxy_pass').value }); e.target.reset(); toggleCollapsible('add-account-section'); };
+        document.getElementById('add-account-form').onsubmit = (e) => {
+    e.preventDefault();
+    const proxyDetails = {
+        ip: document.getElementById('proxy_ip').value,
+        port: document.getElementById('proxy_port').value,
+        username: document.getElementById('proxy_user').value,
+        password: document.getElementById('proxy_pass').value
+    };
+    socket.emit('add_account', {
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value,
+        server_url: document.getElementById('server_url').value,
+        is_sitter: document.getElementById('is_sitter').checked,
+        sitter_for: document.getElementById('sitter_for').value,
+        use_dual_queue: document.getElementById('use_dual_queue').checked,
+        use_hero_resources: document.getElementById('use_hero_resources').checked,
+        proxy: proxyDetails // Pass the proxy details object
+    });
+    e.target.reset();
+    toggleCollapsible('add-account-section');
+};
         function filterLogs() { const levelFilter = document.getElementById('log-level-filter').value; const searchFilter = document.getElementById('log-search-filter').value.toLowerCase(); const logContainer = document.getElementById('log'); if (!logContainer) return; const entries = logContainer.getElementsByTagName('div'); for (const entry of entries) { const levelMatch = !levelFilter || entry.dataset.logLevel === levelFilter; const searchMatch = !searchFilter || entry.textContent.toLowerCase().includes(searchFilter); entry.style.display = (levelMatch && searchMatch) ? '' : 'none'; } }
         document.getElementById('log-level-filter').onchange = filterLogs;
         document.getElementById('log-search-filter').onkeyup = filterLogs;

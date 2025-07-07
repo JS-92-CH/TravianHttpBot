@@ -6,11 +6,11 @@ import copy
 import time
 from config import BOT_STATE, state_lock, save_config, log, setup_logging
 from bot import BotManager
-# Add this line to import the necessary classes
 from client import TravianClient
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import re
+from proxy_util import get_fastest_proxies
 
 
 app = Flask(__name__)
@@ -119,6 +119,9 @@ def handle_add_account(data):
             log.warning("Account %s already exists.", username)
             return
         
+        # Correctly get the nested proxy object from the data
+        proxy_data = data.get('proxy', {})
+
         new_account = {
             "username": username, # Use the potentially new username
             "password": data["password"],
@@ -131,11 +134,12 @@ def handle_add_account(data):
             "use_hero_resources": data.get("use_hero_resources", False),
             "building_logic": data.get("building_logic", "default"),
             "active": False,
+            # Populate from the nested proxy_data object
             "proxy": {
-                "ip": data.get('proxy_ip', ''),
-                "port": data.get('proxy_port', ''),
-                "username": data.get('proxy_user', ''),
-                "password": data.get('proxy_pass', '')
+                "ip": proxy_data.get('ip', ''),
+                "port": proxy_data.get('port', ''),
+                "username": proxy_data.get('username', ''),
+                "password": proxy_data.get('password', '')
             }
         }
         
@@ -469,3 +473,12 @@ def handle_set_end_time_from_infobox(data):
             log.error("Could not parse timer value from infobox.")
     else:
         log.warning(f"Could not find a timer for '{search_text}' in the infobox.")
+
+@socketio.on('fetch_proxies')
+def handle_fetch_proxies():
+    """
+    Handles the request to fetch and test proxies.
+    """
+    log.info("UI request to fetch and test proxies.")
+    fastest_proxies = get_fastest_proxies()
+    socketio.emit("proxy_results", {"proxies": fastest_proxies})
