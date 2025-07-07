@@ -385,9 +385,21 @@ class TravianClient:
                 found_buildings[loc_id] = {'id': loc_id, 'gid': gid, 'level': level, 'name': slot.get('data-name')}
             except Exception: continue
         out['buildings'] = list(found_buildings.values())
+        
+        # --- START OF FIX ---
         for li in soup.select(".buildingList li"):
             if (name_div := li.find("div", class_="name")) and (lvl_span := li.find("span", class_="lvl")) and (timer_span := li.find("span", class_="timer")):
-                out["queue"].append({"name":name_div.text.strip(),"level":lvl_span.text.strip(),"eta":int(timer_span.get("value",0))})
+                # Extract only the number from the level text
+                level_text = lvl_span.text.strip()
+                level_match = re.search(r'\d+', level_text)
+                level = int(level_match.group(0)) if level_match else 0
+                out["queue"].append({
+                    "name": name_div.text.strip(),
+                    "level": level, # Save the corrected integer level
+                    "eta": int(timer_span.get("value", 0))
+                })
+        # --- END OF FIX ---
+                
         for v_entry in soup.select("#sidebarBoxVillageList .listEntry"):
             if link := v_entry.find("a",href=re.compile(r"newdid=")):
                 out["villages"].append({"id":int(re.search(r"newdid=(\d+)",link["href"]).group(1)),"name":v_entry.find("span",class_="name").text.strip(),"active":"active" in v_entry.get("class",[])})

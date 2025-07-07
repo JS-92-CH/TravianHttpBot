@@ -45,12 +45,7 @@ class Module(BaseModule):
 
     def tick(self, village_data):
         agent = self.agent
-        max_queue_length = 2 if agent.use_dual_queue else 1
-        active_builds = village_data.get("queue", [])
-
-        if len(active_builds) >= max_queue_length:
-            return 0
-
+        
         with state_lock:
             build_queue = BOT_STATE["build_queues"].get(str(agent.village_id), [])[:]
 
@@ -58,10 +53,10 @@ class Module(BaseModule):
             return 0
 
         all_buildings = village_data.get("buildings", [])
+        active_builds = village_data.get("queue", [])
         goal_task = build_queue[0]
         action_plan = None
         
-        # --- HANDLE RESOURCE PLAN ---
         if goal_task.get('type') == 'resource_plan':
             target_level = goal_task.get('level')
             resource_fields = sorted([b for b in all_buildings if 1 <= b['id'] <= 18], key=lambda x: (x.get('level', 0), x['id']))
@@ -72,91 +67,57 @@ class Module(BaseModule):
                 log.info(f"AGENT({agent.village_name}): Resource plan to level {target_level} is complete. Removing task.")
                 with state_lock: BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
                 save_config()
-                refreshed_data = agent.client.fetch_and_parse_village(agent.village_id)
-                if refreshed_data:
-                    return self.tick(refreshed_data)
                 return 10
 
             action_plan = {'type': 'upgrade', 'location': field_to_upgrade['id'], 'gid': field_to_upgrade['gid'], 'is_new': False}
             log.info(f"AGENT({agent.village_name}): Resource plan: Upgrading {gid_name(action_plan['gid'])} at Loc {action_plan['location']} to Lvl {field_to_upgrade['level']+1}.")
         
-        # --- HANDLE BUILDING PLAN ---
         elif goal_task.get('type') == 'building':
             goal_gid = goal_task.get('gid')
             goal_level = goal_task.get('level')
+            goal_location = goal_task.get('location')
+
+            # --- START OF NEW LOGIC ---
+            target_building_on_map = next((b for b in all_buildings if b.get('id') == goal_location), None)
             
-            # --- Start of Changes ---
-            # For unique buildings, check if the goal is already met and remove the task if so.
-            # This logic is now skipped for multi-instance buildings to prevent incorrect deletions.
-            if not is_multi_instance(goal_gid):
-                WALL_GIDS_CHECK = {31, 32, 33, 42, 43}
-                gid_to_check_set = WALL_GIDS_CHECK if goal_gid in WALL_GIDS_CHECK else {goal_gid}
-                
-                existing_unique_building = next((b for b in all_buildings if b.get('gid') in gid_to_check_set), None)
+            if not target_building_on_map:
+                 log.error(f"AGENT({agent.village_name}): Building at location {goal_location} not found in village data. This should not happen.")
+                 return 0
 
-                if existing_unique_building and existing_unique_building.get('level', 0) >= goal_level:
-                    log.info(f"AGENT({agent.village_name}): Goal '{gid_name(goal_gid)}' Lvl {goal_level} is complete. Removing from queue.")
-                    with state_lock: BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
-                    save_config()
-                    # Re-tick to process the next item immediately
-                    refreshed_data = agent.client.fetch_and_parse_village(agent.village_id)
-                    if refreshed_data:
-                        return self.tick(refreshed_data)
-                    return 10
-            # --- End of Changes ---
+            current_level = target_building_on_map.get('level', 0)
+            is_new_build = target_building_on_map.get('gid', 0) == 0
 
-            WALL_GIDS = {31, 32, 33, 42, 43}
-            existing_building = None
-            if goal_gid in WALL_GIDS:
-                existing_building = next((b for b in all_buildings if b.get('gid') in WALL_GIDS), None)
-            else:
-                # This logic is now safer because the premature removal for multi-instance buildings is gone.
-                # If a location is specified, it will try to use that. If not, it will look for an empty slot later.
-                existing_building = next((b for b in all_buildings if b.get('gid') == goal_gid and b.get('level', 0) < goal_level), None)
+            # Calculate the effective level by including queued upgrades for this specific building.
+            # This is an approximation based on name, as the server queue doesn't provide a location ID.
+            building_name_in_queue = gid_name(goal_gid)
+            queued_levels = [int(build.get('level')) for build in active_builds if building_name_in_queue in build.get('name')]
+            effective_level = max([current_level] + queued_levels)
 
-
-            if existing_building and existing_building.get('level', 0) >= goal_level:
-                log.info(f"AGENT({agent.village_name}): Goal '{gid_name(goal_gid)}' Lvl {goal_level} is complete. Removing from queue.")
+            if effective_level >= goal_level:
+                log.info(f"AGENT({agent.village_name}): Task '{gid_name(goal_gid)}' Lvl {goal_level} at Loc {goal_location} is already complete (Effective Lvl: {effective_level}). Removing from queue.")
                 with state_lock: BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
                 save_config()
-                refreshed_data = agent.client.fetch_and_parse_village(agent.village_id)
-                if refreshed_data:
-                    return self.tick(refreshed_data)
-                return 10
-
-            if not existing_building:
+                return 10 
+            
+            # If the slot is empty, we must build a new building.
+            if is_new_build:
                 missing_prereqs = self._resolve_dependencies(goal_gid, all_buildings)
                 if missing_prereqs:
                     log.info(f"AGENT({agent.village_name}): Prepending prerequisites for new building {gid_name(goal_gid)}.")
                     with state_lock: BOT_STATE["build_queues"][str(agent.village_id)] = missing_prereqs + build_queue
                     save_config()
                     return 0
+                action_plan = {'type': 'new', 'location': goal_location, 'gid': goal_gid, 'is_new': True}
+            else: # The slot is not empty, so we are upgrading.
+                action_plan = {'type': 'upgrade', 'location': goal_location, 'gid': goal_gid, 'is_new': False}
+            # --- END OF NEW LOGIC ---
 
-                slot_id = None
-                if goal_gid == 16: slot_id = 39
-                elif goal_gid in WALL_GIDS: slot_id = 40
-                
-                if slot_id and any(b['id'] == slot_id and b['gid'] == 0 for b in all_buildings):
-                    location = slot_id
-                else:
-                    empty_slot = next((b for b in all_buildings if b['id'] > 18 and b['gid'] == 0 and b['id'] not in [39, 40]), None)
-                    location = empty_slot['id'] if empty_slot else None
-                
-                if not location:
-                    log.error(f"AGENT({agent.village_name}): No empty slot for {gid_name(goal_gid)}. Removing task.")
-                    with state_lock: BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
-                    save_config()
-                    return 0
-                action_plan = {'type': 'new', 'location': location, 'gid': goal_gid, 'is_new': True}
-            else:
-                action_plan = {'type': 'upgrade', 'location': existing_building['id'], 'gid': goal_gid, 'is_new': False}
         else:
             log.error(f"AGENT({agent.village_name}): Unknown task type '{goal_task.get('type')}'. Removing task.")
             with state_lock: BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
             save_config()
             return 0
         
-        # If an action is planned, check for resources and use hero items if necessary and enabled.
         if action_plan:
             if agent.use_hero_resources and hasattr(agent, 'resources_module') and agent.resources_module:
                 log.info(f"AGENT({agent.village_name}): Checking resources for {gid_name(action_plan['gid'])} with hero resource usage enabled.")
@@ -170,16 +131,13 @@ class Module(BaseModule):
                 if used_items:
                     log.info(f"AGENT({agent.village_name}): Used hero resources. Pausing for 2 seconds before re-attempting build.")
                     time.sleep(2)
-
-        # --- EXECUTE BUILD ---
-        quick_check_data = agent.client.fetch_and_parse_village(agent.village_id)
-        if len(quick_check_data.get("queue", [])) >= max_queue_length:
-            return 0
-
+        
         build_result = agent.client.initiate_build(agent.village_id, action_plan['location'], action_plan['gid'], is_new_build=action_plan['is_new'])
 
         if build_result.get('status') == 'success':
             return build_result.get('eta', 300)
         else:
             log.warning(f"AGENT({agent.village_name}): Failed to build '{gid_name(action_plan['gid'])}'. Reason: {build_result.get('reason')}.")
+            # On failure, we don't want to get stuck in a fast loop.
+            # The agent's main loop will set a longer wait time.
             return 0

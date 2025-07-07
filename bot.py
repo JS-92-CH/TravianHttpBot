@@ -16,7 +16,6 @@ from modules import load_modules
 from proxy_util import test_proxy
 
 class VillageAgent(threading.Thread):
-    # ... (this class is unchanged)
     def __init__(self, account_info: Dict, village_info: Dict, socketio_instance):
         super().__init__()
         self.client = TravianClient(
@@ -42,6 +41,8 @@ class VillageAgent(threading.Thread):
     def stop(self):
         self.stop_event.set()
 
+    # bot.py -> VillageAgent class
+
     def run(self):
         log.info(f"Agent started for village: {self.village_name} ({self.village_id})")
 
@@ -59,8 +60,8 @@ class VillageAgent(threading.Thread):
                 village_data = self.client.fetch_and_parse_village(self.village_id)
 
                 if not village_data or not village_data.get("buildings"):
-                    log.warning(f"[{self.village_name}] Data fetch was incomplete. Retrying in 60 seconds.")
-                    self.next_check_time = time.time() + 60
+                    log.warning(f"[{self.village_name}] Data fetch was incomplete. Retrying in 10 seconds.")
+                    self.next_check_time = time.time() + 10
                     continue
                 
                 with state_lock:
@@ -74,11 +75,9 @@ class VillageAgent(threading.Thread):
                             if training_page_data:
                                 BOT_STATE['training_data'][str(self.village_id)][str(gid)] = training_page_data
 
-                    # Check if a smithy (gid 13) exists in the village
                     smithy_building = next((b for b in village_data.get('buildings', []) if b.get('gid') == 13), None)
 
                     if smithy_building:
-                        # Call with the correct GID, not the location ID
                         smithy_page_data = self.client.get_smithy_page(self.village_id, 13)
                         if smithy_page_data:
                             with state_lock:
@@ -120,17 +119,18 @@ class VillageAgent(threading.Thread):
                             log.info(f"[{self.village_name}] No more buildings to queue or an error occurred. Exiting build loop.")
                             break
                         
-                        time.sleep(0.25)
+                        # If a build was queued, we sleep briefly before checking if we can queue another.
+                        time.sleep(0.5)
 
                 final_data = self.client.fetch_and_parse_village(self.village_id)
                 if final_data and final_data.get("queue"):
                     server_eta = min([b.get('eta', 3600) for b in final_data["queue"]])
-                    wait_time = max(5, server_eta + 0.5) 
+                    wait_time = max(0.5, server_eta + 0.5) 
                     self.next_check_time = time.time() + wait_time
                     log.info(f"[{self.village_name}] Construction active. Next main check in {wait_time:.0f}s.")
                 else:
-                    self.next_check_time = time.time() + 60
-                    log.info(f"[{self.village_name}] No construction active. Next main check in 60s.")
+                    self.next_check_time = time.time() + 10
+                    log.info(f"[{self.village_name}] No construction active. Next main check in 10.")
 
 
             except Exception as e:
@@ -140,6 +140,7 @@ class VillageAgent(threading.Thread):
         log.info(f"Agent stopped for village: {self.village_name} ({self.village_id})")
 
 class BotManager(threading.Thread):
+    # ... (rest of BotManager is unchanged)
     def __init__(self, socketio_instance):
         super().__init__()
         self.socketio = socketio_instance
@@ -148,30 +149,24 @@ class BotManager(threading.Thread):
         self.running_training_agents: Dict[str, TrainingModule] = {}
         self.running_smithy_agents: Dict[str, SmithyModule] = {}
         self.running_demolish_agents: Dict[str, DemolishModule] = {}
-        # --- START OF CHANGES ---
-        # This dictionary will hold the single, reusable, logged-in client for each account.
         self.running_account_clients: Dict[str, TravianClient] = {}
-        # --- END OF CHANGES ---
         self.adventure_module = AdventureModule(self)
         self.hero_module = HeroModule(self)
         self.daemon = True
         self._ui_updater_thread = threading.Thread(target=self._ui_updater, daemon=True)
 
     def _ui_updater(self):
-        # ... (this method is unchanged)
         log.info("UI Updater thread started.")
         while not self.stop_event.is_set():
             with state_lock:
                 try:
-                    # Send a deep copy to avoid race conditions during serialization
                     self.socketio.emit("state_update", copy.deepcopy(BOT_STATE))
                 except Exception as e:
                     log.error(f"Error in UI updater: {e}", exc_info=True)
-            self.stop_event.wait(2) # Update UI every 2 seconds
+            self.stop_event.wait(2) 
         log.info("UI Updater thread stopped.")
 
     def stop(self):
-        # ... (this method is unchanged)
         log.info("Stopping Bot Manager and all active agents...")
         self.stop_event.set()
         with state_lock:
@@ -189,12 +184,9 @@ class BotManager(threading.Thread):
         log.info("Bot Manager stopped.")
 
     def _stop_agents_for_account(self, username: str):
-        # --- START OF CHANGES ---
-        # Remove the persistent client for the stopped account
         if username in self.running_account_clients:
             log.info(f"Removing persistent client for account: {username}")
             self.running_account_clients.pop(username, None)
-        # --- END OF CHANGES ---
 
         if username in self.running_training_agents:
             log.info(f"Stopping training agent for account: {username}")
@@ -243,18 +235,14 @@ class BotManager(threading.Thread):
                 active_usernames = {acc['username'] for acc in accounts if acc.get('active')}
                 running_usernames = set(self.running_account_agents.keys())
 
-                # Start agents and clients for new accounts
                 for username_to_start in active_usernames - running_usernames:
                     account_info = next((acc for acc in accounts if acc['username'] == username_to_start), None)
                     if account_info:
                         self.start_agents_for_account(account_info)
 
-                # Stop agents and clients for deactivated accounts
                 for username_to_stop in running_usernames - active_usernames:
                     self._stop_agents_for_account(username_to_stop)
                 
-                # --- START OF CHANGES ---
-                # Use the persistent, logged-in clients for general tasks
                 for username in active_usernames:
                     client = self.running_account_clients.get(username)
                     if client:
@@ -265,9 +253,7 @@ class BotManager(threading.Thread):
                         except Exception as e:
                             log.error(f"Error in account-level module for {username}: {e}", exc_info=True)
                     else:
-                        # This can happen briefly while an account is starting up
                         log.debug(f"No active client found for running account {username}. It may be starting.")
-                # --- END OF CHANGES ---
 
             except Exception as e:
                 log.error(f"Critical error in BotManager loop: {e}", exc_info=True)
@@ -290,8 +276,6 @@ class BotManager(threading.Thread):
                 save_config()
                 return
         
-        # --- START OF CHANGES ---
-        # Create the single client instance that will be reused
         persistent_client = TravianClient(
             account_info["username"], account_info["password"],
             account_info["server_url"], account_info.get("proxy")
@@ -307,12 +291,9 @@ class BotManager(threading.Thread):
             save_config()
             return
 
-        # Store the successfully logged-in client for reuse
         self.running_account_clients[username] = persistent_client
-        # --- END OF CHANGES ---
 
         try:
-            # Use the new persistent client to fetch initial data
             resp = persistent_client.sess.get(f"{persistent_client.server_url}/dorf1.php", timeout=15)
             sidebar_data = persistent_client.parse_village_page(resp.text, "dorf1")
             villages = sidebar_data.get("villages", [])
@@ -369,6 +350,5 @@ class BotManager(threading.Thread):
 
         except Exception as exc:
             log.error(f"Failed to start village agents for {username}: {exc}", exc_info=True)
-            # Clean up if startup fails midway
             self.running_account_clients.pop(username, None)
             self.running_account_agents.pop(username, None)
