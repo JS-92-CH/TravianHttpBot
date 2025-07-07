@@ -5,6 +5,7 @@ from config import BOT_STATE, state_lock, save_config, gid_name, log, is_multi_i
 import json
 import time
 from collections import deque
+import random
 
 class Module(BaseModule):
     """Handles building queue management for a village."""
@@ -35,11 +36,30 @@ class Module(BaseModule):
             prereq_level = prereq['level']
             
             existing_building = next((b for b in all_buildings if b.get('gid') == prereq_gid), None)
-            actual_level = existing_building.get('level', 0) if existing_building else 0
-
-            if actual_level < prereq_level:
-                log.info(f"Dependency for {gid_name(goal_gid)} not met: {gid_name(prereq_gid)} needs Lvl {prereq_level}, is at {actual_level}.")
-                tasks_to_add.append({'type': 'building', 'gid': prereq_gid, 'level': prereq_level})
+            
+            # --- START OF FIX ---
+            if existing_building:
+                actual_level = existing_building.get('level', 0)
+                if actual_level < prereq_level:
+                    log.info(f"Dependency for {gid_name(goal_gid)} not met: {gid_name(prereq_gid)} needs Lvl {prereq_level}, is at {actual_level}.")
+                    # When adding the upgrade task, we MUST include the location of the existing building.
+                    tasks_to_add.append({
+                        'type': 'building',
+                        'location': existing_building['id'], # Add the location here
+                        'gid': prereq_gid,
+                        'level': prereq_level
+                    })
+            else:
+                # This logic is for when the prerequisite building doesn't exist at all.
+                # It will be created without a location, and the main tick loop will handle finding a slot.
+                log.info(f"Dependency for {gid_name(goal_gid)} not met: {gid_name(prereq_gid)} needs to be built.")
+                tasks_to_add.append({
+                    'type': 'building',
+                    'gid': prereq_gid,
+                    'level': prereq_level
+                    # No location needed here, the main logic will find one.
+                })
+            # --- END OF FIX ---
         
         return tasks_to_add
 
@@ -77,7 +97,48 @@ class Module(BaseModule):
             goal_level = goal_task.get('level')
             goal_location = goal_task.get('location')
 
-            # --- START OF NEW LOGIC ---
+            if goal_location is None:
+                log.info(f"AGENT({agent.village_name}): Task for {gid_name(goal_gid)} has no location. Checking for fixed or random slot.")
+                
+                FIXED_LOCATIONS = {
+                    16: 39, 31: 40, 32: 40, 33: 40, 42: 40, 43: 40
+                }
+
+                if goal_gid in FIXED_LOCATIONS:
+                    goal_location = FIXED_LOCATIONS[goal_gid]
+                    log.info(f"AGENT({agent.village_name}): Assigning {gid_name(goal_gid)} to its fixed location: {goal_location}")
+                else:
+                    unique_gids = set(b['gid'] for b in all_buildings if not is_multi_instance(b['gid']))
+                    
+                    if goal_gid in unique_gids:
+                        log.error(f"AGENT({agent.village_name}): Task for unique building {gid_name(goal_gid)} has no location, but it's already built. Attempting to find and upgrade it.")
+                        # If the building is unique and already exists, we find it and set the location for an upgrade.
+                        existing_building = next((b for b in all_buildings if b.get('gid') == goal_gid), None)
+                        if existing_building:
+                            goal_location = existing_building['id']
+                            log.info(f"AGENT({agent.village_name}): Found existing {gid_name(goal_gid)} at location {goal_location}. Switching to upgrade task.")
+                        else:
+                            # This case should be rare, but as a fallback, we remove the task.
+                            log.error(f"AGENT({agent.village_name}): Could not find the existing unique building. Removing task.")
+                            with state_lock: BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
+                            save_config()
+                            return 0
+                    else:
+                        empty_slots = [b for b in all_buildings if b.get('id') > 18 and b.get('gid') == 0]
+                        if not empty_slots:
+                            log.error(f"AGENT({agent.village_name}): No empty slots available to build {gid_name(goal_gid)}. Removing task.")
+                            with state_lock: BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
+                            save_config()
+                            return 0
+                        
+                        chosen_slot = random.choice(empty_slots)
+                        goal_location = chosen_slot['id']
+                        log.info(f"AGENT({agent.village_name}): Assigning {gid_name(goal_gid)} to random empty slot: {goal_location}")
+                
+                with state_lock:
+                    BOT_STATE["build_queues"][str(agent.village_id)][0]['location'] = goal_location
+                save_config()
+
             target_building_on_map = next((b for b in all_buildings if b.get('id') == goal_location), None)
             
             if not target_building_on_map:
@@ -87,8 +148,6 @@ class Module(BaseModule):
             current_level = target_building_on_map.get('level', 0)
             is_new_build = target_building_on_map.get('gid', 0) == 0
 
-            # Calculate the effective level by including queued upgrades for this specific building.
-            # This is an approximation based on name, as the server queue doesn't provide a location ID.
             building_name_in_queue = gid_name(goal_gid)
             queued_levels = [int(build.get('level')) for build in active_builds if building_name_in_queue in build.get('name')]
             effective_level = max([current_level] + queued_levels)
@@ -99,7 +158,6 @@ class Module(BaseModule):
                 save_config()
                 return 10 
             
-            # If the slot is empty, we must build a new building.
             if is_new_build:
                 missing_prereqs = self._resolve_dependencies(goal_gid, all_buildings)
                 if missing_prereqs:
@@ -108,9 +166,8 @@ class Module(BaseModule):
                     save_config()
                     return 0
                 action_plan = {'type': 'new', 'location': goal_location, 'gid': goal_gid, 'is_new': True}
-            else: # The slot is not empty, so we are upgrading.
+            else: 
                 action_plan = {'type': 'upgrade', 'location': goal_location, 'gid': goal_gid, 'is_new': False}
-            # --- END OF NEW LOGIC ---
 
         else:
             log.error(f"AGENT({agent.village_name}): Unknown task type '{goal_task.get('type')}'. Removing task.")
@@ -138,6 +195,4 @@ class Module(BaseModule):
             return build_result.get('eta', 300)
         else:
             log.warning(f"AGENT({agent.village_name}): Failed to build '{gid_name(action_plan['gid'])}'. Reason: {build_result.get('reason')}.")
-            # On failure, we don't want to get stuck in a fast loop.
-            # The agent's main loop will set a longer wait time.
             return 0
