@@ -1065,3 +1065,58 @@ class TravianClient:
         except Exception as e:
             log.error(f"[{self.username}] An error occurred while fetching infobox HTML: {e}", exc_info=True)
             return None
+        
+def send_resources(self, from_village_id: int, target_x: int, target_y: int, resources: Dict[str, int], runs: int = 1) -> bool:
+    """
+    Sends resources to another village using the marketplace via the REST API.
+    `resources` should be a dict like {'lumber': 1000, 'clay': 1000, ...}
+    """
+    log.info(f"[{self.username}] Attempting to send {runs} run(s) of resources from village {from_village_id} to ({target_x}|{target_y}).")
+
+    # Ensure all resource keys are present, defaulting to 0 if not provided
+    payload_resources = {
+        "lumber": resources.get('lumber', 0),
+        "clay": resources.get('clay', 0),
+        "iron": resources.get('iron', 0),
+        "crop": resources.get('crop', 0)
+    }
+
+    # The final payload for the PUT request, matching your logs
+    payload = {
+        "action": "marketPlace",
+        "resources": payload_resources,
+        "destination": {
+            "x": int(target_x),
+            "y": int(target_y)
+        },
+        "runs": int(runs),
+        "useTradeShips": False
+    }
+
+    try:
+        api_url = f"{self.server_url}/api/v1/marketplace/resources/send"
+        headers = {
+            'X-Version': self.server_version,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            # Find the marketplace's location ID to build a realistic referer
+            'Referer': f"{self.server_url}/build.php?t=5"
+        }
+        
+        # Use the PUT method as identified in your network logs
+        resp = self.sess.put(api_url, json=payload, headers=headers, timeout=15)
+        resp_data = resp.json()
+
+        # A successful request returns a 200 status code and a 'duration' key in the response
+        if resp.status_code == 200 and "duration" in resp_data:
+            duration = resp_data.get('duration')
+            log.info(f"[{self.username}] Successfully sent resources to ({target_x}|{target_y}). Travel time: {duration}s.")
+            return True
+        else:
+            log.error(f"[{self.username}] Failed to send resources. Server responded with status {resp.status_code}: {resp.text}")
+            return False
+
+    except Exception as e:
+        log.error(f"[{self.username}] A critical error occurred while sending resources: {e}", exc_info=True)
+        return False

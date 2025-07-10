@@ -1,0 +1,260 @@
+can you help me look at the option to use hero res please? I'm not sure if it works as it should.
+
+here an interaction in the html:
+
+await fetch("https://x500.vardom.net/hero/inventory", {
+
+    "credentials": "include",
+
+    "headers": {
+
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
+
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+
+        "Accept-Language": "de,en-US;q=0.7,en;q=0.3",
+
+        "Alt-Used": "x500.vardom.net",
+
+        "Upgrade-Insecure-Requests": "1",
+
+        "Sec-Fetch-Dest": "document",
+
+        "Sec-Fetch-Mode": "navigate",
+
+        "Sec-Fetch-Site": "none",
+
+        "Sec-Fetch-User": "?1",
+
+        "Priority": "u=0, i"
+
+    },
+
+    "method": "GET",
+
+    "mode": "cors"
+
+}); 
+
+<div class="heroItems filter_all"><div class="heroItem consumable bag      " title="" data-id="4773" data-placeid="1" data-slot="bag" data-tier="consumable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item114"></div><div class="count">3831</div></div><div class="heroItem consumable inventory      " title="" data-id="5349" data-placeid="2" data-slot="inventory" data-tier="consumable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item145"></div><div class="count">32092207</div></div><div class="heroItem consumable inventory      " title="" data-id="5350" data-placeid="3" data-slot="inventory" data-tier="consumable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item146"></div><div class="count">30803197</div></div><div class="heroItem consumable inventory      " title="" data-id="3556" data-placeid="4" data-slot="inventory" data-tier="consumable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item147"></div><div class="count">31452681</div></div><div class="heroItem consumable inventory      " title="" data-id="19" data-placeid="5" data-slot="inventory" data-tier="consumable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item148"></div><div class="count">63215198</div></div><div class="heroItem consumable inventory      " title="" data-id="6392" data-placeid="6" data-slot="inventory" data-tier="consumable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item110"></div><div class="count">1</div></div><div class="heroItem consumable inventory      " title="" data-id="3435" data-placeid="7" data-slot="inventory" data-tier="consumable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item108"></div><div class="count">1</div></div><div class="heroItem tier3 helmet      " title="" data-id="2747" data-placeid="8" data-slot="helmet" data-tier="tier3"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item12"></div></div><div class="heroItem tier1 shoes      " title="" data-id="4804" data-placeid="9" data-slot="shoes" data-tier="tier1"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item100"></div></div><div class="heroItem consumable bag      " title="" data-id="4816" data-placeid="10" data-slot="bag" data-tier="consumable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item112"></div><div class="count">2987</div></div><div class="heroItem tier1 leftHand      " title="" data-id="4834" data-placeid="11" data-slot="leftHand" data-tier="tier1"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item79"></div></div><div class="heroItem consumable inventory      " title="" data-id="4838" data-placeid="12" data-slot="inventory" data-tier="consumable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item108"></div><div class="count">1</div></div><div class="heroItem consumable inventory      " title="" data-id="4935" data-placeid="13" data-slot="inventory" data-tier="consumable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item109"></div><div class="count">33</div></div><div class="heroItem consumable bag      " title="" data-id="5797" data-placeid="14" data-slot="bag" data-tier="consumable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item113"></div><div class="count">3573</div></div><div class="heroItem tier1 leftHand      " title="" data-id="5260" data-placeid="15" data-slot="leftHand" data-tier="tier1"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item67"></div></div><div class="heroItem empty       " title="" data-placeid="16"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item "></div></div><div class="heroItem tier1 helmet      " title="" data-id="6624" data-placeid="17" data-slot="helmet" data-tier="tier1"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item1"></div></div><div class="heroItem consumable inventory      " title="" data-id="6651" data-placeid="18" data-slot="inventory" data-tier="consumable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item item108"></div><div class="count">1</div></div><div class="heroItem empty       " title="" data-placeid="19"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item "></div></div><div class="heroItem empty       " title="" data-placeid="20"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item "></div></div><div class="heroItem empty       " title="" data-placeid="21"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item "></div></div><div class="heroItem empty       " title="" data-placeid="22"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item "></div></div><div class="heroItem empty       " title="" data-placeid="23"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item "></div></div><div class="heroItem empty       " title="" data-placeid="24"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 62"><path class="top" d="M31 4l2-4h-4l2 4z"></path><path class="bottom" d="M29 62h4l-2-4-2 4z"></path><path class="from" d="M0 33l4-2-4-2v4z"></path><path class="to" d="M58 31l4 2v-4l-4 2z"></path></svg><div class="item "></div></div></div>
+
+
+resources are item id 145 to 148
+
+
+here how to get them:
+
+await fetch("https://x500.vardom.net/api/v1/hero/v2/inventory/use-item", {
+
+    "credentials": "include",
+
+    "headers": {
+
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
+
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+
+        "Accept-Language": "de,en-US;q=0.7,en;q=0.3",
+
+        "Content-Type": "application/json; charset=UTF-8",
+
+        "X-Version": "2554.3",
+
+        "X-Requested-With": "XMLHttpRequest",
+
+        "Alt-Used": "x500.vardom.net",
+
+        "Sec-Fetch-Dest": "empty",
+
+        "Sec-Fetch-Mode": "cors",
+
+        "Sec-Fetch-Site": "same-origin",
+
+        "Priority": "u=0"
+
+    },
+
+    "referrer": "https://x500.vardom.net/hero/inventory",
+
+    "body": "{\"action\":\"inventory\",\"itemId\":5349,\"amount\":200000,\"villageId\":69156}",
+
+    "method": "PUT",
+
+    "mode": "cors"
+
+});
+
+
+here 200000 wood
+
+
+await fetch("https://x500.vardom.net/api/v1/hero/v2/inventory/use-item", {
+
+    "credentials": "include",
+
+    "headers": {
+
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
+
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+
+        "Accept-Language": "de,en-US;q=0.7,en;q=0.3",
+
+        "Content-Type": "application/json; charset=UTF-8",
+
+        "X-Nonce": "null",
+
+        "X-Version": "2554.3",
+
+        "X-Requested-With": "XMLHttpRequest",
+
+        "Alt-Used": "x500.vardom.net",
+
+        "Sec-Fetch-Dest": "empty",
+
+        "Sec-Fetch-Mode": "cors",
+
+        "Sec-Fetch-Site": "same-origin"
+
+    },
+
+    "referrer": "https://x500.vardom.net/hero/inventory",
+
+    "body": "{\"action\":\"inventory\",\"itemId\":5349,\"amount\":200000,\"villageId\":69156}",
+
+    "method": "POST",
+
+    "mode": "cors"
+
+});
+
+
+{"amount":200000}
+
+
+await fetch("https://x500.vardom.net/api/v1/hero/dataForHUD", {
+
+    "credentials": "include",
+
+    "headers": {
+
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
+
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+
+        "Accept-Language": "de,en-US;q=0.7,en;q=0.3",
+
+        "Content-Type": "application/json; charset=UTF-8",
+
+        "X-Version": "2554.3",
+
+        "X-Requested-With": "XMLHttpRequest",
+
+        "Alt-Used": "x500.vardom.net",
+
+        "Sec-Fetch-Dest": "empty",
+
+        "Sec-Fetch-Mode": "cors",
+
+        "Sec-Fetch-Site": "same-origin"
+
+    },
+
+    "referrer": "https://x500.vardom.net/hero/inventory",
+
+    "method": "GET",
+
+    "mode": "cors"
+
+});
+
+
+{"bars":{"experience":{"currentValue":91.47647058823529,"endAngle":-202,"image":"experience","paths":{"mask":"M55 55L32.63 105.25A 55 55 0 0 1 2.47 38.7","title":"M55 55L32.63 105.25A 55 55 0 0 1 4 34.4"},"startAngle":-114,"title":"Experience 91.5%||Your hero need 2,898 more experience to reach level 34."},"health":{"currentValue":100,"endAngle":-4,"image":"health","paths":{"mask":"M55 55L47.35 109.46A 55 55 0 0 0 109.87 51.16","title":"M55 55L47.35 109.46A 55 55 0 0 0 109.87 51.16"},"startAngle":98,"title":"Health 100%||Your hero regeneration: 20% per day<br \/><span class=\"heroAttributeInformation\">Health: 20% per day from hero"}},"experience":592102,"experiencePercent":91.47647058823529,"health":100,"healthStatus":"\tin home village","heroButtonTitle":"Hero overview||Your hero is currently in village B.","heroGenderImage":"heroImageFemale","heroImagePath":"\/heroV2\/head\/0fa0c267ce5ee3cf82075671833ebe6c3accac8c.83.1.png","heroStatusTitle":"Hero overview||Your hero is currently in village B.","level":33,"levelUp":false,"statusInlineIcon":"<i class=\"heroHome\" ><\/i>","tooltipForExperience":"Experience 91.5%||Your hero need 2,898 more experience to reach level 34.","url":null}
+
+
+await fetch("https://x500.vardom.net/api/v1/village/resources", {
+
+    "credentials": "include",
+
+    "headers": {
+
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
+
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+
+        "Accept-Language": "de,en-US;q=0.7,en;q=0.3",
+
+        "Content-Type": "application/json; charset=UTF-8",
+
+        "X-Version": "2554.3",
+
+        "X-Requested-With": "XMLHttpRequest",
+
+        "Alt-Used": "x500.vardom.net",
+
+        "Sec-Fetch-Dest": "empty",
+
+        "Sec-Fetch-Mode": "cors",
+
+        "Sec-Fetch-Site": "same-origin"
+
+    },
+
+    "referrer": "https://x500.vardom.net/hero/inventory",
+
+    "body": "{}",
+
+    "method": "POST",
+
+    "mode": "cors"
+
+});
+
+
+{"maxStorage":{"l1":2950000,"l2":2950000,"l3":2950000,"l4":2950000},"production":{"l1":700000,"l2":560000,"l3":420000,"l4":1049497,"l5":1049491},"storage":{"l1":505958,"l2":295975,"l3":301583,"l4":515861}}
+
+
+await fetch("https://x500.vardom.net/api/v1/hero/v2/screen/inventory", {
+
+    "credentials": "include",
+
+    "headers": {
+
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
+
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+
+        "Accept-Language": "de,en-US;q=0.7,en;q=0.3",
+
+        "Content-Type": "application/json; charset=UTF-8",
+
+        "X-Version": "2554.3",
+
+        "X-Requested-With": "XMLHttpRequest",
+
+        "Alt-Used": "x500.vardom.net",
+
+        "Sec-Fetch-Dest": "empty",
+
+        "Sec-Fetch-Mode": "cors",
+
+        "Sec-Fetch-Site": "same-origin"
+
+    },
+
+    "referrer": "https://x500.vardom.net/hero/inventory",
+
+    "method": "GET",
+
+    "mode": "cors"
+
+});
+
+
+{"checksum":"b13e2b","knowledgeBaseLink":"https:\/\/support.vardom.net\/support\/solutions\/articles\/7000064021-hero-item-overview-and-mounts","imageHash":"07566d7115bbc21d7c300b96e6e0b6946d80a5ed.83","direction":"LTR","gender":"female","viewData":{"itemsInventory":[{"id":19,"typeId":148,"name":"Crop","placeId":5,"place":"inventory","slot":"inventory","amount":63922741,"type":"consumable","isUsableIfDead":true,"attributes":[{"descriptionDetails":"Transfer crop to the granary of your currently active village.","effectDescription":"Crop"}],"tier":0,"descriptionDetails":"Transfer crop to the granary of your currently active village.","canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":2434124,"minInput":0,"defaultInput":2434124,"description":"Transfer crop to the granary of your currently active village.","alreadyEquipped":515876,"isEquipped":false,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Transfer"}},{"id":2747,"typeId":12,"name":"Helmet of the Heavy Cavalry","placeId":8,"place":"helmet","slot":"helmet","amount":1,"type":"item","isUsableIfDead":false,"attributes":[{"descriptionDetails":null,"effectDescription":"20% reduced training time in the stable"}],"tier":3,"descriptionDetails":null,"canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":null,"alreadyEquipped":null,"isEquipped":false,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Equip"}},{"id":3435,"typeId":108,"name":"Bucket","placeId":7,"place":"inventory","slot":"inventory","amount":1,"type":"consumable","isUsableIfDead":true,"attributes":[{"descriptionDetails":"Use to revive your hero immediately. Has a 1h cooldown.","effectDescription":"Resurrect your hero at once and for free. If the hero is alive, you cannot put a bucket in the bag."},{"descriptionDetails":null,"effectDescription":"Takes effect when equipped."},{"descriptionDetails":null,"effectDescription":"The item is stackable."}],"tier":0,"descriptionDetails":"Use to revive your hero immediately. Has a 1h cooldown.","canBeUsed":false,"errorMessage":"Your hero is alive. Therefore you cannot use this item.","tooltipErrorMessage":"Your hero is alive. Therefore you cannot use this item.","warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":"Use to revive your hero immediately. Has a 1h cooldown.","alreadyEquipped":null,"isEquipped":false,"canBeClicked":false,"clickShortDescription":{"icon":"swap","text":"Transfer"}},{"id":3556,"typeId":147,"name":"Iron","placeId":4,"place":"inventory","slot":"inventory","amount":32160224,"type":"consumable","isUsableIfDead":true,"attributes":[{"descriptionDetails":"Transfer iron to the warehouse of your currently active village.","effectDescription":"Iron"}],"tier":0,"descriptionDetails":"Transfer iron to the warehouse of your currently active village.","canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":2648411,"minInput":0,"defaultInput":2648411,"description":"Transfer iron to the warehouse of your currently active village.","alreadyEquipped":301589,"isEquipped":false,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Transfer"}},{"id":4773,"typeId":114,"name":"Cage","placeId":1,"place":"bag","slot":"bag","amount":3831,"type":"consumable","isUsableIfDead":true,"attributes":[{"descriptionDetails":"Equip and raid an oasis with animals to tame them. Tamed animals reinforce your village as defensive troops. Taming animals happens without combat.","effectDescription":"Animals in an oasis can be tamed with them and brought to your village, where they will help in defending it."},{"descriptionDetails":null,"effectDescription":"Takes effect when equipped."},{"descriptionDetails":null,"effectDescription":"The item is stackable."},{"descriptionDetails":null,"effectDescription":"Has to be equipped before battle to take effect."},{"descriptionDetails":null,"effectDescription":"No fight will take place but animals will be captured."}],"tier":0,"descriptionDetails":"Equip and raid an oasis with animals to tame them. Tamed animals reinforce your village as defensive troops. Taming animals happens without combat.","canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":3831,"minInput":0,"defaultInput":3831,"description":"Equip and raid an oasis with animals to tame them. Tamed animals reinforce your village as defensive troops. Taming animals happens without combat.","alreadyEquipped":0,"isEquipped":false,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Equip"}},{"id":4804,"typeId":100,"name":"Small Spurs","placeId":9,"place":"shoes","slot":"shoes","amount":1,"type":"item","isUsableIfDead":false,"attributes":[{"descriptionDetails":null,"effectDescription":"+75 speed for mounted hero"}],"tier":1,"descriptionDetails":null,"canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":null,"alreadyEquipped":null,"isEquipped":false,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Equip"}},{"id":4816,"typeId":112,"name":"Small Bandage","placeId":10,"place":"bag","slot":"bag","amount":2987,"type":"consumable","isUsableIfDead":true,"attributes":[{"descriptionDetails":"Equipped bandages can heal a maximum of 25% of battle losses right after the battle. You can only heal the amount of troops that you have bandages for. Healing time is equal to the return time of these troops, but at least 24 hours.","effectDescription":"Has to be equipped before battle to take effect."},{"descriptionDetails":null,"effectDescription":"The item is stackable."}],"tier":0,"descriptionDetails":"Equipped bandages can heal a maximum of 25% of battle losses right after the battle. You can only heal the amount of troops that you have bandages for. Healing time is equal to the return time of these troops, but at least 24 hours.","canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":2987,"minInput":0,"defaultInput":2987,"description":"Equipped bandages can heal a maximum of 25% of battle losses right after the battle. You can only heal the amount of troops that you have bandages for. Healing time is equal to the return time of these troops, but at least 24 hours.","alreadyEquipped":0,"isEquipped":false,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Equip"}},{"id":4834,"typeId":79,"name":"Small Horn of the Natarian","placeId":11,"place":"leftHand","slot":"leftHand","amount":1,"type":"item","isUsableIfDead":false,"attributes":[{"descriptionDetails":"Applies to hero and troops.","effectDescription":"+20% attacking strength against Natars"}],"tier":1,"descriptionDetails":"Applies to hero and troops.","canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":"Applies to hero and troops.","alreadyEquipped":null,"isEquipped":false,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Equip"}},{"id":4838,"typeId":108,"name":"Bucket","placeId":12,"place":"inventory","slot":"inventory","amount":1,"type":"consumable","isUsableIfDead":true,"attributes":[{"descriptionDetails":"Use to revive your hero immediately. Has a 1h cooldown.","effectDescription":"Resurrect your hero at once and for free. If the hero is alive, you cannot put a bucket in the bag."},{"descriptionDetails":null,"effectDescription":"Takes effect when equipped."},{"descriptionDetails":null,"effectDescription":"The item is stackable."}],"tier":0,"descriptionDetails":"Use to revive your hero immediately. Has a 1h cooldown.","canBeUsed":false,"errorMessage":"Your hero is alive. Therefore you cannot use this item.","tooltipErrorMessage":"Your hero is alive. Therefore you cannot use this item.","warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":"Use to revive your hero immediately. Has a 1h cooldown.","alreadyEquipped":null,"isEquipped":false,"canBeClicked":false,"clickShortDescription":{"icon":"swap","text":"Transfer"}},{"id":4935,"typeId":109,"name":"Tablet of Law","placeId":13,"place":"inventory","slot":"inventory","amount":33,"type":"consumable","isUsableIfDead":true,"attributes":[{"descriptionDetails":"Each tablet of law that is used will raise the loyalty of your hero's home village by 1% (to a maximum of 125%)","effectDescription":"Raises loyalty."},{"descriptionDetails":null,"effectDescription":"Takes effect when equipped."},{"descriptionDetails":null,"effectDescription":"The item is stackable."}],"tier":0,"descriptionDetails":"Each tablet of law that is used will raise the loyalty of your hero's home village by 1% (to a maximum of 125%)","canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":33,"minInput":0,"defaultInput":33,"description":"Each tablet of law that is used will raise the loyalty of your hero's home village by 1% (to a maximum of 125%)","alreadyEquipped":0,"isEquipped":false,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Transfer"}},{"id":5260,"typeId":67,"name":"Small Standard","placeId":15,"place":"leftHand","slot":"leftHand","amount":1,"type":"item","isUsableIfDead":false,"attributes":[{"descriptionDetails":"Your hero and all troops with you are faster.","effectDescription":"+15% speed between confederacy members"}],"tier":1,"descriptionDetails":"Your hero and all troops with you are faster.","canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":"Your hero and all troops with you are faster.","alreadyEquipped":null,"isEquipped":false,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Equip"}},{"id":5349,"typeId":145,"name":"Lumber","placeId":2,"place":"inventory","slot":"inventory","amount":32599750,"type":"consumable","isUsableIfDead":true,"attributes":[{"descriptionDetails":"Transfer lumber to the warehouse of your currently active village.","effectDescription":"Lumber"}],"tier":0,"descriptionDetails":"Transfer lumber to the warehouse of your currently active village.","canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":2444033,"minInput":0,"defaultInput":2444033,"description":"Transfer lumber to the warehouse of your currently active village.","alreadyEquipped":505967,"isEquipped":false,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Transfer"}},{"id":5350,"typeId":146,"name":"Clay","placeId":3,"place":"inventory","slot":"inventory","amount":31510740,"type":"consumable","isUsableIfDead":true,"attributes":[{"descriptionDetails":"Transfer clay to the warehouse of your currently active village.","effectDescription":"Clay"}],"tier":0,"descriptionDetails":"Transfer clay to the warehouse of your currently active village.","canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":2654017,"minInput":0,"defaultInput":2654017,"description":"Transfer clay to the warehouse of your currently active village.","alreadyEquipped":295983,"isEquipped":false,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Transfer"}},{"id":5797,"typeId":113,"name":"Bandage","placeId":14,"place":"bag","slot":"bag","amount":3573,"type":"consumable","isUsableIfDead":true,"attributes":[{"descriptionDetails":"Equipped bandages can heal a maximum of 33% of battle losses right after the battle. You can only heal the amount of troops that you have bandages for. Healing time is equal to the return time of these troops, but at least 24 hours.","effectDescription":"Has to be equipped before battle to take effect."},{"descriptionDetails":null,"effectDescription":"The item is stackable."}],"tier":0,"descriptionDetails":"Equipped bandages can heal a maximum of 33% of battle losses right after the battle. You can only heal the amount of troops that you have bandages for. Healing time is equal to the return time of these troops, but at least 24 hours.","canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":3573,"minInput":0,"defaultInput":3573,"description":"Equipped bandages can heal a maximum of 33% of battle losses right after the battle. You can only heal the amount of troops that you have bandages for. Healing time is equal to the return time of these troops, but at least 24 hours.","alreadyEquipped":0,"isEquipped":false,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Equip"}},{"id":6392,"typeId":110,"name":"Book of Wisdom","placeId":6,"place":"inventory","slot":"inventory","amount":1,"type":"consumable","isUsableIfDead":true,"attributes":[{"descriptionDetails":"Use to reclaim all spent attribute points and be able to spend them again.","effectDescription":"Reset all attributes and rearrange them."},{"descriptionDetails":null,"effectDescription":"Takes effect when equipped."},{"descriptionDetails":null,"effectDescription":"The item is stackable."}],"tier":0,"descriptionDetails":"Use to reclaim all spent attribute points and be able to spend them again.","canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":"Use to reclaim all spent attribute points and be able to spend them again.","alreadyEquipped":null,"isEquipped":false,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Transfer"}},{"id":6624,"typeId":1,"name":"Helmet of Awareness","placeId":17,"place":"helmet","slot":"helmet","amount":1,"type":"item","isUsableIfDead":false,"attributes":[{"descriptionDetails":null,"effectDescription":"+15% experience"}],"tier":1,"descriptionDetails":null,"canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":null,"alreadyEquipped":null,"isEquipped":false,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Equip"}},{"id":6651,"typeId":108,"name":"Bucket","placeId":18,"place":"inventory","slot":"inventory","amount":1,"type":"consumable","isUsableIfDead":true,"attributes":[{"descriptionDetails":"Use to revive your hero immediately. Has a 1h cooldown.","effectDescription":"Resurrect your hero at once and for free. If the hero is alive, you cannot put a bucket in the bag."},{"descriptionDetails":null,"effectDescription":"Takes effect when equipped."},{"descriptionDetails":null,"effectDescription":"The item is stackable."}],"tier":0,"descriptionDetails":"Use to revive your hero immediately. Has a 1h cooldown.","canBeUsed":false,"errorMessage":"Your hero is alive. Therefore you cannot use this item.","tooltipErrorMessage":"Your hero is alive. Therefore you cannot use this item.","warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":"Use to revive your hero immediately. Has a 1h cooldown.","alreadyEquipped":null,"isEquipped":false,"canBeClicked":false,"clickShortDescription":{"icon":"swap","text":"Transfer"}}],"itemsEquipped":[{"id":204,"typeId":103,"name":"Gelding","placeId":-7,"place":"horse","slot":"horse","amount":1,"type":"item","isUsableIfDead":false,"attributes":[{"descriptionDetails":null,"effectDescription":"+350 speed for mounted hero"}],"tier":1,"descriptionDetails":null,"canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":null,"alreadyEquipped":null,"isEquipped":true,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Unequip"}},{"id":3053,"typeId":15,"name":"Helmet of the Archon","placeId":-1,"place":"helmet","slot":"helmet","amount":1,"type":"item","isUsableIfDead":false,"attributes":[{"descriptionDetails":null,"effectDescription":"20% reduced training time in the barracks"}],"tier":3,"descriptionDetails":null,"canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":null,"alreadyEquipped":null,"isEquipped":true,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Unequip"}},{"id":3231,"typeId":73,"name":"Pouch of the Thief","placeId":-2,"place":"leftHand","slot":"leftHand","amount":1,"type":"item","isUsableIfDead":false,"attributes":[{"descriptionDetails":null,"effectDescription":"+10% reduction of enemy cranny size"}],"tier":1,"descriptionDetails":null,"canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":null,"alreadyEquipped":null,"isEquipped":true,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Unequip"}},{"id":3238,"typeId":97,"name":"Boots of the Mercenary","placeId":-3,"place":"shoes","slot":"shoes","amount":1,"type":"item","isUsableIfDead":false,"attributes":[{"descriptionDetails":"Applies only after traveling 20 fields of distance.","effectDescription":"+25% speed for armies"}],"tier":1,"descriptionDetails":"Applies only after traveling 20 fields of distance.","canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":"Applies only after traveling 20 fields of distance.","alreadyEquipped":null,"isEquipped":true,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Unequip"}},{"id":5228,"typeId":106,"name":"Ointment","placeId":-6,"place":"bag","slot":"bag","amount":357,"type":"consumable","isUsableIfDead":false,"attributes":[{"descriptionDetails":"Each ointment used will restore 1% health. Equip ointments to heal non-lethal damage directly after a battle.","effectDescription":"Regenerate the health points of the hero immediately. The number of ointments determines how many health points are regenerated (max 100%)."},{"descriptionDetails":null,"effectDescription":"Takes effect when equipped."},{"descriptionDetails":null,"effectDescription":"The item is stackable."}],"tier":0,"descriptionDetails":"Each ointment used will restore 1% health. Equip ointments to heal non-lethal damage directly after a battle.","canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":357,"minInput":0,"defaultInput":357,"description":"Each ointment used will restore 1% health. Equip ointments to heal non-lethal damage directly after a battle.","alreadyEquipped":357,"isEquipped":true,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Unequip"}},{"id":5230,"typeId":91,"name":"Light Segmented Armor","placeId":-4,"place":"body","slot":"body","amount":1,"type":"item","isUsableIfDead":false,"attributes":[{"descriptionDetails":null,"effectDescription":"+250 fighting strength"},{"descriptionDetails":null,"effectDescription":"+3 damage reduction"}],"tier":1,"descriptionDetails":null,"canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":null,"alreadyEquipped":null,"isEquipped":true,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Unequip"}},{"id":5596,"typeId":52,"name":"Hatchet of the Axeman","placeId":-5,"place":"rightHand","slot":"rightHand","amount":1,"type":"item","isUsableIfDead":false,"attributes":[{"descriptionDetails":null,"effectDescription":"+500 fighting strength"},{"descriptionDetails":null,"effectDescription":"+3 attack and defense for every Axeman"}],"tier":1,"descriptionDetails":null,"canBeUsed":true,"errorMessage":null,"tooltipErrorMessage":null,"warningMessage":null,"maxInput":1,"minInput":0,"defaultInput":1,"description":null,"alreadyEquipped":null,"isEquipped":true,"canBeClicked":true,"clickShortDescription":{"icon":"swap","text":"Unequip"}}],"heroState":{"isRegenerating":false,"status":{"status":100}},"commonData":{"experiencePerScroll":10,"experienceBonus":0,"currentExperience":91,"heroHomeVillageLoyalty":100,"heroHomeVillageName":"B","loyaltyPerTablet":1,"activeVillageID":69156,"activeVillageName":"I","currentHealth":100,"healthDelta":0,"fullHealth":100,"useArtworksOneByOneOnly":true}}}
+
+
+this is the row of steps to transfer 200000 wood from the hero to the village.
+
+
+does this match my bot logic? or any changes needed? 
