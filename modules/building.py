@@ -6,6 +6,7 @@ import json
 import time
 from collections import deque
 import random
+import re
 
 class Module(BaseModule):
     """Handles building queue management for a village."""
@@ -73,7 +74,22 @@ class Module(BaseModule):
         
         if goal_task.get('type') == 'resource_plan':
             target_level = goal_task.get('level')
-            resource_fields = sorted([b for b in all_buildings if 1 <= b['id'] <= 18], key=lambda x: (x.get('level', 0), x['id']))
+            
+            # Factor in the buildings already in the server queue
+            queued_field_ids = []
+            for build in active_builds:
+                 # Regex to find a location ID which is usually preceded by a space and a dot
+                match = re.search(r'\s(\d+)\s*\.', build.get('name', ''))
+                if match:
+                    # This logic is a bit fragile and depends on the naming convention in the queue.
+                    # A more robust solution would be to track builds initiated by the bot.
+                    pass
+
+
+            resource_fields = sorted(
+                [b for b in all_buildings if 1 <= b['id'] <= 18], 
+                key=lambda x: (x.get('level', 0), x['id'])
+            )
             
             field_to_upgrade = next((field for field in resource_fields if field.get('level', 0) < target_level), None)
 
@@ -82,10 +98,10 @@ class Module(BaseModule):
                 with state_lock:
                     BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
                 save_config()
-                return 10
+                return 'queue_modified'
 
             action_plan = {'type': 'upgrade', 'location': field_to_upgrade['id'], 'gid': field_to_upgrade['gid'], 'is_new': False}
-            log.info(f"AGENT({agent.village_name}): Resource plan: Upgrading {gid_name(action_plan['gid'])} at Loc {action_plan['location']} to Lvl {field_to_upgrade['level']+1}.")
+            log.info(f"AGENT({agent.village_name}): Resource plan: Upgrading {gid_name(action_plan['gid'])} at Loc {action_plan['location']} to Lvl {field_to_upgrade.get('level', 0) + 1}.")
         
         elif goal_task.get('type') == 'building':
             goal_gid = goal_task.get('gid')
@@ -95,7 +111,8 @@ class Module(BaseModule):
             if goal_location is None:
                 log.info(f"AGENT({agent.village_name}): Task for {gid_name(goal_gid)} has no location. Checking for existing building or assigning new slot.")
                 
-                existing_building = next((b for b in all_buildings if b.get('gid') == goal_gid), None)
+                existing_building = next((b for b in all_buildings if b.get('gid') == goal_gid and not is_multi_instance(b['gid'])), None)
+
 
                 if existing_building:
                     goal_location = existing_building['id']
@@ -108,13 +125,13 @@ class Module(BaseModule):
                         goal_location = FIXED_LOCATIONS[goal_gid]
                         log.info(f"AGENT({agent.village_name}): Assigning {gid_name(goal_gid)} to its fixed location: {goal_location}")
                     else:
-                        empty_slots = [b for b in all_buildings if b.get('id') > 18 and b.get('gid') == 0]
+                        empty_slots = [b for b in all_buildings if b.get('id') > 18 and b.get('id') not in [39, 40] and b.get('gid') == 0]
                         if not empty_slots:
                             log.error(f"AGENT({agent.village_name}): No empty slots available to build {gid_name(goal_gid)}. Removing task.")
                             with state_lock:
                                 BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
                             save_config()
-                            return 0
+                            return 'queue_modified'
                         
                         chosen_slot = random.choice(empty_slots)
                         goal_location = chosen_slot['id']
@@ -123,6 +140,8 @@ class Module(BaseModule):
                 with state_lock:
                     BOT_STATE["build_queues"][str(agent.village_id)][0]['location'] = goal_location
                 save_config()
+                # Return 'queue_modified' to immediately re-evaluate with the new location
+                return 'queue_modified'
 
             target_building_on_map = next((b for b in all_buildings if b.get('id') == goal_location), None)
             
@@ -142,7 +161,7 @@ class Module(BaseModule):
                 with state_lock:
                     BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
                 save_config()
-                return 10 
+                return 'queue_modified'
             
             if is_new_build:
                 missing_prereqs = self._resolve_dependencies(goal_gid, all_buildings)
@@ -151,7 +170,7 @@ class Module(BaseModule):
                     with state_lock:
                         BOT_STATE["build_queues"][str(agent.village_id)] = missing_prereqs + build_queue
                     save_config()
-                    return 0
+                    return 'queue_modified'
                 action_plan = {'type': 'new', 'location': goal_location, 'gid': goal_gid, 'is_new': True}
             else: 
                 action_plan = {'type': 'upgrade', 'location': goal_location, 'gid': goal_gid, 'is_new': False}
@@ -161,7 +180,7 @@ class Module(BaseModule):
             with state_lock:
                 BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
             save_config()
-            return 0
+            return 'queue_modified'
         
         if action_plan:
             if agent.use_hero_resources and hasattr(agent, 'resources_module') and agent.resources_module:

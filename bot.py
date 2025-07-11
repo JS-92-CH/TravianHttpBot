@@ -41,8 +41,6 @@ class VillageAgent(threading.Thread):
     def stop(self):
         self.stop_event.set()
 
-    # bot.py -> VillageAgent class
-
     def run(self):
         log.info(f"Agent started for village: {self.village_name} ({self.village_id})")
 
@@ -95,42 +93,71 @@ class VillageAgent(threading.Thread):
                         log.error(f"[{self.village_name}] Error in module {type(module).__name__}: {e}", exc_info=True)
                 
                 if self.building_module:
-                    while not self.stop_event.is_set():
-                        # Fetch another copy right before the build attempt for maximum freshness
+                    # --- Start of New, More Persistent Build Loop ---
+                    build_attempts = 0
+                    MAX_BUILD_ATTEMPTS = 5 # Prevents infinite loops on a persistent error
+
+                    while build_attempts < MAX_BUILD_ATTEMPTS and not self.stop_event.is_set():
+                        # Fetch fresh data on each attempt
                         current_village_data_for_build = self.client.fetch_and_parse_village(self.village_id)
                         if not current_village_data_for_build:
                             log.warning(f"[{self.village_name}] Could not fetch village data for building loop. Waiting a moment.")
                             time.sleep(15)
                             continue
 
+                        # Check if the server's queue is full
                         max_queue_length = 2 if self.use_dual_queue else 1
                         current_queue_length = len(current_village_data_for_build.get("queue", []))
 
                         if current_queue_length >= max_queue_length:
                             log.info(f"[{self.village_name}] Server build queue is full ({current_queue_length}/{max_queue_length}).")
-                            break
+                            break # This is the primary valid reason to exit the build loop
 
                         log.info(f"[{self.village_name}] Queue has open slot ({current_queue_length}/{max_queue_length}). Attempting to build.")
                         
-                        # Pass the freshest data to the building module
-                        build_eta = self.building_module.tick(current_village_data_for_build)
+                        build_result = self.building_module.tick(current_village_data_for_build)
 
-                        if build_eta <= 0:
-                            log.info(f"[{self.village_name}] No more buildings to queue or an error occurred. Exiting build loop.")
-                            break
+                        # If the local queue was changed, reset attempts and retry immediately
+                        if build_result == 'queue_modified':
+                            log.info(f"[{self.village_name}] Local build queue was modified. Re-evaluating immediately.")
+                            build_attempts = 0
+                            time.sleep(0.2)
+                            continue 
                         
-                        # If a build was queued, we sleep briefly before checking if we can queue another.
-                        time.sleep(0.5)
+                        # If build succeeded, reset attempts and loop to fill the next slot
+                        if isinstance(build_result, int) and build_result > 0:
+                             build_attempts = 0 
+                             time.sleep(0.5) 
+                             continue
+
+                        # If build failed, increment attempts and pause briefly before retrying
+                        build_attempts += 1
+                        log.warning(f"[{self.village_name}] Build attempt {build_attempts}/{MAX_BUILD_ATTEMPTS} failed or no tasks found. Pausing before retry.")
+                        time.sleep(2) # Wait 2 seconds before the next attempt in the loop
+
+                    if build_attempts >= MAX_BUILD_ATTEMPTS:
+                        log.error(f"[{self.village_name}] Exceeded max build attempts. The build queue for this village might be stalled.")
+                    # --- End of New Build Loop ---
 
                 final_data = self.client.fetch_and_parse_village(self.village_id)
                 if final_data and final_data.get("queue"):
-                    server_eta = min([b.get('eta', 3600) for b in final_data["queue"]])
-                    wait_time = max(0.5, server_eta + 0.5) 
-                    self.next_check_time = time.time() + wait_time
-                    log.info(f"[{self.village_name}] Construction active. Next main check in {wait_time:.0f}s.")
+                    with state_lock:
+                        if BOT_STATE["build_queues"].get(str(self.village_id)):
+                            self.next_check_time = time.time() + 10
+                            log.info(f"[{self.village_name}] Local queue is active. Next check in 10s.")
+                        else:
+                            server_eta = min([b.get('eta', 3600) for b in final_data["queue"]])
+                            wait_time = max(0.5, server_eta + 0.5)
+                            self.next_check_time = time.time() + wait_time
+                            log.info(f"[{self.village_name}] Construction active. Next main check in {wait_time:.0f}s.")
                 else:
-                    self.next_check_time = time.time() + 10
-                    log.info(f"[{self.village_name}] No construction active. Next main check in 10.")
+                    with state_lock:
+                        if BOT_STATE["build_queues"].get(str(self.village_id)):
+                             self.next_check_time = time.time() + 10
+                             log.info(f"[{self.village_name}] No construction, but local queue exists. Next check in 10s.")
+                        else:
+                             self.next_check_time = time.time() + 300 
+                             log.info(f"[{self.village_name}] No construction and no local queue. Next check in 5 minutes.")
 
 
             except Exception as e:
