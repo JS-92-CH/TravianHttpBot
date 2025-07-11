@@ -113,7 +113,7 @@ BOT_STATE: Dict[str, Any] = {
             { "type": "building", "gid": 10, "level": 1 },
             { "type": "building", "gid": 11, "level": 1 },
             { "type": "building", "gid": 16, "level": 1 },
-            { "type": "building", "gid": 19, "level": 1 },
+            { "type": "building", "gid": 19, "level": 10 },
             { "type": "building", "gid": 22, "level": 1 },
             { "type": "building", "gid": 24, "level": 1 },
             { "type": "building", "gid": 17, "level": 1 },
