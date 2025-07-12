@@ -326,34 +326,49 @@ class Module(threading.Thread):
     def check_build_up_complete(self, client, slot_state):
         new_village_id = slot_state.get("new_village_id")
         
+        # --- START OF FIX: Ensure the build queue is actually empty ---
         with state_lock:
-            new_village_queue = BOT_STATE.get("build_queues", {}).get(str(new_village_id), [])
-            
-        if not new_village_queue:
+            # We check both the local config queue and the server's queue
+            local_queue_empty = not BOT_STATE.get("build_queues", {}).get(str(new_village_id))
+            server_data = client.fetch_and_parse_village(new_village_id)
+            server_queue_empty = not (server_data and server_data.get("queue"))
+
+        if local_queue_empty and server_queue_empty:
+        # --- END OF FIX ---
             log.info(f"[LoopAgent] Build-up of village {new_village_id} is complete. Starting destruction.")
             slot_state["status"] = "destroying"
         
         save_config()
 
-    def destroy_village(self, client, village_data, slot_state, loop_state):
+    def destroy_village(self, client, origin_village_data, slot_state, loop_state):
         new_village_id = slot_state.get("new_village_id")
-        origin_village_id = loop_state.get("catapult_origin_village") or village_data['id']
+        
+        # --- START OF FIX: Correctly look up the designated catapult village ---
+        catapult_origin_id = loop_state.get("catapult_origin_village")
+
+        if not catapult_origin_id:
+            log.error(f"[LoopAgent] Cannot destroy village {new_village_id}. No catapult origin village is set for {origin_village_data.get('name')}. The loop for this slot will reset.")
+            slot_state["status"] = "idle" # Reset the slot so it can be used again
+            save_config()
+            return
+        # --- END OF FIX ---
         
         target_village_details = client.fetch_and_parse_village(new_village_id)
 
         if not target_village_details or 'coords' not in target_village_details:
-            log.error(f"[LoopAgent] Cannot find coordinates for target village {new_village_id}. Aborting.")
+            log.error(f"[LoopAgent] Cannot find coordinates for target village {new_village_id}. Aborting destruction.")
             slot_state["status"] = "idle"
             save_config()
             return
 
         target_coords = target_village_details['coords']
-        attack_troops = {'t8': 100} # Catapults
+        # Note: Using 't8' for Teuton Catapults. This may need adjustment for other tribes.
+        attack_troops = {'t8': 100} 
 
-        log.info(f"[LoopAgent] Sending 17 catapult waves from village {origin_village_id} to destroy {new_village_id}.")
+        log.info(f"[LoopAgent] Sending 17 catapult waves from designated village {catapult_origin_id} to destroy {new_village_id}.")
         
         success = client.send_catapult_waves(
-            from_village_id=int(origin_village_id),
+            from_village_id=int(catapult_origin_id),
             target_x=target_coords['x'],
             target_y=target_coords['y'],
             troops=attack_troops,
@@ -361,13 +376,14 @@ class Module(threading.Thread):
         )
 
         if success:
-            log.info(f"[LoopAgent] All catapult waves sent. Waiting for destruction.")
+            log.info(f"[LoopAgent] All catapult waves sent successfully. Waiting for destruction.")
             slot_state["status"] = "waiting_for_destruction"
         else:
-            log.error(f"[LoopAgent] Failed to send catapult waves. Resetting loop slot.")
+            log.error(f"[LoopAgent] Failed to send catapult waves from {catapult_origin_id}. Resetting loop slot.")
             slot_state["status"] = "idle"
             
         save_config()
+
 
     def check_destruction_complete(self, client, slot_state):
         new_village_id = slot_state.get("new_village_id")

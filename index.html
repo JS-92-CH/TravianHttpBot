@@ -420,104 +420,102 @@ function selectProxy() {
         }
 
         function showVillageDetails(villageId, userClicked = true) {
-            if (isUserInteracting && !userClicked) {
-                return; 
-            }
-            if (userClicked) {
-                selectedVillageId = villageId;
-            }
-            if (!selectedVillageId) {
-                renderGlobalSummary();
-                return;
-            }
+        if (isUserInteracting && !userClicked) {
+            return; 
+        }
+        if (userClicked) {
+            selectedVillageId = villageId;
+        }
+        if (!selectedVillageId) {
+            renderGlobalSummary();
+            return;
+        }
 
-            const villageData = FULL_STATE.village_data[selectedVillageId];
-            if (!villageData || !villageData.resources || !villageData.buildings) {
-                return; 
-            }
+        const villageData = FULL_STATE.village_data[selectedVillageId];
+        if (!villageData || !villageData.resources || !villageData.buildings) {
+            return; 
+        }
 
-            let villageName = '';
-            for (const user in FULL_STATE.village_data) {
-                const villages = FULL_STATE.village_data[user];
-                if (Array.isArray(villages)) {
-                    const village = villages.find(v => v.id == selectedVillageId);
-                    if (village) {
-                        villageName = village.name;
-                        break;
-                    }
+        let villageName = '';
+        for (const user in FULL_STATE.village_data) {
+            const villages = FULL_STATE.village_data[user];
+            if (Array.isArray(villages)) {
+                const village = villages.find(v => v.id == selectedVillageId);
+                if (village) {
+                    villageName = village.name;
+                    break;
                 }
             }
-            
-            renderVillages(); 
+        }
+        
+        renderVillages(); 
 
-            let tabsHtml = `<div class="tabs">
-                                <div class="tab" id="tab-fields" onclick="openTab(event, 'fields')">Fields</div>
-                                <div class="tab" id="tab-buildings" onclick="openTab(event, 'buildings')">City</div>
-                                <div class="tab" id="tab-training" onclick="openTab(event, 'training')">Training</div>
-                                <div class="tab" id="tab-smithy" onclick="openTab(event, 'smithy')">Smithy</div>
-                                <div class="tab" id="tab-demolish" onclick="openTab(event, 'demolish')">Demolish</div>
-                                <div class="tab" id="tab-loop" onclick="openTab(event, 'loop')">Loop</div>
-                                <div class="tab" id="tab-new" onclick="openTab(event, 'new')">New Build</div>
-                            </div>`;
-            document.getElementById('detail-pane-header').innerHTML = `<h2 class="card-title">${villageName}</h2>${tabsHtml}`;
-            
-            const detailsDiv = document.getElementById('village-details-content');
-            
-            const villageQueue = FULL_STATE.build_queues[villageId] || [];
-            const demolishQueue = FULL_STATE.demolish_queues ? (FULL_STATE.demolish_queues[villageId] || []) : [];
-            const trainingSettingsForVillage = (FULL_STATE.training_queues || {})[villageId] || {};
-            const trainingDataForVillage = (FULL_STATE.training_data || {})[villageId] || {};
-
-            const projectedBuildings = JSON.parse(JSON.stringify(villageData.buildings));
-            
-            function getActionControls(villageId, building) {
-                const currentLevelInQueue = villageQueue.filter(q => q.location === building.id).reduce((maxLvl, q) => Math.max(maxLvl, q.level), building.level);
-                const maxLvl = getMaxLevel(building.gid);
-                const isUpgradeable = currentLevelInQueue < maxLvl;
-                const nextLevel = currentLevelInQueue + 1;
-
-                if (!isUpgradeable) return `<button class="btn" disabled>Max Level</button>`;
-
-                return `<div style="display:flex; align-items:center; gap: 10px;">
-                            <input type="number" id="level-input-${villageId}-${building.id}" class="form-control" min="${nextLevel}" max="${maxLvl}" value="${nextLevel}" style="width: 80px;">
-                            <button onclick="queueUpgradeTask('${villageId}', '${building.id}', '${building.gid}', 'level-input-${villageId}-${building.id}')" class="btn">Queue</button>
-                            <button onclick="queueToMax('${villageId}', '${building.id}', '${building.gid}')" class="btn" style="background-color: var(--accent-highlight); color: var(--bg-primary);">Max</button>
+        let tabsHtml = `<div class="tabs">
+                            <div class="tab" id="tab-fields" onclick="openTab(event, 'fields')">Fields</div>
+                            <div class="tab" id="tab-buildings" onclick="openTab(event, 'buildings')">City</div>
+                            <div class="tab" id="tab-training" onclick="openTab(event, 'training')">Training</div>
+                            <div class="tab" id="tab-smithy" onclick="openTab(event, 'smithy')">Smithy</div>
+                            <div class="tab" id="tab-demolish" onclick="openTab(event, 'demolish')">Demolish</div>
+                            <div class="tab" id="tab-loop" onclick="openTab(event, 'loop')">Loop</div>
+                            <div class="tab" id="tab-new" onclick="openTab(event, 'new')">New Build</div>
                         </div>`;
-            }
+        document.getElementById('detail-pane-header').innerHTML = `<h2 class="card-title">${villageName}</h2>${tabsHtml}`;
+        
+        const detailsDiv = document.getElementById('village-details-content');
+        
+        const villageQueue = FULL_STATE.build_queues[villageId] || [];
+        const demolishQueue = FULL_STATE.demolish_queues ? (FULL_STATE.demolish_queues[villageId] || []) : [];
+        const trainingSettingsForVillage = (FULL_STATE.training_queues || {})[villageId] || {};
+        const trainingDataForVillage = (FULL_STATE.training_data || {})[villageId] || {};
 
-            let fieldsContent = '<div id="fields" class="tab-content">';
-            fieldsContent += `<div class="resource-upgrade-form" style="padding: 1rem; background-color: var(--bg-tertiary); border-radius: 6px; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
-                                 <label for="resource-target-level-${villageId}">Set Resource Plan Target Level:</label>
-                                 <input type="number" id="resource-target-level-${villageId}" value="10" min="1" max="50" class="form-control" style="width: 80px;">
-                                 <button onclick="upgradeAllResources('${villageId}')" class="btn">Set Plan</button>
-                               </div>`;
-            fieldsContent += '<table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
-            projectedBuildings.filter(b => b.id <= 18).sort((a,b) => a.id - b.id).forEach(b => {
-                fieldsContent += `<tr><td>${b.id}</td><td>${GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td>${getActionControls(villageId, b)}</td></tr>`;
-            });
-            fieldsContent += '</tbody></table></div>';
-            
-            let buildingsContent = '<div id="buildings" class="tab-content"><table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
-            projectedBuildings.filter(b => b.id > 18 && b.gid > 0).sort((a,b) => a.id - b.id).forEach(b => {
-                buildingsContent += `<tr><td>${b.name || GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td>${getActionControls(villageId, b)}</td></tr>`;
-            });
-            buildingsContent += '</tbody></table></div>';
-            
-            let trainingContent = `<div id="training" class="tab-content"><h3>Troop Training Configuration</h3>`;
-trainingContent += `<div style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px;">
+        const projectedBuildings = JSON.parse(JSON.stringify(villageData.buildings));
+        
+        function getActionControls(villageId, building) {
+            const currentLevelInQueue = villageQueue.filter(q => q.location === building.id).reduce((maxLvl, q) => Math.max(maxLvl, q.level), building.level);
+            const maxLvl = getMaxLevel(building.gid);
+            const isUpgradeable = currentLevelInQueue < maxLvl;
+            const nextLevel = currentLevelInQueue + 1;
+
+            if (!isUpgradeable) return `<button class="btn" disabled>Max Level</button>`;
+
+            return `<div style="display:flex; align-items:center; gap: 10px;">
+                        <input type="number" id="level-input-${villageId}-${building.id}" class="form-control" min="${nextLevel}" max="${maxLvl}" value="${nextLevel}" style="width: 80px;">
+                        <button onclick="queueUpgradeTask('${villageId}', '${building.id}', '${building.gid}', 'level-input-${villageId}-${building.id}')" class="btn">Queue</button>
+                        <button onclick="queueToMax('${villageId}', '${building.id}', '${building.gid}')" class="btn" style="background-color: var(--accent-highlight); color: var(--bg-primary);">Max</button>
+                    </div>`;
+        }
+
+        let fieldsContent = '<div id="fields" class="tab-content">';
+        fieldsContent += `<div class="resource-upgrade-form" style="padding: 1rem; background-color: var(--bg-tertiary); border-radius: 6px; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+                                <label for="resource-target-level-${villageId}">Set Resource Plan Target Level:</label>
+                                <input type="number" id="resource-target-level-${villageId}" value="10" min="1" max="50" class="form-control" style="width: 80px;">
+                                <button onclick="upgradeAllResources('${villageId}')" class="btn">Set Plan</button>
+                            </div>`;
+        fieldsContent += '<table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
+        projectedBuildings.filter(b => b.id <= 18).sort((a,b) => a.id - b.id).forEach(b => {
+            fieldsContent += `<tr><td>${b.id}</td><td>${GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td>${getActionControls(villageId, b)}</td></tr>`;
+        });
+        fieldsContent += '</tbody></table></div>';
+        
+        let buildingsContent = '<div id="buildings" class="tab-content"><table><thead><tr><th>Location</th><th>Name</th><th>Level</th><th>Actions</th></tr></thead><tbody>';
+        projectedBuildings.filter(b => b.id > 18 && b.gid > 0).sort((a,b) => a.id - b.id).forEach(b => {
+            buildingsContent += `<tr><td>${b.name || GID_MAP[b.gid] || `GID ${b.gid}`}</td><td>${b.level}</td><td>${getActionControls(villageId, b)}</td></tr>`;
+        });
+        buildingsContent += '</tbody></table></div>';
+        
+        let trainingContent = `<div id="training" class="tab-content"><h3>Troop Training Configuration</h3>`;
+        trainingContent += `<div style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px;">
                         <button onclick="saveTrainingSettings('${villageId}')" class="btn btn-primary">Save Settings</button>
                         <div id="training-copy-container" style="display:contents;"></div>
                     </div>`;
 
-trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px;">
+        trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px;">
                         <label><input type="checkbox" id="training-enabled-${villageId}" ${trainingSettingsForVillage.enabled ? 'checked' : ''}> Enable Training Agent</label>
-                        
                         <div style="display: flex; align-items: center; gap: 10px; margin-top: 1rem;">
                             <label for="min-queue-duration-${villageId}">Min Queue (minutes):</label>
                             <input type="number" id="min-queue-duration-${villageId}" class="form-control" style="width: 100px;" value="${trainingSettingsForVillage.min_queue_duration_minutes || 15}">
                             <button onclick="setToLowestTrainingTime('${villageId}')" class="btn btn-small" title="Set to the lowest training time of any enabled unit in this village.">Set to Lowest</button>
                         </div>
-
                         <div style="display: flex; align-items: center; gap: 10px; margin-top: 1rem;">
                             <label><input type="checkbox" id="auto-increment-enabled-${villageId}" ${trainingSettingsForVillage.auto_increment_enabled ? 'checked' : ''}> Auto-increment queue time</label>
                             <label for="auto-increment-step-size-${villageId}">by</label>
@@ -525,201 +523,198 @@ trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px so
                             <span>minutes.</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 10px; margin-top: 1rem;">
-                           <label for="max-training-time-${villageId}">End Time (dd.mm.yyyy hh:mm):</label>
-                           <input type="text" id="max-training-time-${villageId}" class="form-control" style="width: 200px;" value="${trainingSettingsForVillage.max_training_time || ''}">
-                           <select id="infobox-time-select-${villageId}" class="form-control" style="width: auto;">
-                               <option value="ww">WW Plans</option>
-                               <option value="artefacts">Artifacts</option>
-                           </select>
-                           <button onclick="setEndTimeFromInfobox('${villageId}')" class="btn btn-small">Set</button>
+                            <label for="max-training-time-${villageId}">End Time (dd.mm.yyyy hh:mm):</label>
+                            <input type="text" id="max-training-time-${villageId}" class="form-control" style="width: 200px;" value="${trainingSettingsForVillage.max_training_time || ''}">
+                            <select id="infobox-time-select-${villageId}" class="form-control" style="width: auto;">
+                                <option value="ww">WW Plans</option>
+                                <option value="artefacts">Artifacts</option>
+                            </select>
+                            <button onclick="setEndTimeFromInfobox('${villageId}')" class="btn btn-small">Set</button>
                         </div>
                     </div>`;
 
-            const buildingTypes = {
-                barracks: { gid: 19, name: 'Barracks' }, stable: { gid: 20, name: 'Stable' },
-                workshop: { gid: 21, name: 'Workshop' }, great_barracks: { gid: 29, name: 'Great Barracks'}, great_stable: { gid: 30, name: 'Great Stable'}
-            };
+        const buildingTypes = {
+            barracks: { gid: 19, name: 'Barracks' }, stable: { gid: 20, name: 'Stable' },
+            workshop: { gid: 21, name: 'Workshop' }, great_barracks: { gid: 29, name: 'Great Barracks'}, great_stable: { gid: 30, name: 'Great Stable'}
+        };
 
-            Object.entries(buildingTypes).forEach(([key, value]) => {
-                const buildingData = (trainingDataForVillage || {})[value.gid];
-                if (!buildingData) return;
-                const buildingConfig = (trainingSettingsForVillage.buildings || {})[key] || {};
-                let optionsHtml = '<option value="">-- Select Troop --</option>';
-                (buildingData.trainable || []).forEach(troop => {
-                    optionsHtml += `<option value="${troop.name}" ${troop.name === buildingConfig.troop_name ? 'selected' : ''}>${troop.name}</option>`;
-                });
-                let queueHtml = (buildingData.training_queue && buildingData.training_queue.length > 0)
-                    ? `<h4>In Training</h4><table><thead><tr><th>Amount</th><th>Troop</th><th>Duration</th></tr></thead><tbody>${buildingData.training_queue.map(q => `<tr><td>${q.amount.toLocaleString()}</td><td>${q.name}</td><td>${formatDuration(q.duration)}</td></tr>`).join('')}</tbody></table>`
-                    : '<p>No troops currently in training.</p>';
+        Object.entries(buildingTypes).forEach(([key, value]) => {
+            const buildingData = (trainingDataForVillage || {})[value.gid];
+            if (!buildingData) return;
+            const buildingConfig = (trainingSettingsForVillage.buildings || {})[key] || {};
+            let optionsHtml = '<option value="">-- Select Troop --</option>';
+            (buildingData.trainable || []).forEach(troop => {
+                optionsHtml += `<option value="${troop.name}" ${troop.name === buildingConfig.troop_name ? 'selected' : ''}>${troop.name}</option>`;
+            });
+            let queueHtml = (buildingData.training_queue && buildingData.training_queue.length > 0)
+                ? `<h4>In Training</h4><table><thead><tr><th>Amount</th><th>Troop</th><th>Duration</th></tr></thead><tbody>${buildingData.training_queue.map(q => `<tr><td>${q.amount.toLocaleString()}</td><td>${q.name}</td><td>${formatDuration(q.duration)}</td></tr>`).join('')}</tbody></table>`
+                : '<p>No troops currently in training.</p>';
 
-                trainingContent += `<div class="collapsible-section" style="margin-top: 1rem; border: 1px solid var(--text-muted); border-radius: 6px;">
-                                        <div class="card-header" style="padding: 1rem 1.5rem; cursor: pointer;" onclick="this.parentElement.classList.toggle('open')">
-                                            <h4 class="card-title" style="font-size: 1.1rem; color: var(--text-primary); text-transform: capitalize;">${value.name}</h4>
-                                        </div>
-                                        <div class="card-content collapsible-content" style="padding: 1.2rem;">
-                                            <div class="form-group"><label><input type="checkbox" id="train-enabled-${villageId}-${key}" ${buildingConfig.enabled ? 'checked' : ''}> Enable</label></div>
-                                            <div class="form-group"><label>Troop to Train:</label><select id="train-select-${villageId}-${key}" class="form-control">${optionsHtml}</select></div>
-                                            <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
-                                            ${queueHtml}
-                                        </div>
-                                    </div>`;
-            });
-            trainingContent += `</div>`;
+            trainingContent += `<div class="collapsible-section" style="margin-top: 1rem; border: 1px solid var(--text-muted); border-radius: 6px;">
+                                    <div class="card-header" style="padding: 1rem 1.5rem; cursor: pointer;" onclick="this.parentElement.classList.toggle('open')">
+                                        <h4 class="card-title" style="font-size: 1.1rem; color: var(--text-primary); text-transform: capitalize;">${value.name}</h4>
+                                    </div>
+                                    <div class="card-content collapsible-content" style="padding: 1.2rem;">
+                                        <div class="form-group"><label><input type="checkbox" id="train-enabled-${villageId}-${key}" ${buildingConfig.enabled ? 'checked' : ''}> Enable</label></div>
+                                        <div class="form-group"><label>Troop to Train:</label><select id="train-select-${villageId}-${key}" class="form-control">${optionsHtml}</select></div>
+                                        <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
+                                        ${queueHtml}
+                                    </div>
+                                </div>`;
+        });
+        trainingContent += `</div>`;
 
-            let demolishContent = `<div id="demolish" class="tab-content"><h3>Demolish Building</h3><p>Queue demolition tasks. One task per level.</p><table><thead><tr><th>Name</th><th>Level</th><th>Action</th></tr></thead><tbody>`;
-            villageData.buildings.filter(b => b.gid > 0 && b.id > 18 && b.level > 0).sort((a, b) => (a.name || GID_MAP[a.gid]).localeCompare(b.name || GID_MAP[b.gid])).forEach(b => {
-                demolishContent += `<tr><td>${b.name || GID_MAP[b.gid]}</td><td>${b.level}</td><td><div style="display:flex; align-items:center; gap: 10px;"><input type="number" id="demolish-level-input-${villageId}-${b.id}" class="form-control" min="0" max="${b.level - 1}" value="${b.level - 1}" style="width: 80px;"><button onclick="queueDemolishTask('${villageId}', {id: ${b.id}, gid: ${b.gid}, level: ${b.level}})" class="btn btn-danger">Queue</button></div></td></tr>`;
-            });
-            demolishContent += `</tbody></table><h3 style="margin-top: 2rem;">Demolition Queue (${demolishQueue.length})</h3><ol id="demolish-queue-list" style="list-style-type: none; padding: 0;">`;
-            demolishQueue.forEach((job, index) => {
-                 demolishContent += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 4px; background-color: var(--bg-tertiary); margin-bottom: 0.5rem;"><span>${index + 1}. Demolish ${GID_MAP[job.gid] || 'Unknown'} to Lvl ${job.level}</span><button class="btn btn-small btn-danger" onclick="removeDemolishQueueItem('${villageId}', ${index})">X</button></li>`;
-            });
-            demolishContent += '</ol></div>';
-            
-            let loopContent = `<div id="loop" class="tab-content">
-                <h3>Settling & Destruction Loop</h3>
-                <div id="loop-settings-form-${villageId}" style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 1.5rem;">
-                    <div class="form-group">
-                        <label><input type="checkbox" id="loop-enabled-${villageId}"> Enable Loop for this village</label>
-                    </div>
-                    <div class="form-group">
-                        <label for="catapult-origin-village-${villageId}">Catapult Origin Village:</label>
-                        <select id="catapult-origin-village-${villageId}" class="form-control"></select>
-                    </div>
-                    <div class="form-group">
-                         <button onclick="saveLoopSettings('${villageId}')" class="btn btn-primary">Save Loop Settings</button>
-                    </div>
+        let demolishContent = `<div id="demolish" class="tab-content"><h3>Demolish Building</h3><p>Queue demolition tasks. One task per level.</p><table><thead><tr><th>Name</th><th>Level</th><th>Action</th></tr></thead><tbody>`;
+        villageData.buildings.filter(b => b.gid > 0 && b.id > 18 && b.level > 0).sort((a, b) => (a.name || GID_MAP[a.gid]).localeCompare(b.name || GID_MAP[b.gid])).forEach(b => {
+            demolishContent += `<tr><td>${b.name || GID_MAP[b.gid]}</td><td>${b.level}</td><td><div style="display:flex; align-items:center; gap: 10px;"><input type="number" id="demolish-level-input-${villageId}-${b.id}" class="form-control" min="0" max="${b.level - 1}" value="${b.level - 1}" style="width: 80px;"><button onclick="queueDemolishTask('${villageId}', {id: ${b.id}, gid: ${b.gid}, level: ${b.level}})" class="btn btn-danger">Queue</button></div></td></tr>`;
+        });
+        demolishContent += `</tbody></table><h3 style="margin-top: 2rem;">Demolition Queue (${demolishQueue.length})</h3><ol id="demolish-queue-list" style="list-style-type: none; padding: 0;"></ol></div>`;
+        
+        let loopContent = `<div id="loop" class="tab-content">
+            <h3>Settling & Destruction Loop</h3>
+            <div id="loop-settings-form-${villageId}" style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 1.5rem;">
+                <div class="form-group">
+                    <label><input type="checkbox" id="loop-enabled-${villageId}"> Enable Loop for this village</label>
                 </div>
-                <hr>
-                <h4>Loop Status</h4>
-                <div id="loop-status-container-${villageId}"></div>
-                <hr>
-<h4 style="margin-top: 1.5rem;">Manual Assignment</h4>
-<p style="color: var(--text-muted); font-size: 0.9em;">If a village was settled but not automatically detected, you can assign it to an idle loop slot here.</p>
-<div id="manual-assign-container-${villageId}" style="display: flex; gap: 1rem; align-items: center; background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px;">
-    </div>
-            </div>`;
+                <div class="form-group">
+                    <label for="catapult-origin-village-${villageId}">Catapult Origin Village:</label>
+                    <select id="catapult-origin-village-${villageId}" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                        <button onclick="saveLoopSettings('${villageId}')" class="btn btn-primary">Save Loop Settings</button>
+                </div>
+            </div>
+            <hr>
+            <h4>Loop Status</h4>
+            <div id="loop-status-container-${villageId}"></div>
+            <hr>
+            <h4 style="margin-top: 1.5rem;">Manual Assignment</h4>
+            <p style="color: var(--text-muted); font-size: 0.9em;">If a village was settled but not automatically detected, you can assign it to an idle loop slot here.</p>
+            <div id="manual-assign-container-${villageId}" style="display: flex; gap: 1rem; align-items: center; background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px;">
+            </div>
+        </div>`;
 
-            let newBuildContent = '<div id="new" class="tab-content"><h4>Build in Empty Slot</h4><table><thead><tr><th>Location</th><th>Action</th></tr></thead><tbody>';
-            const baseBuildable = [5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46];
-            const existingUniqueGids = new Set(projectedBuildings.filter(b => b.gid > 0 && !is_multi_instance(b.gid)).map(b => b.gid));
-            const buildableGIDs = baseBuildable.filter(g => !existingUniqueGids.has(g));
-            villageData.buildings.filter(b => b.id > 18 && b.gid === 0).forEach(slot => {
-                const queuedBuilding = villageQueue.find(q => q.location === slot.id);
-                if (!queuedBuilding) {
-                    let allowedGIDs = buildableGIDs.slice();
-                    if (slot.id === 40) allowedGIDs = [getWallGid(villageData)];
-                    else if (slot.id === 39) allowedGIDs = [16];
-                    let optionsHtml = '<option value="0">-- Select Building --</option>' + allowedGIDs.map(gid => `<option value="${gid}">${GID_MAP[gid]}</option>`).join('');
-                    newBuildContent += `<tr><td>${slot.id}</td><td><div style="display:flex; align-items:center; gap: 10px;"><select id="gid-select-${villageId}-${slot.id}" class="form-control" style="width: auto;">${optionsHtml}</select><input type="number" id="level-input-new-${villageId}-${slot.id}" class="form-control" min="1" max="20" value="1" style="width: 80px;"><button onclick="addNewBuildingTask('${villageId}', '${slot.id}', 'gid-select-${villageId}-${slot.id}', 'level-input-new-${villageId}-${slot.id}')" class="btn">Queue</button></div></td></tr>`;
-                }
-            });
-            newBuildContent += '</tbody></table></div>';
-            
-            let queueHtml = `<h3 style="margin-top: 2rem;">Build Queue (${villageQueue.length})</h3><div style="background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px; margin-bottom: 1rem;"><h4>Templates</h4><div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;"><input type="text" id="template-name-input" class="form-control" placeholder="Template Name"><button onclick="saveTemplate('${villageId}')" class="btn btn-primary">Save</button></div><div id="template-list-container" style="display: flex; gap: 1rem; align-items: center;"></div></div>`;
-            queueHtml += `<ol id="build-queue-list" style="list-style-type: none; padding: 0;">`;
-            villageQueue.forEach((job, index) => {
-                let jobName = (job.type === 'resource_plan') ? `ALL RESOURCES PLAN` : `${GID_MAP[job.gid] || 'Unknown'} (Loc: ${job.location || '??'})`;
-                queueHtml += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 4px; background-color: var(--bg-tertiary); margin-bottom: 0.5rem;"><span>${index + 1}. ${jobName} to Lvl ${job.level}</span><div><button class="btn btn-small" onclick="moveQueueItem('${villageId}', ${index}, 'top')">Top</button><button class="btn btn-small" onclick="moveQueueItem('${villageId}', ${index}, 'up')">Up</button><button class="btn btn-small" onclick="moveQueueItem('${villageId}', ${index}, 'down')">Down</button><button class="btn btn-small" onclick="moveQueueItem('${villageId}', ${index}, 'bottom')">Bottom</button><button class="btn btn-small btn-danger" onclick="removeQueueItem('${villageId}', ${index})">X</button></div></li>`;
-            });
-            queueHtml += '</ol>';
+        let newBuildContent = '<div id="new" class="tab-content"><h4>Build in Empty Slot</h4><table><thead><tr><th>Location</th><th>Action</th></tr></thead><tbody>';
+        const baseBuildable = [5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46];
+        const existingUniqueGids = new Set(projectedBuildings.filter(b => b.gid > 0 && !is_multi_instance(b.gid)).map(b => b.gid));
+        const buildableGIDs = baseBuildable.filter(g => !existingUniqueGids.has(g));
+        villageData.buildings.filter(b => b.id > 18 && b.gid === 0).forEach(slot => {
+            const queuedBuilding = villageQueue.find(q => q.location === slot.id);
+            if (!queuedBuilding) {
+                let allowedGIDs = buildableGIDs.slice();
+                if (slot.id === 40) allowedGIDs = [getWallGid(villageData)];
+                else if (slot.id === 39) allowedGIDs = [16];
+                let optionsHtml = '<option value="0">-- Select Building --</option>' + allowedGIDs.map(gid => `<option value="${gid}">${GID_MAP[gid]}</option>`).join('');
+                newBuildContent += `<tr><td>${slot.id}</td><td><div style="display:flex; align-items:center; gap: 10px;"><select id="gid-select-${villageId}-${slot.id}" class="form-control" style="width: auto;">${optionsHtml}</select><input type="number" id="level-input-new-${villageId}-${slot.id}" class="form-control" min="1" max="20" value="1" style="width: 80px;"><button onclick="addNewBuildingTask('${villageId}', '${slot.id}', 'gid-select-${villageId}-${slot.id}', 'level-input-new-${villageId}-${slot.id}')" class="btn">Queue</button></div></td></tr>`;
+            }
+        });
+        newBuildContent += '</tbody></table></div>';
+        
+        let queueHtml = `<h3 style="margin-top: 2rem;">Build Queue (${villageQueue.length})</h3><div style="background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px; margin-bottom: 1rem;"><h4>Templates</h4><div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;"><input type="text" id="template-name-input" class="form-control" placeholder="Template Name"><button onclick="saveTemplate('${villageId}')" class="btn btn-primary">Save</button></div><div id="template-list-container" style="display: flex; gap: 1rem; align-items: center;"></div></div>`;
+        queueHtml += `<ol id="build-queue-list" style="list-style-type: none; padding: 0;">`;
+        villageQueue.forEach((job, index) => {
+            let jobName = (job.type === 'resource_plan') ? `ALL RESOURCES PLAN` : `${GID_MAP[job.gid] || 'Unknown'} (Loc: ${job.location || '??'})`;
+            queueHtml += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 4px; background-color: var(--bg-tertiary); margin-bottom: 0.5rem;"><span>${index + 1}. ${jobName} to Lvl ${job.level}</span><div><button class="btn btn-small" onclick="moveQueueItem('${villageId}', ${index}, 'top')">Top</button><button class="btn btn-small" onclick="moveQueueItem('${villageId}', ${index}, 'up')">Up</button><button class="btn btn-small" onclick="moveQueueItem('${villageId}', ${index}, 'down')">Down</button><button class="btn btn-small" onclick="moveQueueItem('${villageId}', ${index}, 'bottom')">Bottom</button><button class="btn btn-small btn-danger" onclick="removeQueueItem('${villageId}', ${index})">X</button></div></li>`;
+        });
+        queueHtml += '</ol>';
 
-            let smithyContent = `<div id="smithy" class="tab-content"><h3>Smithy Upgrade Priority</h3></div>`;
-            detailsDiv.innerHTML = fieldsContent + buildingsContent + trainingContent + smithyContent + demolishContent + loopContent + newBuildContent + queueHtml;
-            renderCopyControls(villageId, 'training');
-            renderTemplateList(villageId);
-            renderSmithyUpgrades(villageId);
-            renderCopyControls(villageId, 'smithy');
-            
-            const loopState = (FULL_STATE.loop_module_state || {})[villageId] || {};
-const loopEnabledCheckbox = document.getElementById(`loop-enabled-${villageId}`);
-if (loopEnabledCheckbox) {
-    loopEnabledCheckbox.checked = loopState.enabled || false;
-}
+        let smithyContent = `<div id="smithy" class="tab-content"><h3>Smithy Upgrade Priority</h3></div>`;
+        detailsDiv.innerHTML = fieldsContent + buildingsContent + trainingContent + smithyContent + demolishContent + loopContent + newBuildContent + queueHtml;
+        
+        renderCopyControls(villageId, 'training');
+        renderTemplateList(villageId);
+        renderSmithyUpgrades(villageId);
+        renderCopyControls(villageId, 'smithy');
+        
+        const loopState = (FULL_STATE.loop_module_state || {})[villageId] || {};
+        const loopEnabledCheckbox = document.getElementById(`loop-enabled-${villageId}`);
+        if (loopEnabledCheckbox) {
+            loopEnabledCheckbox.checked = loopState.enabled || false;
+        }
 
-const loopStatusContainer = document.getElementById(`loop-status-container-${villageId}`);
-if (loopStatusContainer) {
-    let statusHtml = '<ul>';
-    const settlementSlots = loopState.settlement_slots || [];
-    if (settlementSlots.length > 0) {
-        settlementSlots.forEach((slot, index) => {
-            let villageNameStr = '';
-            if (slot.new_village_id) {
-                for (const user in FULL_STATE.village_data) {
-                    const village = (FULL_STATE.village_data[user] || []).find(v => v.id == slot.new_village_id);
-                    if (village) {
-                        villageNameStr = ` (Managing: <strong>${village.name}</strong>)`;
-                        break;
+        const loopStatusContainer = document.getElementById(`loop-status-container-${villageId}`);
+        if (loopStatusContainer) {
+            let statusHtml = '<ul>';
+            const settlementSlots = loopState.settlement_slots || [];
+            if (settlementSlots.length > 0) {
+                settlementSlots.forEach((slot, index) => {
+                    let villageNameStr = '';
+                    if (slot.new_village_id) {
+                        for (const user in FULL_STATE.village_data) {
+                            const village = (FULL_STATE.village_data[user] || []).find(v => v.id == slot.new_village_id);
+                            if (village) {
+                                villageNameStr = ` (Managing: <strong>${village.name}</strong>)`;
+                                break;
+                            }
+                        }
                     }
+                    statusHtml += `<li>Slot ${index + 1}: <span style="font-weight: bold; color: var(--accent-highlight);">${slot.status || 'unknown'}</span>${villageNameStr}</li>`;
+                });
+            } else {
+                statusHtml += '<li>No active settlement slots.</li>';
+            }
+            statusHtml += '</ul>';
+            loopStatusContainer.innerHTML = statusHtml;
+        }
+
+        const catapultOriginSelect = document.getElementById(`catapult-origin-village-${villageId}`);
+        if (catapultOriginSelect) {
+            catapultOriginSelect.innerHTML = '';
+            let sourceAccountUsername = null;
+            for (const username in FULL_STATE.village_data) {
+                if (Array.isArray(FULL_STATE.village_data[username]) && FULL_STATE.village_data[username].some(v => v.id == villageId)) {
+                    sourceAccountUsername = username;
+                    break;
                 }
             }
-            statusHtml += `<li>Slot ${index + 1}: <span style="font-weight: bold; color: var(--accent-highlight);">${slot.status || 'unknown'}</span>${villageNameStr}</li>`;
-        });
-    } else {
-        statusHtml += '<li>No active settlement slots.</li>';
-    }
-    statusHtml += '</ul>';
-    loopStatusContainer.innerHTML = statusHtml;
-}
-
-const catapultOriginSelect = document.getElementById(`catapult-origin-village-${villageId}`);
-if (catapultOriginSelect) {
-    catapultOriginSelect.innerHTML = '';
-    let sourceAccountUsername = null;
-    for (const username in FULL_STATE.village_data) {
-        if (Array.isArray(FULL_STATE.village_data[username]) && FULL_STATE.village_data[username].some(v => v.id == villageId)) {
-            sourceAccountUsername = username;
-            break;
-        }
-    }
-    if (sourceAccountUsername) {
-        const allVillages = FULL_STATE.village_data[sourceAccountUsername] || [];
-        allVillages.forEach(v => {
-            const option = document.createElement('option');
-            option.value = v.id;
-            option.textContent = v.name;
-            if (v.id == loopState.catapult_origin_village) {
-                option.selected = true;
+            if(sourceAccountUsername){
+                const allVillages = FULL_STATE.village_data[sourceAccountUsername] || [];
+                allVillages.forEach(v => {
+                    const option = document.createElement('option');
+                    option.value = v.id;
+                    option.textContent = v.name;
+                    if (v.id == loopState.catapult_origin_village) {
+                        option.selected = true;
+                    }
+                    catapultOriginSelect.appendChild(option);
+                });
             }
-            catapultOriginSelect.appendChild(option);
-        });
-    }
-}
-
-const manualAssignContainer = document.getElementById(`manual-assign-container-${villageId}`);
-if (manualAssignContainer) {
-    const assigned_new_village_ids = new Set((loopState.settlement_slots || []).map(s => s.new_village_id).filter(Boolean));
-    let sourceAccountUsername = null;
-    for (const username in FULL_STATE.village_data) {
-        if (Array.isArray(FULL_STATE.village_data[username]) && FULL_STATE.village_data[username].some(v => v.id == villageId)) {
-            sourceAccountUsername = username;
-            break;
-        }
-    }
-
-    if (sourceAccountUsername) {
-        const all_villages_for_account = FULL_STATE.village_data[sourceAccountUsername] || [];
-        const unassigned_villages = all_villages_for_account.filter(v => v.id != villageId && !assigned_new_village_ids.has(v.id));
-
-        if (unassigned_villages.length > 0) {
-            let optionsHtml = '<option value="">-- Select village to assign --</option>';
-            unassigned_villages.forEach(v => {
-                optionsHtml += `<option value="${v.id}">${v.name} (${v.id})</option>`;
-            });
-
-            manualAssignContainer.innerHTML = `
-                <select id="manual-assign-select-${villageId}" class="form-control" style="flex-grow: 1;">${optionsHtml}</select>
-                <button onclick="assignVillageToLoop('${villageId}')" class="btn btn-primary">Assign to Loop</button>
-            `;
-        } else {
-            manualAssignContainer.innerHTML = '<p style="color: var(--text-muted);">No unassigned villages found for this account.</p>';
-        }
-    }
-}
-
-            openTab(null, currentTab);
         }
 
+        const manualAssignContainer = document.getElementById(`manual-assign-container-${villageId}`);
+        if (manualAssignContainer) {
+            const assigned_new_village_ids = new Set((loopState.settlement_slots || []).map(s => s.new_village_id).filter(Boolean));
+            
+            let sourceAccountUsername = null;
+            for (const username in FULL_STATE.village_data) {
+                if (Array.isArray(FULL_STATE.village_data[username]) && FULL_STATE.village_data[username].some(v => v.id == villageId)) {
+                    sourceAccountUsername = username;
+                    break;
+                }
+            }
+
+            if (sourceAccountUsername) {
+                const all_villages_for_account = FULL_STATE.village_data[sourceAccountUsername] || [];
+                const unassigned_villages = all_villages_for_account.filter(v => v.id != villageId && !assigned_new_village_ids.has(v.id));
+
+                if (unassigned_villages.length > 0) {
+                    let optionsHtml = '<option value="">-- Select village to assign --</option>';
+                    unassigned_villages.forEach(v => {
+                        optionsHtml += `<option value="${v.id}">${v.name} (${v.id})</option>`;
+                    });
+
+                    manualAssignContainer.innerHTML = `
+                        <select id="manual-assign-select-${villageId}" class="form-control" style="flex-grow: 1;">${optionsHtml}</select>
+                        <button onclick="assignVillageToLoop('${villageId}')" class="btn btn-primary">Assign to Loop</button>
+                    `;
+                } else {
+                    manualAssignContainer.innerHTML = '<p style="color: var(--text-muted);">No unassigned villages found for this account.</p>';
+                }
+            }
+        }
+        
+        openTab(null, currentTab);
+    }
         // --- All other helper and utility functions ---
         function openTab(event, tabName) {
             if (event) currentTab = tabName;
