@@ -1,4 +1,4 @@
-# modules/loop.py
+# js-92-ch/travianhttpbot/TravianHttpBot-loop/modules/loop.py
 import time
 import math
 import re
@@ -8,8 +8,8 @@ from config import log, BOT_STATE, state_lock, save_config, gid_name
 
 class Module(BaseModule):
     """
-    Handles the entire lifecycle of settling a new village, building it up,
-    and then destroying it to start over.
+    Handles the entire lifecycle of settling new villages, building them up,
+    and then destroying them to start over. Now supports multiple concurrent settlements.
     """
 
     def __init__(self, agent):
@@ -20,15 +20,13 @@ class Module(BaseModule):
         with state_lock:
             if "loop_module_state" not in BOT_STATE:
                 BOT_STATE["loop_module_state"] = {}
-            if str(village_id) not in BOT_STATE["loop_module_state"]:
+            if "reserved_settle_targets" not in BOT_STATE:
+                BOT_STATE["reserved_settle_targets"] = []
+            if str(village_id) not in BOT_STATE["loop_module_state"] or "settlement_slots" not in BOT_STATE["loop_module_state"][str(village_id)]:
                 BOT_STATE["loop_module_state"][str(village_id)] = {
                     "enabled": False,
-                    "status": "idle",
-                    "target_coords": None,
-                    "settle_start_time": None,
-                    "settle_travel_time": 0,
-                    "new_village_id": None,
-                    "catapult_origin_village": None
+                    "catapult_origin_village": None,
+                    "settlement_slots": []
                 }
             return BOT_STATE["loop_module_state"][str(village_id)]
 
@@ -40,72 +38,94 @@ class Module(BaseModule):
         if not loop_state.get("enabled"):
             return
 
-        log.info(f"[{agent.village_name}] Loop module active. Current status: {loop_state['status']}")
+        self.manage_settlement_slots(village_data, loop_state)
 
-        if loop_state["status"] == "idle":
-            self.start_settling_process(village_data, loop_state)
-        elif loop_state["status"] == "training_settlers":
-            self.check_settler_training(village_data, loop_state)
-        elif loop_state["status"] == "finding_village":
-            self.find_and_send_settlers(village_data, loop_state)
-        elif loop_state["status"] == "settling":
-            self.check_settlement_complete(village_data, loop_state)
-        elif loop_state["status"] == "waiting_for_build_up":
-            self.check_build_up_complete(village_data, loop_state)
-        elif loop_state["status"] == "destroying":
-            self.destroy_village(village_data, loop_state)
-        elif loop_state["status"] == "waiting_for_destruction":
-            self.check_destruction_complete(village_data, loop_state)
+        for i, slot_state in enumerate(loop_state.get("settlement_slots", [])):
+            log.info(f"[{agent.village_name}] Loop slot {i+1} active. Current status: {slot_state.get('status', 'unknown')}")
 
+            status = slot_state.get("status")
+            if status == "idle":
+                if self.start_settling_process(agent, village_data, slot_state):
+                    if slot_state["status"] == "finding_village":
+                        self.find_and_send_settlers(agent, village_data, slot_state)
+            elif status == "training_settlers":
+                self.check_settler_training(agent, slot_state)
+            elif status == "finding_village":
+                self.find_and_send_settlers(agent, village_data, slot_state)
+            elif status == "settling":
+                self.check_settlement_complete(agent, slot_state)
+            elif status == "waiting_for_build_up":
+                self.check_build_up_complete(agent, slot_state)
+            elif status == "destroying":
+                self.destroy_village(agent, village_data, slot_state, loop_state)
+            elif status == "waiting_for_destruction":
+                self.check_destruction_complete(agent, slot_state)
 
-    def start_settling_process(self, village_data, loop_state):
-        """Starts the process by training settlers."""
+    def manage_settlement_slots(self, village_data, loop_state):
         agent = self.agent
-        log.info(f"[{agent.village_name}] Starting loop: Training settlers.")
+        max_slots = 0
+        buildings = village_data.get('buildings', [])
+        if any(b.get('gid') == 26 and b.get('level', 0) >= 10 for b in buildings):
+             max_slots = 3
+        elif any(b.get('gid') == 44 and b.get('level', 0) >= 10 for b in buildings):
+             max_slots = 3
+        elif any(b.get('gid') == 25 and b.get('level', 0) >= 10 for b in buildings):
+             max_slots = 2
         
-        # Determine which building to use for settlers
-        settler_building_gid = None
-        if any(b.get('gid') == 26 for b in village_data.get('buildings', [])):
-            settler_building_gid = 26 # Palace
-        elif any(b.get('gid') == 25 for b in village_data.get('buildings', [])):
-            settler_building_gid = 25 # Residence
-        elif any(b.get('gid') == 44 for b in village_data.get('buildings', [])):
-            settler_building_gid = 44 # Command Center
-        else:
-            log.error(f"[{agent.village_name}] No Residence, Palace, or Command Center found to train settlers.")
-            loop_state["status"] = "idle" # Reset
-            return
+        loop_state["settlement_slots"] = [s for s in loop_state["settlement_slots"] if s.get("status") != "idle" and s.get("status") is not None]
+        
+        active_slots = len(loop_state["settlement_slots"])
+        if max_slots > active_slots:
+            needed_slots = max_slots - active_slots
+            log.info(f"[{agent.village_name}] Found {needed_slots} available expansion slot(s). Adding to queue.")
+            for _ in range(needed_slots):
+                loop_state["settlement_slots"].append({"status": "idle"})
+            save_config()
 
-        success = agent.client.train_settlers(agent.village_id, settler_building_gid, 3)
+    def start_settling_process(self, agent, village_data, slot_state) -> bool:
+        log.info(f"[{agent.village_name}] Attempting to start settlement process for an idle slot.")
+        home_troops = agent.client.get_home_troops(agent.village_id)
+        available_settlers = home_troops.get('Settler', 0)
+
+        if available_settlers >= 3:
+            log.info(f"[{agent.village_name}] Found {available_settlers} available settlers. Skipping training.")
+            slot_state["status"] = "finding_village"
+            save_config()
+            return True
+
+        needed_settlers = 3 - available_settlers
+        log.info(f"[{agent.village_name}] Not enough settlers available ({available_settlers}/3). Training {needed_settlers} more.")
+        
+        settler_building_gid = 26 if any(b.get('gid') == 26 for b in village_data.get('buildings', [])) else 25
+        
+        success, duration = agent.client.train_settlers(agent.village_id, settler_building_gid, needed_settlers)
         if success:
-            loop_state["status"] = "training_settlers"
-            log.info(f"[{agent.village_name}] Settler training initiated.")
+            slot_state["status"] = "training_settlers"
+            slot_state["settler_training_end_time"] = time.time() + duration
+            log.info(f"[{agent.village_name}] Training for {needed_settlers} settlers initiated. Will be ready in {duration} seconds.")
+            save_config()
+            return True
         else:
-            log.error(f"[{agent.village_name}] Failed to initiate settler training. Retrying next cycle.")
-        save_config()
+            log.error(f"[{agent.village_name}] Failed to initiate settler training. Slot will remain idle.")
+            return False
 
-    def check_settler_training(self, village_data, loop_state):
-        """Waits for settlers to be trained."""
-        agent = self.agent
-        # This is a simplified check. A more robust implementation would parse the training queue.
-        # For now, we assume if we are in this state, we are waiting, then proceed.
-        log.info(f"[{agent.village_name}] Waiting for settlers to finish training...")
-        loop_state["status"] = "finding_village"
-        save_config()
+    def check_settler_training(self, agent, slot_state):
+        end_time = slot_state.get("settler_training_end_time")
+        if end_time and time.time() > end_time:
+            log.info(f"[{agent.village_name}] Settlers have finished training for a slot.")
+            slot_state["status"] = "finding_village"
+            slot_state["settler_training_end_time"] = None
+            save_config()
 
-
-    def find_and_send_settlers(self, village_data, loop_state):
-        """Finds the closest empty village and sends settlers."""
-        agent = self.agent
-        log.info(f"[{agent.village_name}] Searching for a nearby empty village...")
-        
+    def find_and_send_settlers(self, agent, village_data, slot_state):
+        log.info(f"[{agent.village_name}] Searching for a nearby empty village for a slot...")
         current_coords = village_data.get('coords')
         if not current_coords:
-            log.error(f"[{agent.village_name}] Cannot find coordinates for current village. Aborting loop.")
-            loop_state["status"] = "idle"
+            log.error(f"[{agent.village_name}] Cannot find coordinates. Aborting.")
+            slot_state["status"] = "idle"
+            save_config()
             return
             
-        # Fetch map data around the current village
         map_data = agent.client.get_map_data(current_coords['x'], current_coords['y'])
         if not map_data or not map_data.get('tiles'):
             log.error(f"[{agent.village_name}] Failed to fetch map data.")
@@ -113,49 +133,63 @@ class Module(BaseModule):
 
         empty_villages = []
         for tile in map_data['tiles']:
-            # k.vt indicates an empty, settable valley
             if 'k.vt' in tile.get('title', ''):
                 pos = tile['position']
-                distance = math.sqrt((current_coords['x'] - pos['x'])**2 + (current_coords['y'] - pos['y'])**2)
-                empty_villages.append({'x': pos['x'], 'y': pos['y'], 'distance': distance})
+                dist = math.sqrt((current_coords['x'] - pos['x'])**2 + (current_coords['y'] - pos['y'])**2)
+                empty_villages.append({'x': pos['x'], 'y': pos['y'], 'distance': dist})
         
         if not empty_villages:
-            log.warning(f"[{agent.village_name}] No empty villages found nearby. Will try again later.")
+            log.warning(f"[{agent.village_name}] No empty villages found nearby.")
             return
 
-        # Sort by distance to find the closest
-        closest_village = min(empty_villages, key=lambda v: v['distance'])
-        target_coords = {'x': closest_village['x'], 'y': closest_village['y']}
-        log.info(f"[{agent.village_name}] Closest empty village found at ({target_coords['x']}|{target_coords['y']}).")
+        empty_villages.sort(key=lambda v: v['distance'])
 
+        # --- START OF CHANGE: Find an unreserved target ---
+        target_village = None
+        with state_lock:
+            for village in empty_villages:
+                coord_tuple = (village['x'], village['y'])
+                if coord_tuple not in BOT_STATE["reserved_settle_targets"]:
+                    target_village = village
+                    BOT_STATE["reserved_settle_targets"].append(coord_tuple)
+                    log.info(f"[{agent.village_name}] Reserving target {coord_tuple}.")
+                    break
+        # --- END OF CHANGE ---
+
+        if not target_village:
+            log.warning(f"[{agent.village_name}] No *unreserved* empty villages found nearby.")
+            return
+
+        target_coords = {'x': target_village['x'], 'y': target_village['y']}
+        
         success, travel_time = agent.client.send_settlers(agent.village_id, target_coords)
 
         if success:
-            loop_state["status"] = "settling"
-            loop_state["target_coords"] = target_coords
-            loop_state["settle_start_time"] = time.time()
-            loop_state["settle_travel_time"] = travel_time
-            log.info(f"[{agent.village_name}] Settlers sent. Travel time: {travel_time}s.")
+            slot_state["status"] = "settling"
+            slot_state["target_coords"] = target_coords
+            slot_state["settle_start_time"] = time.time()
+            slot_state["settle_travel_time"] = travel_time
+            log.info(f"[{agent.village_name}] Settlers sent to ({target_coords['x']}|{target_coords['y']}). Travel time: {travel_time}s.")
         else:
-            log.error(f"[{agent.village_name}] Failed to send settlers.")
-            loop_state["status"] = "idle" # Reset
+            slot_state["status"] = "idle"
+            # --- START OF CHANGE: Un-reserve the target on failure ---
+            with state_lock:
+                coord_tuple = (target_coords['x'], target_coords['y'])
+                if coord_tuple in BOT_STATE["reserved_settle_targets"]:
+                    BOT_STATE["reserved_settle_targets"].remove(coord_tuple)
+                    log.info(f"[{agent.village_name}] Un-reserving target {coord_tuple} due to send failure.")
+            # --- END OF CHANGE ---
         save_config()
-        
-    def check_settlement_complete(self, village_data, loop_state):
-        """Checks if the new village appears in the sidebar."""
-        agent = self.agent
-        
-        elapsed_time = time.time() - loop_state.get("settle_start_time", 0)
-        if elapsed_time < loop_state.get("settle_travel_time", float('inf')):
-            # Not yet time, just wait
+
+    def check_settlement_complete(self, agent, slot_state):
+        elapsed_time = time.time() - slot_state.get("settle_start_time", 0)
+        if elapsed_time < slot_state.get("settle_travel_time", float('inf')):
             return
 
         log.info(f"[{agent.village_name}] Settler arrival time has passed. Checking for new village...")
-        # Fetch fresh list of all villages for the account
         all_villages = agent.client.get_all_villages()
         
         new_village = None
-        # Find a village that wasn't there before
         with state_lock:
             current_known_villages = BOT_STATE['village_data'][agent.client.username]
             known_ids = {v['id'] for v in current_known_villages}
@@ -165,63 +199,59 @@ class Module(BaseModule):
                     new_village = v
                     break
 
+        target_coords = slot_state.get("target_coords")
+        coord_tuple = (target_coords['x'], target_coords['y']) if target_coords else None
+
         if new_village:
             log.info(f"[{agent.village_name}] SUCCESS! New village '{new_village['name']}' ({new_village['id']}) has been settled.")
-            loop_state["status"] = "waiting_for_build_up"
-            loop_state["new_village_id"] = new_village['id']
+            slot_state["status"] = "waiting_for_build_up"
+            slot_state["new_village_id"] = new_village['id']
             
-            # This is the key part: trigger the special agent via the bot manager
             agent.socketio.emit('start_special_agent', {
                 'account_username': agent.client.username,
                 'village_id': new_village['id']
             })
         else:
-            log.error(f"[{agent.village_name}] Settlement failed. New village not found. Restarting loop.")
-            loop_state["status"] = "idle"
+            log.error(f"[{agent.village_name}] Settlement failed. New village not found. Resetting slot.")
+            slot_state["status"] = "idle"
+
+        # --- START OF CHANGE: Always un-reserve the target after checking ---
+        with state_lock:
+            if coord_tuple and coord_tuple in BOT_STATE["reserved_settle_targets"]:
+                BOT_STATE["reserved_settle_targets"].remove(coord_tuple)
+                log.info(f"[{agent.village_name}] Un-reserving target {coord_tuple} after settlement check.")
+        # --- END OF CHANGE ---
             
         save_config()
+
+    def check_build_up_complete(self, agent, slot_state):
+        new_village_id = slot_state.get("new_village_id")
         
-    def check_build_up_complete(self, village_data, loop_state):
-        """Checks if the special agent for the new village is finished."""
-        agent = self.agent
-        new_village_id = loop_state.get("new_village_id")
-        
-        # The special agent should signal its completion by clearing its own build queue
         with state_lock:
             new_village_queue = BOT_STATE.get("build_queues", {}).get(str(new_village_id), [])
             
         if not new_village_queue:
-            log.info(f"[{agent.village_name}] Build-up of village {new_village_id} is complete. Starting destruction phase.")
-            loop_state["status"] = "destroying"
+            log.info(f"[{agent.village_name}] Build-up of village {new_village_id} is complete. Starting destruction.")
+            slot_state["status"] = "destroying"
         
         save_config()
 
-    def destroy_village(self, village_data, loop_state):
-        """Initiates the catapult waves to destroy the newly built village."""
-        agent = self.agent
-        new_village_id = loop_state.get("new_village_id")
+    def destroy_village(self, agent, village_data, slot_state, loop_state):
+        new_village_id = slot_state.get("new_village_id")
         origin_village_id = loop_state.get("catapult_origin_village") or agent.village_id
         
-        with state_lock:
-            # Re-fetch all village data to ensure we have the latest info for the new village
-            all_player_villages = BOT_STATE.get("village_data", {}).get(agent.client.username, [])
-            target_village_details = next((v for v in all_player_villages if v.get('id') == new_village_id), None)
-
-        if not target_village_details:
-             # If not in the main list, fetch its details directly
-             target_village_details = agent.client.fetch_and_parse_village(new_village_id)
+        target_village_details = agent.client.fetch_and_parse_village(new_village_id)
 
         if not target_village_details or 'coords' not in target_village_details:
-            log.error(f"[{agent.village_name}] Cannot find coordinates for target village {new_village_id}. Aborting destruction.")
-            loop_state["status"] = "idle"
+            log.error(f"[{agent.village_name}] Cannot find coordinates for target village {new_village_id}. Aborting.")
+            slot_state["status"] = "idle"
+            save_config()
             return
 
         target_coords = target_village_details['coords']
-        
-        # Assuming Teuton catapults (t8). Adjust if needed.
         attack_troops = {'t8': 100}
 
-        log.info(f"[{agent.village_name}] Sending 17 catapult waves from village {origin_village_id} to {new_village_id} at ({target_coords['x']}|{target_coords['y']}).")
+        log.info(f"[{agent.village_name}] Sending 17 catapult waves from village {origin_village_id} to destroy {new_village_id}.")
         
         success = agent.client.send_catapult_waves(
             from_village_id=int(origin_village_id),
@@ -232,23 +262,18 @@ class Module(BaseModule):
         )
 
         if success:
-            log.info(f"[{agent.village_name}] All catapult waves sent. Now waiting for destruction.")
-            loop_state["status"] = "waiting_for_destruction"
+            log.info(f"[{agent.village_name}] All catapult waves sent. Waiting for destruction.")
+            slot_state["status"] = "waiting_for_destruction"
         else:
-            log.error(f"[{agent.village_name}] Failed to send catapult waves. Resetting loop.")
-            loop_state["status"] = "idle"
+            log.error(f"[{agent.village_name}] Failed to send catapult waves. Resetting loop slot.")
+            slot_state["status"] = "idle"
             
         save_config()
 
-
-    def check_destruction_complete(self, village_data, loop_state):
-        """Checks if the settled village has been destroyed by seeing if it's gone from the village list."""
-        agent = self.agent
-        new_village_id = loop_state.get("new_village_id")
-
+    def check_destruction_complete(self, agent, slot_state):
+        new_village_id = slot_state.get("new_village_id")
         if not new_village_id:
-            log.info(f"[{agent.village_name}] No new village ID in state. Resetting loop to idle.")
-            loop_state["status"] = "idle"
+            slot_state["status"] = "idle"
             save_config()
             return
 
@@ -258,10 +283,8 @@ class Module(BaseModule):
         village_exists = any(v['id'] == new_village_id for v in all_villages)
 
         if not village_exists:
-            log.info(f"[{agent.village_name}] SUCCESS! Village {new_village_id} has been destroyed. Restarting loop.")
-            loop_state["status"] = "idle"
-            loop_state["new_village_id"] = None
-            loop_state["target_coords"] = None
+            log.info(f"[{agent.village_name}] SUCCESS! Village {new_village_id} has been destroyed. Slot is now free.")
+            slot_state["status"] = "idle"
         else:
             log.info(f"[{agent.village_name}] Village {new_village_id} still exists. Will check again on the next cycle.")
 

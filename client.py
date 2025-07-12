@@ -1,3 +1,5 @@
+# js-92-ch/travianhttpbot/TravianHttpBot-loop/client.py
+
 import re
 import json
 import requests
@@ -340,19 +342,16 @@ class TravianClient:
             except Exception: continue
         out['buildings'] = list(found_buildings.values())
         
-        # --- START OF FIX ---
         for li in soup.select(".buildingList li"):
             if (name_div := li.find("div", class_="name")) and (lvl_span := li.find("span", class_="lvl")) and (timer_span := li.find("span", class_="timer")):
-                # Extract only the number from the level text
                 level_text = lvl_span.text.strip()
                 level_match = re.search(r'\d+', level_text)
                 level = int(level_match.group(0)) if level_match else 0
                 out["queue"].append({
                     "name": name_div.text.strip(),
-                    "level": level, # Save the corrected integer level
+                    "level": level,
                     "eta": int(timer_span.get("value", 0))
                 })
-        # --- END OF FIX ---
                 
         for v_entry in soup.select("#sidebarBoxVillageList .listEntry"):
             if link := v_entry.find("a",href=re.compile(r"newdid=")):
@@ -419,7 +418,7 @@ class TravianClient:
                 "action": "inventory",
                 "itemId": item_id,
                 "amount": 1,
-                "targetPlaceId": -1  # -1 is the helmet slot
+                "targetPlaceId": -1
             }
             headers = {
                 'X-Version': self.server_version,
@@ -869,8 +868,6 @@ class TravianClient:
             log.error(f"[{self.username}] Failed to execute demolition: {e}", exc_info=True)
             return 0
         
-    # In client.py
-
     def get_smithy_page(self, village_id: int, gid: int) -> Optional[Dict]:
         """Fetches and parses a building page using its GID."""
         try:
@@ -1019,233 +1016,218 @@ class TravianClient:
         except Exception as e:
             log.error(f"[{self.username}] An error occurred while fetching infobox HTML: {e}", exc_info=True)
             return None
-        
-def send_resources(self, from_village_id: int, target_x: int, target_y: int, resources: Dict[str, int], runs: int = 1) -> bool:
-    """
-    Sends resources to another village using the marketplace via the REST API.
-    `resources` should be a dict like {'lumber': 1000, 'clay': 1000, ...}
-    """
-    log.info(f"[{self.username}] Attempting to send {runs} run(s) of resources from village {from_village_id} to ({target_x}|{target_y}).")
 
-    # Ensure all resource keys are present, defaulting to 0 if not provided
-    payload_resources = {
-        "lumber": resources.get('lumber', 0),
-        "clay": resources.get('clay', 0),
-        "iron": resources.get('iron', 0),
-        "crop": resources.get('crop', 0)
-    }
+    def send_resources(self, from_village_id: int, target_x: int, target_y: int, resources: Dict[str, int], runs: int = 1) -> bool:
+        """
+        Sends resources to another village using the marketplace via the REST API.
+        `resources` should be a dict like {'lumber': 1000, 'clay': 1000, ...}
+        """
+        log.info(f"[{self.username}] Attempting to send {runs} run(s) of resources from village {from_village_id} to ({target_x}|{target_y}).")
 
-    # The final payload for the PUT request, matching your logs
-    payload = {
-        "action": "marketPlace",
-        "resources": payload_resources,
-        "destination": {
-            "x": int(target_x),
-            "y": int(target_y)
-        },
-        "runs": int(runs),
-        "useTradeShips": False
-    }
-
-    try:
-        api_url = f"{self.server_url}/api/v1/marketplace/resources/send"
-        headers = {
-            'X-Version': self.server_version,
-            'X-Requested-With': 'XMLHttpRequest',
-            'Content-Type': 'application/json; charset=UTF-8',
-            'Accept': 'application/json, text/javascript, */*; q=0.01',
-            # Find the marketplace's location ID to build a realistic referer
-            'Referer': f"{self.server_url}/build.php?t=5"
+        payload_resources = {
+            "lumber": resources.get('lumber', 0),
+            "clay": resources.get('clay', 0),
+            "iron": resources.get('iron', 0),
+            "crop": resources.get('crop', 0)
         }
-        
-        # Use the PUT method as identified in your network logs
-        resp = self.sess.put(api_url, json=payload, headers=headers, timeout=15)
-        resp_data = resp.json()
 
-        # A successful request returns a 200 status code and a 'duration' key in the response
-        if resp.status_code == 200 and "duration" in resp_data:
-            duration = resp_data.get('duration')
-            log.info(f"[{self.username}] Successfully sent resources to ({target_x}|{target_y}). Travel time: {duration}s.")
-            return True
-        else:
-            log.error(f"[{self.username}] Failed to send resources. Server responded with status {resp.status_code}: {resp.text}")
-            return False
+        payload = {
+            "action": "marketPlace",
+            "resources": payload_resources,
+            "destination": {
+                "x": int(target_x),
+                "y": int(target_y)
+            },
+            "runs": int(runs),
+            "useTradeShips": False
+        }
 
-    except Exception as e:
-        log.error(f"[{self.username}] A critical error occurred while sending resources: {e}", exc_info=True)
-        return False
-
-def get_map_data(self, x: int, y: int) -> Optional[Dict[str, Any]]:
-        """Fetches map data for a 7x7 grid centered on the given coordinates."""
-        log.info(f"[{self.username}] Fetching map data around ({x}|{y}).")
         try:
-            api_url = f"{self.server_url}/api/v1/map/position"
-            payload = {
-                "data": {
-                    "x": str(x),
-                    "y": str(y),
-                    "zoomLevel": 3, # Fetches a wider area
-                    "ignorePositions": []
-                }
-            }
+            api_url = f"{self.server_url}/api/v1/marketplace/resources/send"
             headers = {
                 'X-Version': self.server_version,
                 'X-Requested-With': 'XMLHttpRequest',
-                'Content-Type': 'application/json; charset=UTF-8'
+                'Content-Type': 'application/json; charset=UTF-8',
+                'Accept': 'application/json, text/javascript, */*; q=0.01',
+                'Referer': f"{self.server_url}/build.php?t=5"
             }
-            resp = self.sess.post(api_url, json=payload, headers=headers, timeout=20)
-            return resp.json()
+            
+            resp = self.sess.put(api_url, json=payload, headers=headers, timeout=15)
+            resp_data = resp.json()
+
+            if resp.status_code == 200 and "duration" in resp_data:
+                duration = resp_data.get('duration')
+                log.info(f"[{self.username}] Successfully sent resources to ({target_x}|{target_y}). Travel time: {duration}s.")
+                return True
+            else:
+                log.error(f"[{self.username}] Failed to send resources. Server responded with status {resp.status_code}: {resp.text}")
+                return False
+
         except Exception as e:
-            log.error(f"[{self.username}] Failed to fetch map data: {e}", exc_info=True)
-            return None
+            log.error(f"[{self.username}] A critical error occurred while sending resources: {e}", exc_info=True)
+            return False
+
+    def get_map_data(self, x: int, y: int) -> Optional[Dict[str, Any]]:
+            """Fetches map data for a 7x7 grid centered on the given coordinates."""
+            log.info(f"[{self.username}] Fetching map data around ({x}|{y}).")
+            try:
+                api_url = f"{self.server_url}/api/v1/map/position"
+                payload = {
+                    "data": {
+                        "x": str(x),
+                        "y": str(y),
+                        "zoomLevel": 3,
+                        "ignorePositions": []
+                    }
+                }
+                headers = {
+                    'X-Version': self.server_version,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json; charset=UTF-8'
+                }
+                resp = self.sess.post(api_url, json=payload, headers=headers, timeout=20)
+                return resp.json()
+            except Exception as e:
+                log.error(f"[{self.username}] Failed to fetch map data: {e}", exc_info=True)
+                return None
             
-def get_all_villages(self) -> List[Dict[str, Any]]:
-    """Fetches the complete list of villages from the sidebar."""
-    try:
-        resp = self.sess.get(f"{self.server_url}/dorf1.php", timeout=15)
-        parsed_data = self.parse_village_page(resp.text, "dorf1")
-        return parsed_data.get("villages", [])
-    except Exception as e:
-        log.error(f"[{self.username}] Failed to get all villages: {e}")
-        return []
+    def get_all_villages(self) -> List[Dict[str, Any]]:
+        """Fetches the complete list of villages from the sidebar."""
+        try:
+            resp = self.sess.get(f"{self.server_url}/dorf1.php", timeout=15)
+            parsed_data = self.parse_village_page(resp.text, "dorf1")
+            return parsed_data.get("villages", [])
+        except Exception as e:
+            log.error(f"[{self.username}] Failed to get all villages: {e}")
+            return []
 
-def train_settlers(self, village_id: int, building_gid: int, amount: int) -> bool:
-    """Trains a specific amount of settlers."""
-    log.info(f"[{self.username}] Attempting to train {amount} settlers in village {village_id} from GID {building_gid}.")
-    try:
-        # Step 1: Find the location ID of the building
-        dorf2_resp = self.sess.get(f"{self.server_url}/dorf2.php?newdid={village_id}", timeout=15)
-        dorf2_soup = BeautifulSoup(dorf2_resp.text, 'html.parser')
-        building_slot = dorf2_soup.select_one(f'.buildingSlot.g{building_gid}')
-        if not building_slot or not building_slot.has_attr('data-aid'):
-            log.error(f"[{self.username}] Could not find building GID {building_gid} in village {village_id}.")
-            return False
-        location_id = building_slot['data-aid']
+    def train_settlers(self, village_id: int, building_gid: int, amount: int) -> Tuple[bool, int]:
+        """Trains a specific amount of settlers and returns the total queue time."""
+        log.info(f"[{self.username}] Attempting to train {amount} settlers in village {village_id} from GID {building_gid}.")
+        try:
+            dorf2_resp = self.sess.get(f"{self.server_url}/dorf2.php?newdid={village_id}", timeout=15)
+            dorf2_soup = BeautifulSoup(dorf2_resp.text, 'html.parser')
+            building_slot = dorf2_soup.select_one(f'.buildingSlot.g{building_gid}')
+            if not building_slot or not building_slot.has_attr('data-aid'):
+                log.error(f"[{self.username}] Could not find building GID {building_gid} in village {village_id}.")
+                return False, 0
+            location_id = building_slot['data-aid']
 
-        # Step 2: GET the training page to get form details
-        train_page_url = f"{self.server_url}/build.php?newdid={village_id}&gid={building_gid}&s=1"
-        train_page_resp = self.sess.get(train_page_url, timeout=15)
-        train_soup = BeautifulSoup(train_page_resp.text, 'html.parser')
+            train_page_url = f"{self.server_url}/build.php?newdid={village_id}&gid={building_gid}&s=1"
+            train_page_resp = self.sess.get(train_page_url, timeout=15)
+            train_soup = BeautifulSoup(train_page_resp.text, 'html.parser')
 
-        form = train_soup.find('form', {'name': 'snd'})
-        if not form:
-            log.error(f"[{self.username}] Could not find training form for settlers.")
-            return False
+            form = train_soup.find('form', {'name': 'snd'})
+            if not form:
+                log.error(f"[{self.username}] Could not find training form for settlers.")
+                return False, 0
 
-        payload = {i['name']: i['value'] for i in form.find_all('input', {'type': 'hidden'})}
-        
-        # Settlers are t10 for Romans, t20 for Teutons, t30 for Gauls, etc.
-        # We need to find the correct input name.
-        settler_input = train_soup.find('input', {'name': re.compile(r't\d0')})
-        if not settler_input:
-            log.error(f"[{self.username}] Could not find settler input field on training page.")
-            return False
-
-        payload[settler_input['name']] = str(amount)
-        payload['s1'] = 'ok' # The 'Train' button
-
-        # Step 3: POST to train
-        post_url = urljoin(self.server_url, form['action'])
-        resp = self.sess.post(post_url, data=payload, headers={'Referer': train_page_url})
-        
-        if "in training" in resp.text.lower() or "duration" in resp.text.lower():
-            log.info(f"[{self.username}] Successfully queued {amount} settlers for training.")
-            return True
-        else:
-            log.error(f"[{self.username}] Failed to queue settlers. Response might indicate lack of resources.")
-            # Here you would integrate the hero resource usage
-            return False
-
-    except Exception as e:
-        log.error(f"[{self.username}] An error occurred during train_settlers: {e}", exc_info=True)
-        return False
-
-def send_settlers(self, from_village_id: int, target_coords: Dict[str, int]) -> Tuple[bool, int]:
-    """Sends 3 settlers to found a new village at the given coordinates."""
-    log.info(f"[{self.username}] Initiating settlement at ({target_coords['x']}|{target_coords['y']}) from village {from_village_id}.")
-    try:
-        # Travian formula for converting coords to kid
-        map_size = 400 
-        width = 2 * map_size + 1
-        kid = (target_coords['y'] + map_size) * width + (target_coords['x'] + map_size) + 1
-
-        # Step 1: GET the rally point confirmation page
-        confirm_url = f"{self.server_url}/build.php?id=39&tt=2&kid={kid}&a=6"
-        confirm_resp = self.sess.get(confirm_url, timeout=15)
-        confirm_soup = BeautifulSoup(confirm_resp.text, 'html.parser')
-
-        form = confirm_soup.find('form', {'action': re.compile(r'build\.php')})
-        if not form:
-            log.error(f"[{self.username}] Could not find settlement confirmation form.")
-            return False, 0
+            payload = {i['name']: i['value'] for i in form.find_all('input', {'type': 'hidden'})}
             
-        payload = {i['name']: i['value'] for i in form.find_all('input', {'type': 'hidden'})}
-        payload['s1'] = 'Send' # The confirm button
-        
-        # Step 2: Parse travel time
-        travel_time = 0
-        arrival_info = confirm_soup.select_one('.in')
-        if arrival_info:
-            time_match = re.search(r'(\d+):(\d{2}):(\d{2})', arrival_info.text)
-            if time_match:
-                h, m, s = map(int, time_match.groups())
-                travel_time = h * 3600 + m * 60 + s
+            settler_input = train_soup.find('input', {'name': re.compile(r't\d0')})
+            if not settler_input:
+                log.error(f"[{self.username}] Could not find settler input field on training page.")
+                return False, 0
 
-        # Step 3: POST to send the settlers
-        post_url = urljoin(self.server_url, form['action'])
-        final_resp = self.sess.post(post_url, data=payload, headers={'Referer': confirm_url})
+            payload[settler_input['name']] = str(amount)
+            payload['s1'] = 'ok'
 
-        if "troops are on their way" in final_resp.text:
-            log.info(f"[{self.username}] Settlement mission successfully sent.")
-            return True, travel_time
-        else:
-            log.error(f"[{self.username}] Final settlement send request failed.")
+            post_url = urljoin(self.server_url, form['action'])
+            resp = self.sess.post(post_url, data=payload, headers={'Referer': train_page_url})
+            
+            if "in training" in resp.text.lower() or "duration" in resp.text.lower():
+                log.info(f"[{self.username}] Successfully queued {amount} settlers for training.")
+                soup = BeautifulSoup(resp.text, 'html.parser')
+                duration = 0
+                if queue_table := soup.find('table', class_='under_progress'):
+                    timers = queue_table.select('td.dur span.timer')
+                    if timers:
+                        duration = int(timers[-1].get('value', 0))
+                
+                if duration > 0:
+                    log.info(f"[{self.username}] Total training time for settlers: {duration}s.")
+                else:
+                    log.warning(f"[{self.username}] Could not parse settler training time, will use a default wait.")
+                    duration = 300
+
+                return True, duration
+            else:
+                log.error(f"[{self.username}] Failed to queue settlers. Response might indicate lack of resources.")
+                return False, 0
+
+        except Exception as e:
+            log.error(f"[{self.username}] An error occurred during train_settlers: {e}", exc_info=True)
             return False, 0
 
-    except Exception as e:
-        log.error(f"[{self.username}] A critical error occurred during send_settlers: {e}", exc_info=True)
-        return False, 0
+    def send_settlers(self, from_village_id: int, target_coords: Dict[str, int]) -> Tuple[bool, int]:
+        """Sends 3 settlers to found a new village at the given coordinates."""
+        log.info(f"[{self.username}] Initiating settlement at ({target_coords['x']}|{target_coords['y']}) from village {from_village_id}.")
+        try:
+            # --- START OF CORRECTION: Use the correct map size and formula for kid calculation ---
+            map_size = 200 
+            width = 2 * map_size + 1
+            # This is the standard formula used by Travian to convert coordinates to a map ID (kid)
+            kid = (map_size - target_coords['y']) * width + (target_coords['x'] + map_size) + 1
+            # --- END OF CORRECTION ---
+
+            # Step 1: GET the rally point confirmation page with the correct kid
+            confirm_url = f"{self.server_url}/build.php?id=39&tt=2&kid={kid}&a=6"
+            confirm_resp = self.sess.get(confirm_url, timeout=15)
+            confirm_soup = BeautifulSoup(confirm_resp.text, 'html.parser')
+
+            form = confirm_soup.find('form', {'action': re.compile(r'build\.php')})
+            if not form:
+                log.error(f"[{self.username}] Could not find settlement confirmation form. This may be due to an incorrect kid, or not enough resources/settlers.")
+                return False, 0
+            
+            payload = {i['name']: i['value'] for i in form.find_all('input', {'type': 'hidden'})}
+            payload['s1'] = 'Send'
+            
+            travel_time = 0
+            arrival_info = confirm_soup.select_one('.in')
+            if arrival_info:
+                time_match = re.search(r'(\d+):(\d{2}):(\d{2})', arrival_info.text)
+                if time_match:
+                    h, m, s = map(int, time_match.groups())
+                    travel_time = h * 3600 + m * 60 + s
+
+            # Step 2: POST to send the settlers
+            post_url = urljoin(self.server_url, form['action'])
+            final_resp = self.sess.post(post_url, data=payload, headers={'Referer': confirm_url})
+
+            if "troops are on their way" in final_resp.text:
+                log.info(f"[{self.username}] Settlement mission successfully sent. Travel time: {travel_time}s")
+                return True, travel_time
+            else:
+                log.error(f"[{self.username}] Final settlement send request failed.")
+                return False, 0
+
+        except Exception as e:
+            log.error(f"[{self.username}] A critical error occurred during send_settlers: {e}", exc_info=True)
+            return False, 0
     
-def send_catapult_waves(self, from_village_id: int, target_x: int, target_y: int, troops: Dict[str, int], waves: int, target_gid: int = 27) -> bool:
+    def send_catapult_waves(self, from_village_id: int, target_x: int, target_y: int, troops: Dict[str, int], waves: int, target_gid: int = 27) -> bool:
         """
         Sends multiple waves of catapults to a specific target. The first wave includes 200 rams.
-
-        Args:
-            from_village_id: The village ID to send troops from.
-            target_x: The target's X coordinate.
-            target_y: The target's Y coordinate.
-            troops: A dictionary of troops to send in every wave (e.g., catapults).
-            waves: The total number of waves to send.
-            target_gid: The GID of the building to target (default is Main Building).
-
-        Returns:
-            True if all waves were sent successfully, False otherwise.
         """
         log.info(f"[{self.username}] Preparing to send {waves} catapult waves from village {from_village_id} to ({target_x}|{target_y}).")
 
         try:
-            # Loop for each wave
             for i in range(waves):
                 log.info(f"[{self.username}] Preparing wave {i + 1}/{waves}...")
 
-                # --- START OF CHANGE: Define troops for the current wave ---
                 current_wave_troops = troops.copy()
                 if i == 0:
-                    # Add 200 rams (t7) to the first wave only
                     current_wave_troops['t7'] = current_wave_troops.get('t7', 0) + 200
                     log.info(f"[{self.username}] This is the first wave, adding 200 rams.")
-                # --- END OF CHANGE ---
 
-                # Step 1: Prepare the initial payload with the correct troops for this wave
                 first_post_params = {'x': str(target_x), 'y': str(target_y), 'eventType': '3', 'ok': 'ok'}
                 for troop_type, count in current_wave_troops.items():
                     first_post_params[f"troop[{troop_type}]"] = str(count)
 
-                # Step 2: Get the confirmation page to get a fresh checksum for each wave
                 confirm_resp = self.sess.post(f"{self.server_url}/build.php?id=39&tt=2", data=first_post_params, timeout=15)
                 confirm_soup = BeautifulSoup(confirm_resp.text, 'html.parser')
 
-                # Step 3: Parse the confirmation page for hidden fields and checksum
                 form = confirm_soup.find('form', id='troopSendForm')
                 if not form:
                     log.error(f"[{self.username}] Wave {i + 1}: Could not find confirmation form. Aborting.")
@@ -1253,12 +1235,10 @@ def send_catapult_waves(self, from_village_id: int, target_x: int, target_y: int
 
                 final_payload = {inp.get('name'): inp.get('value') for inp in form.find_all('input', {'name': True})}
 
-                # Add catapult targets to the payload
                 final_payload['troops[0][catapultTarget1]'] = str(target_gid)
                 if confirm_soup.select_one('select[name="troops[0][catapultTarget2]"]'):
                     final_payload['troops[0][catapultTarget2]'] = str(target_gid)
 
-                # Step 4: Send the final confirmation POST
                 final_action_url = urljoin(self.server_url, form['action'])
                 final_resp = self.sess.post(final_action_url, data=final_payload, timeout=15)
 
@@ -1280,3 +1260,49 @@ def send_catapult_waves(self, from_village_id: int, target_x: int, target_y: int
         except Exception as e:
             log.error(f"[{self.username}] A critical error occurred during send_catapult_waves: {e}", exc_info=True)
             return False
+        
+    def get_home_troops(self, village_id: int) -> Dict[str, int]:
+        """
+        Fetches the rally point to get a list of all troops currently in the village.
+        Returns a dictionary mapping troop name (e.g., 'Clubswinger', 'Settler') to its count.
+        """
+        log.info(f"[{self.username}] Checking for home troops in village {village_id}.")
+        troops = {}
+        try:
+            url = f"{self.server_url}/build.php?newdid={village_id}&gid=16&tt=1"
+            resp = self.sess.get(url, timeout=15)
+            soup = BeautifulSoup(resp.text, 'html.parser')
+
+            troop_table = soup.find('table', class_='troop_details')
+            if not troop_table:
+                log.warning(f"[{self.username}] Could not find troop_details table in rally point for village {village_id}.")
+                return {}
+
+            unit_row = troop_table.select_one('tbody.units')
+            count_row = troop_table.select_one('tbody.units.last')
+
+            if not unit_row or not count_row:
+                log.warning(f"[{self.username}] Could not find unit/count rows in troop_details table for village {village_id}.")
+                return {}
+
+            unit_icons = unit_row.select('img.unit')
+            unit_counts = count_row.select('td.unit')
+
+            for i, icon in enumerate(unit_icons):
+                troop_name = icon.get('alt', '').strip()
+                if not troop_name:
+                    continue
+                
+                if i < len(unit_counts):
+                    count_text = unit_counts[i].text.strip().replace(',', '')
+                    if count_text.isdigit():
+                        troops[troop_name] = int(count_text)
+                    else:
+                        troops[troop_name] = 0
+            
+            log.info(f"[{self.username}] Found troops: {troops}")
+            return troops
+
+        except Exception as e:
+            log.error(f"[{self.username}] An error occurred while getting home troops for village {village_id}: {e}", exc_info=True)
+            return {}
