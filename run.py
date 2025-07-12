@@ -1,10 +1,15 @@
-import eventlet
-eventlet.monkey_patch()
+import sys
+from PyQt6.QtWidgets import QApplication
 
-from dashboard import app, socketio
-from config import load_config, log
+from main_window import MainWindow
+from config import load_config
 
 if __name__ == "__main__":
+    # Load the configuration first
     load_config()
-    log.info("Dashboard available at http://127.0.0.1:5000")
-    socketio.run(app, host="0.0.0.0", port=5000)
+
+    # Create and run the PyQt application
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())

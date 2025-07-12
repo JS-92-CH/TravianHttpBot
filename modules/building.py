@@ -177,6 +177,31 @@ class Module(BaseModule):
                 save_config()
                 return 'queue_modified'
             
+            # -----------------------------------------------------------
+            # BEFORE launching a fresh build, see whether an existing copy
+            # of the same GID can simply be upgraded to the requested level
+            # -----------------------------------------------------------
+            existing_same_gid = [
+                b for b in all_buildings
+                if b.get('gid') == goal_gid
+                and b.get('level', 0) < goal_level          # still needs work
+                and b['id'] not in [q['location'] for q in active_builds]  # not already queued
+            ]
+
+            if is_new_build and existing_same_gid:
+                # pick the lowest-level candidate (or any policy you prefer)
+                candidate = min(existing_same_gid, key=lambda b: b['level'])
+                log.info(
+                    f"AGENT({agent.village_name}): Redirecting task → upgrade existing "
+                    f"{gid_name(goal_gid)} at loc {candidate['id']} "
+                    f"(Lvl {candidate['level']} → {goal_level})."
+                )
+
+                with state_lock:
+                    BOT_STATE["build_queues"][str(agent.village_id)][0]['location'] = candidate['id']
+                save_config()
+                return 'queue_modified'
+
             if is_new_build:
                 # Last check: if we are about to build a new unique building, make sure one doesn't already exist somewhere else
                 if not is_multi_instance(goal_gid) and any(b.get('gid') == goal_gid for b in all_buildings):

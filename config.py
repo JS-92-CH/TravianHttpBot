@@ -4,6 +4,7 @@ import json
 import threading
 import logging
 from typing import List, Dict, Any
+from qt_handler import QtLogHandler
 
 # ANSI escape codes for colors
 class bcolors:
@@ -29,36 +30,28 @@ class ColoredFormatter(logging.Formatter):
 # ─────────────────────────────────────────
 # LOGGING
 # ─────────────────────────────────────────
-class SocketIOHandler(logging.Handler):
-    def __init__(self, socketio_instance):
-        super().__init__()
-        self.socketio = socketio_instance
+log = logging.getLogger("TravianBot")
 
-    def emit(self, record):
-        log_entry = self.format(record)
-        # Remove ANSI color codes for the web dashboard
-        log_entry = re.sub(r'\x1b\[[0-9;]*m', '', log_entry)
-        self.socketio.emit('log_message', {'data': log_entry})
-
-def setup_logging(socketio_instance=None):
-    """Sets up the global logger."""
-    log = logging.getLogger("TravianBot")
+def setup_logging(gui_handler: QtLogHandler = None):
+    """Sets up the global logger, optionally adding a GUI handler."""
     if not log.handlers:
         log.setLevel(logging.INFO)
+        # Console handler
         stream_handler = logging.StreamHandler()
-        # Use the new ColoredFormatter for console output
         stream_handler.setFormatter(ColoredFormatter('[%(levelname)s] [%(asctime)s] %(message)s'))
         log.addHandler(stream_handler)
-        
-        if socketio_instance:
-            socketio_handler = SocketIOHandler(socketio_instance)
-            socketio_handler.setFormatter(logging.Formatter('%(message)s'))
-            log.addHandler(socketio_handler)
 
+        # GUI handler (if provided)
+        if gui_handler:
+            gui_handler.setFormatter(logging.Formatter('%(message)s'))
+            log.addHandler(gui_handler)
+
+        # Silence other noisy loggers
         logging.getLogger("werkzeug").setLevel(logging.ERROR)
-    return log
+        logging.getLogger("requests").setLevel(logging.WARNING)
+        logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-log = setup_logging()
+
 # ─────────────────────────────────────────
 # SHARED STATE
 # ─────────────────────────────────────────
@@ -85,7 +78,7 @@ BOT_STATE: Dict[str, Any] = {
             {"type": "building", "location": 25, "gid": 17, "level": 1},
             {"type": "building", "location": 27, "gid": 13, "level": 3},
             {"type": "building", "location": 28, "gid": 20, "level": 15},
-            {"type": "building", "location": 29, "gid": 21, "level": 10},            
+            {"type": "building", "location": 29, "gid": 21, "level": 10},
             {"type": "building", "location": 40, "gid": 31, "level": 20},
             {"type": "building", "location": 19, "gid": 25, "level": 20},
             {"type": "building", "location": 20, "gid": 19, "level": 20},
@@ -108,45 +101,45 @@ BOT_STATE: Dict[str, Any] = {
             {"type": "building", "location": 37, "gid": 11, "level": 20}
         ],
             "Task_Focused": [
-    { "type": "building", "gid": 15, "level": 20, "location": 26 }, # Main Building
-    { "type": "resource_plan", "level": 2 },                        # Upgrade all resource fields to level 2
-    { "type": "building", "gid": 10, "level": 1 },                  # Warehouse
-    { "type": "building", "gid": 11, "level": 1 },                  # Granary
-    { "type": "building", "gid": 16, "level": 1 },                  # Rally Point
-    { "type": "building", "gid": 19, "level": 10 },                 # Barracks
-    { "type": "building", "gid": 22, "level": 10 },                 # Academy
-    { "type": "building", "gid": 24, "level": 1 },                  # Town Hall
-    { "type": "building", "gid": 17, "level": 1 },                  # Marketplace
-    { "type": "building", "gid": 25, "level": 1 },                  # Residence
-    { "type": "building", "gid": 31, "level": 1 },                  # City Wall
-    { "type": "building", "gid": 23, "level": 10 },                 # Cranny
-    { "type": "resource_plan", "level": 4 },                        # Upgrade all resource fields to level 4
-    { "type": "resource_plan", "level": 7 },                        # Upgrade all resource fields to level 7
-    { "type": "building", "gid": 1, "level": 10 },                  # Woodcutter
-    { "type": "building", "gid": 2, "level": 10 },                  # Clay Pit
-    { "type": "building", "gid": 3, "level": 10 },                  # Iron Mine
-    { "type": "building", "gid": 4, "level": 10 },                  # Cropland
-    { "type": "building", "gid": 18, "level": 10 },                 # Embassy
-    { "type": "building", "gid": 13, "level": 10 },                 # Smithy
-    { "type": "building", "gid": 20, "level": 10 },                 # Stable
-    { "type": "building", "gid": 10, "level": 10 },                 # Warehouse
-    { "type": "building", "gid": 11, "level": 10 },                 # Granary
-    { "type": "building", "gid": 16, "level": 10 },                 # Rally Point
-    { "type": "building", "gid": 17, "level": 10 },                 # Marketplace
-    { "type": "building", "gid": 25, "level": 10 },                 # Residence
-    { "type": "building", "gid": 31, "level": 10 },                 # City Wall
-    { "type": "building", "gid": 24, "level": 10 },                  # Town Hall
-    { "type": "building", "gid": 18, "level": 16 },                 # Embassy
-    { "type": "building", "gid": 13, "level": 16 },                 # Smithy
-    { "type": "building", "gid": 20, "level": 16 },                 # Stable
-    { "type": "building", "gid": 10, "level": 16 },                 # Warehouse
-    { "type": "building", "gid": 11, "level": 16 },                 # Granary
-    { "type": "building", "gid": 16, "level": 20 },                 # Rally Point
-    { "type": "building", "gid": 31, "level": 20 },                 # City Wall
-    { "type": "building", "gid": 22, "level": 20 },                 # Academy
-    { "type": "building", "gid": 19, "level": 20 },                 # Barracks
-    { "type": "building", "gid": 17, "level": 20 }                 # Marketplace
-],
+            { "type": "building", "gid": 15, "level": 20, "location": 26 }, # Main Building
+            { "type": "resource_plan", "level": 2 },                        # Upgrade all resource fields to level 2
+            { "type": "building", "gid": 10, "level": 1 },                  # Warehouse
+            { "type": "building", "gid": 11, "level": 1 },                  # Granary
+            { "type": "building", "gid": 16, "level": 1 },                  # Rally Point
+            { "type": "building", "gid": 19, "level": 10 },                 # Barracks
+            { "type": "building", "gid": 22, "level": 10 },                 # Academy
+            { "type": "building", "gid": 24, "level": 1 },                  # Town Hall
+            { "type": "building", "gid": 17, "level": 1 },                  # Marketplace
+            { "type": "building", "gid": 25, "level": 1 },                  # Residence
+            { "type": "building", "gid": 31, "level": 1 },                  # City Wall
+            { "type": "building", "gid": 23, "level": 10 },                 # Cranny
+            { "type": "resource_plan", "level": 4 },                        # Upgrade all resource fields to level 4
+            { "type": "resource_plan", "level": 7 },                        # Upgrade all resource fields to level 7
+            { "type": "building", "gid": 1, "level": 10 },                  # Woodcutter
+            { "type": "building", "gid": 2, "level": 10 },                  # Clay Pit
+            { "type": "building", "gid": 3, "level": 10 },                  # Iron Mine
+            { "type": "building", "gid": 4, "level": 10 },                  # Cropland
+            { "type": "building", "gid": 18, "level": 10 },                 # Embassy
+            { "type": "building", "gid": 13, "level": 10 },                 # Smithy
+            { "type": "building", "gid": 20, "level": 10 },                 # Stable
+            { "type": "building", "gid": 10, "level": 10 },                 # Warehouse
+            { "type": "building", "gid": 11, "level": 10 },                 # Granary
+            { "type": "building", "gid": 16, "level": 10 },                 # Rally Point
+            { "type": "building", "gid": 17, "level": 10 },                 # Marketplace
+            { "type": "building", "gid": 25, "level": 10 },                 # Residence
+            { "type": "building", "gid": 31, "level": 10 },                 # City Wall
+            { "type": "building", "gid": 24, "level": 10 },                 # Town Hall
+            { "type": "building", "gid": 18, "level": 16 },                 # Embassy
+            { "type": "building", "gid": 13, "level": 16 },                 # Smithy
+            { "type": "building", "gid": 20, "level": 16 },                 # Stable
+            { "type": "building", "gid": 10, "level": 16 },                 # Warehouse
+            { "type": "building", "gid": 11, "level": 16 },                 # Granary
+            { "type": "building", "gid": 16, "level": 20 },                 # Rally Point
+            { "type": "building", "gid": 31, "level": 20 },                 # City Wall
+            { "type": "building", "gid": 22, "level": 20 },                 # Academy
+            { "type": "building", "gid": 19, "level": 20 },                 # Barracks
+            { "type": "building", "gid": 17, "level": 20 }                  # Marketplace
+        ],
         "Roman": [
             {"type": "resource_plan", "level": 10},
             {"type": "building", "gid": 15, "level": 20},
@@ -165,7 +158,6 @@ state_lock = threading.RLock()
 # ─────────────────────────────────────────
 # CONFIG & DEFAULTS
 # ─────────────────────────────────────────
-# --- (CSHARP_BUILD_ORDER, GID_MAPPING, NAME_TO_GID, etc. remain unchanged) ---
 CSHARP_BUILD_ORDER = r"""
 [{"Id":{"Value":0},"Position":0,"Type":0,"Content":"{\"Location\":39,\"Level\":1,\"Type\":16}"},{"Id":{"Value":0},"Position":1,"Type":0,"Content":"{\"Location\":26,\"Level\":20,\"Type\":15}"},{"Id":{"Value":0},"Position":2,"Type":0,"Content":"{\"Location\":19,\"Level\":5,\"Type\":10}"},{"Id":{"Value":0},"Position":3,"Type":0,"Content":"{\"Location\":20,\"Level\":5,\"Type\":11}"},{"Id":{"Value":0},"Position":4,"Type":0,"Content":"{\"Location\":21,\"Level\":1,\"Type\":17}"},{"Id":{"Value":0},"Position":5,"Type":0,"Content":"{\"Location\":22,\"Level\":20,\"Type\":25}"},{"Id":{"Value":0},"Position":6,"Type":1,"Content":"{\"Level\":5,\"Plan\":0}"},{"Id":{"Value":0},"Position":7,"Type":0,"Content":"{\"Location\":23,\"Level\":3,\"Type\":19}"},{"Id":{"Value":0},"Position":8,"Type":0,"Content":"{\"Location\":24,\"Level\":10,\"Type\":22}"},{"Id":{"Value":0},"Position":9,"Type":0,"Content":"{\"Location\":25,\"Level\":20,\"Type\":24}"},{"Id":{"Value":0},"Position":10,"Type":1,"Content":"{\"Level\":10,\"Plan\":0}"},{"Id":{"Value":0},"Position":11,"Type":0,"Content":"{\"Location\":19,\"Level\":20,\"Type\":10}"},{"Id":{"Value":0},"Position":12,"Type":0,"Content":"{\"Location\":20,\"Level\":20,\"Type\":11}"},{"Id":{"Value":0},"Position":13,"Type":0,"Content":"{\"Location\":21,\"Level\":20,\"Type\":17}"},{"Id":{"Value":0},"Position":14,"Type":0,"Content":"{\"Location\":23,\"Level\":20,\"Type\":19}"},{"Id":{"Value":0},"Position":15,"Type":0,"Content":"{\"Location\":24,\"Level\":20,\"Type\":22}"},{"Id":{"Value":0},"Position":16,"Type":0,"Content":"{\"Location\":27,\"Level\":20,\"Type\":13}"},{"Id":{"Value":0},"Position":17,"Type":0,"Content":"{\"Location\":28,\"Level\":20,\"Type\":20}"},{"Id":{"Value":0},"Position":18,"Type":0,"Content":"{\"Location\":29,\"Level\":20,\"Type\":46}"},{"Id":{"Value":0},"Position":19,"Type":0,"Content":"{\"Location\":39,\"Level\":20,\"Type\":16}"},{"Id":{"Value":0},"Position":20,"Type":0,"Content":"{\"Location\":30,\"Level\":20,\"Type\":14}"},{"Id":{"Value":0},"Position":21,"Type":0,"Content":"{\"Location\":40,\"Level\":20,\"Type\":42}"},{"Id":{"Value":0},"Position":22,"Type":0,"Content":"{\"Location\":31,\"Level\":20,\"Type\":21}"},{"Id":{"Value":0},"Position":23,"Type":0,"Content":"{\"Location\":32,\"Level\":5,\"Type\":5}"},{"Id":{"Value":0},"Position":24,"Type":0,"Content":"{\"Location\":33,\"Level\":5,\"Type\":6}"},{"Id":{"Value":0},"Position":25,"Type":0,"Content":"{\"Location\":34,\"Level\":5,\"Type\":7}"},{"Id":{"Value":0},"Position":26,"Type":0,"Content":"{\"Location\":35,\"Level\":5,\"Type\":8}"},{"Id":{"Value":0},"Position":27,"Type":0,"Content":"{\"Location\":36,\"Level\":5,\"Type\":9}"}]
 """
@@ -225,7 +217,7 @@ def load_config() -> None:
                 BOT_STATE["village_data"] = {}
             if "training_data" not in BOT_STATE:
                 BOT_STATE["training_data"] = {}
-        
+
         if config_updated:
             log.info("Configuration was updated with new fields. Saving changes...")
             save_config()
