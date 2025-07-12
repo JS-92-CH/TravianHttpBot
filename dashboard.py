@@ -514,3 +514,44 @@ def handle_start_special_agent(data):
             data.get('account_username'),
             data.get('village_id')
         )
+
+@socketio.on('assign_village_to_loop')
+def handle_assign_to_loop(data):
+    origin_village_id = str(data.get('origin_village_id'))
+    target_village_id = int(data.get('target_village_id'))
+    
+    if not origin_village_id or not target_village_id:
+        return
+
+    log.info(f"UI request to manually assign village {target_village_id} to a loop slot from {origin_village_id}.")
+
+    with state_lock:
+        loop_state = BOT_STATE.get("loop_module_state", {}).get(origin_village_id)
+        if not loop_state:
+            log.error(f"No loop state found for origin village {origin_village_id}.")
+            return
+
+        idle_slot = next((s for s in loop_state.get("settlement_slots", []) if s.get("status") == "idle"), None)
+
+        if not idle_slot:
+            log.warning(f"No idle loop slots available for village {origin_village_id} to assign a new village to.")
+            return
+            
+        idle_slot['new_village_id'] = target_village_id
+        idle_slot['status'] = 'waiting_for_build_up'
+        log.info(f"Assigned village {target_village_id} to an idle slot. Status is now 'waiting_for_build_up'.")
+        
+        account_username = None
+        for username, village_list in BOT_STATE.get("village_data", {}).items():
+            if isinstance(village_list, list) and any(str(v['id']) == origin_village_id for v in village_list):
+                account_username = username
+                break
+
+    save_config()
+
+    if bot_manager_thread and bot_manager_thread.is_alive() and account_username:
+        log.info(f"Triggering special agent for manually assigned village {target_village_id}.")
+        bot_manager_thread.start_special_agent_for_village(
+            account_username,
+            target_village_id
+        )

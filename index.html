@@ -593,6 +593,11 @@ trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px so
                 <hr>
                 <h4>Loop Status</h4>
                 <div id="loop-status-container-${villageId}"></div>
+                <hr>
+<h4 style="margin-top: 1.5rem;">Manual Assignment</h4>
+<p style="color: var(--text-muted); font-size: 0.9em;">If a village was settled but not automatically detected, you can assign it to an idle loop slot here.</p>
+<div id="manual-assign-container-${villageId}" style="display: flex; gap: 1rem; align-items: center; background-color: var(--bg-tertiary); padding: 1rem; border-radius: 6px;">
+    </div>
             </div>`;
 
             let newBuildContent = '<div id="new" class="tab-content"><h4>Build in Empty Slot</h4><table><thead><tr><th>Location</th><th>Action</th></tr></thead><tbody>';
@@ -627,61 +632,90 @@ trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px so
             renderCopyControls(villageId, 'smithy');
             
             const loopState = (FULL_STATE.loop_module_state || {})[villageId] || {};
-            const loopEnabledCheckbox = document.getElementById(`loop-enabled-${villageId}`);
-            if (loopEnabledCheckbox) {
-                loopEnabledCheckbox.checked = loopState.enabled || false;
-            }
+const loopEnabledCheckbox = document.getElementById(`loop-enabled-${villageId}`);
+if (loopEnabledCheckbox) {
+    loopEnabledCheckbox.checked = loopState.enabled || false;
+}
 
-            const loopStatusContainer = document.getElementById(`loop-status-container-${villageId}`);
-            if (loopStatusContainer) {
-                let statusHtml = '<ul>';
-                const settlementSlots = loopState.settlement_slots || [];
-                if (settlementSlots.length > 0) {
-                    settlementSlots.forEach((slot, index) => {
-                        let villageNameStr = '';
-                        if (slot.new_village_id) {
-                            for (const user in FULL_STATE.village_data) {
-                                const village = (FULL_STATE.village_data[user] || []).find(v => v.id == slot.new_village_id);
-                                if (village) {
-                                    villageNameStr = ` (Managing: <strong>${village.name}</strong>)`;
-                                    break;
-                                }
-                            }
-                        }
-                        statusHtml += `<li>Slot ${index + 1}: <span style="font-weight: bold; color: var(--accent-highlight);">${slot.status || 'unknown'}</span>${villageNameStr}</li>`;
-                    });
-                } else {
-                    statusHtml += '<li>No active settlement slots.</li>';
-                }
-                statusHtml += '</ul>';
-                loopStatusContainer.innerHTML = statusHtml;
-            }
-
-            // Populate catapult origin dropdown
-            const catapultOriginSelect = document.getElementById(`catapult-origin-village-${villageId}`);
-            if (catapultOriginSelect) {
-                catapultOriginSelect.innerHTML = ''; 
-                let sourceAccountUsername = null;
-                for (const username in FULL_STATE.village_data) {
-                    if (Array.isArray(FULL_STATE.village_data[username]) && FULL_STATE.village_data[username].some(v => v.id == villageId)) {
-                        sourceAccountUsername = username;
+const loopStatusContainer = document.getElementById(`loop-status-container-${villageId}`);
+if (loopStatusContainer) {
+    let statusHtml = '<ul>';
+    const settlementSlots = loopState.settlement_slots || [];
+    if (settlementSlots.length > 0) {
+        settlementSlots.forEach((slot, index) => {
+            let villageNameStr = '';
+            if (slot.new_village_id) {
+                for (const user in FULL_STATE.village_data) {
+                    const village = (FULL_STATE.village_data[user] || []).find(v => v.id == slot.new_village_id);
+                    if (village) {
+                        villageNameStr = ` (Managing: <strong>${village.name}</strong>)`;
                         break;
                     }
                 }
-                if(sourceAccountUsername){
-                    const allVillages = FULL_STATE.village_data[sourceAccountUsername] || [];
-                    allVillages.forEach(v => {
-                        const option = document.createElement('option');
-                        option.value = v.id;
-                        option.textContent = v.name;
-                        if (v.id == loopState.catapult_origin_village) {
-                            option.selected = true;
-                        }
-                        catapultOriginSelect.appendChild(option);
-                    });
-                }
             }
-            // --- END OF CORRECTION ---
+            statusHtml += `<li>Slot ${index + 1}: <span style="font-weight: bold; color: var(--accent-highlight);">${slot.status || 'unknown'}</span>${villageNameStr}</li>`;
+        });
+    } else {
+        statusHtml += '<li>No active settlement slots.</li>';
+    }
+    statusHtml += '</ul>';
+    loopStatusContainer.innerHTML = statusHtml;
+}
+
+const catapultOriginSelect = document.getElementById(`catapult-origin-village-${villageId}`);
+if (catapultOriginSelect) {
+    catapultOriginSelect.innerHTML = '';
+    let sourceAccountUsername = null;
+    for (const username in FULL_STATE.village_data) {
+        if (Array.isArray(FULL_STATE.village_data[username]) && FULL_STATE.village_data[username].some(v => v.id == villageId)) {
+            sourceAccountUsername = username;
+            break;
+        }
+    }
+    if (sourceAccountUsername) {
+        const allVillages = FULL_STATE.village_data[sourceAccountUsername] || [];
+        allVillages.forEach(v => {
+            const option = document.createElement('option');
+            option.value = v.id;
+            option.textContent = v.name;
+            if (v.id == loopState.catapult_origin_village) {
+                option.selected = true;
+            }
+            catapultOriginSelect.appendChild(option);
+        });
+    }
+}
+
+const manualAssignContainer = document.getElementById(`manual-assign-container-${villageId}`);
+if (manualAssignContainer) {
+    const assigned_new_village_ids = new Set((loopState.settlement_slots || []).map(s => s.new_village_id).filter(Boolean));
+    let sourceAccountUsername = null;
+    for (const username in FULL_STATE.village_data) {
+        if (Array.isArray(FULL_STATE.village_data[username]) && FULL_STATE.village_data[username].some(v => v.id == villageId)) {
+            sourceAccountUsername = username;
+            break;
+        }
+    }
+
+    if (sourceAccountUsername) {
+        const all_villages_for_account = FULL_STATE.village_data[sourceAccountUsername] || [];
+        const unassigned_villages = all_villages_for_account.filter(v => v.id != villageId && !assigned_new_village_ids.has(v.id));
+
+        if (unassigned_villages.length > 0) {
+            let optionsHtml = '<option value="">-- Select village to assign --</option>';
+            unassigned_villages.forEach(v => {
+                optionsHtml += `<option value="${v.id}">${v.name} (${v.id})</option>`;
+            });
+
+            manualAssignContainer.innerHTML = `
+                <select id="manual-assign-select-${villageId}" class="form-control" style="flex-grow: 1;">${optionsHtml}</select>
+                <button onclick="assignVillageToLoop('${villageId}')" class="btn btn-primary">Assign to Loop</button>
+            `;
+        } else {
+            manualAssignContainer.innerHTML = '<p style="color: var(--text-muted);">No unassigned villages found for this account.</p>';
+        }
+    }
+}
 
             openTab(null, currentTab);
         }
@@ -841,6 +875,20 @@ trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px so
         function deleteTemplate() { const select = document.getElementById('template-select'); const templateName = select.value; if (!templateName) return; if (confirm(`Are you sure you want to delete the template "${templateName}"?`)) { socket.emit('delete_build_template', { templateName }); } }
         function formatDuration(seconds) { if (seconds <= 0) return "0:00:00"; const h = Math.floor(seconds / 3600); const m = Math.floor((seconds % 3600) / 60); const s = Math.floor(seconds % 60); return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':'); }
         function is_multi_instance(gid) { return [10,11,23,36,38,39].includes(parseInt(gid)); }
+function assignVillageToLoop(originVillageId) {
+    const select = document.getElementById(`manual-assign-select-${originVillageId}`);
+    const targetVillageId = select.value;
+    if (!targetVillageId) {
+        alert('Please select a village to assign.');
+        return;
+    }
+    if (confirm(`Are you sure you want to assign village ${targetVillageId} to an idle loop slot? This will start the build-up process.`)) {
+        socket.emit('assign_village_to_loop', {
+            origin_village_id: originVillageId,
+            target_village_id: targetVillageId
+        });
+    }
+}
     </script>
 </body>
 </html>
