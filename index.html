@@ -154,7 +154,6 @@
 </head>
 <body>
     <div class="main-container">
-        <!-- ACCOUNTS COLUMN -->
         <div id="left-column" class="column">
             <div class="card-header">
                 <h2 class="card-title">Accounts</h2>
@@ -200,7 +199,6 @@
             </div>
         </div>
 
-        <!-- VILLAGES COLUMN -->
         <div id="middle-column" class="column">
             <div class="card-header">
                 <h2 class="card-title">Villages</h2>
@@ -210,7 +208,6 @@
             </div>
         </div>
 
-        <!-- DETAIL PANE -->
         <div id="right-column" class="column">
             <div id="detail-pane-header" class="card-header">
                  <h2 class="card-title" id="village-details-title">Select a Village</h2>
@@ -224,7 +221,6 @@
         </div>
     </div>
 
-    <!-- LOG PANEL -->
     <div class="log-panel">
         <div class="card-header">
             <h2 class="card-title">Live Log</h2>
@@ -460,6 +456,7 @@ function selectProxy() {
                                 <div class="tab" id="tab-training" onclick="openTab(event, 'training')">Training</div>
                                 <div class="tab" id="tab-smithy" onclick="openTab(event, 'smithy')">Smithy</div>
                                 <div class="tab" id="tab-demolish" onclick="openTab(event, 'demolish')">Demolish</div>
+                                <div class="tab" id="tab-loop" onclick="openTab(event, 'loop')">Loop</div>
                                 <div class="tab" id="tab-new" onclick="openTab(event, 'new')">New Build</div>
                             </div>`;
             document.getElementById('detail-pane-header').innerHTML = `<h2 class="card-title">${villageName}</h2>${tabsHtml}`;
@@ -578,6 +575,28 @@ trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px so
                  demolishContent += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 4px; background-color: var(--bg-tertiary); margin-bottom: 0.5rem;"><span>${index + 1}. Demolish ${GID_MAP[job.gid] || 'Unknown'} to Lvl ${job.level}</span><button class="btn btn-small btn-danger" onclick="removeDemolishQueueItem('${villageId}', ${index})">X</button></li>`;
             });
             demolishContent += '</ol></div>';
+            
+            let loopContent = `<div id="loop" class="tab-content">
+    <h3>Settling & Destruction Loop</h3>
+    <div id="loop-settings-form-${villageId}" style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px;">
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="loop-enabled-${villageId}">
+                Enable Loop for this village
+            </label>
+        </div>
+        <div class="form-group">
+            <label for="catapult-origin-village-${villageId}">Catapult Origin Village:</label>
+            <select id="catapult-origin-village-${villageId}" class="form-control"></select>
+        </div>
+        <div class="form-group">
+             <button onclick="saveLoopSettings('${villageId}')" class="btn btn-primary">Save Loop Settings</button>
+        </div>
+        <hr>
+        <h4>Loop Status</h4>
+        <p id="loop-status-display-${villageId}" style="font-weight: bold; color: var(--accent-highlight);">Idle</p>
+    </div>
+</div>`;
 
             let newBuildContent = '<div id="new" class="tab-content"><h4>Build in Empty Slot</h4><table><thead><tr><th>Location</th><th>Action</th></tr></thead><tbody>';
             const baseBuildable = [5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46];
@@ -604,11 +623,52 @@ trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px so
             queueHtml += '</ol>';
 
             let smithyContent = `<div id="smithy" class="tab-content"><h3>Smithy Upgrade Priority</h3></div>`;
-            detailsDiv.innerHTML = fieldsContent + buildingsContent + trainingContent + smithyContent + demolishContent + newBuildContent + queueHtml;
+            detailsDiv.innerHTML = fieldsContent + buildingsContent + trainingContent + smithyContent + demolishContent + loopContent + newBuildContent + queueHtml;
             renderCopyControls(villageId, 'training');
             renderTemplateList(villageId);
             renderSmithyUpgrades(villageId);
             renderCopyControls(villageId, 'smithy');
+            
+            // --- CORRECT PLACEMENT FOR POPULATING THE LOOP TAB ---
+            const loopState = (FULL_STATE.loop_module_state || {})[villageId] || {};
+            const loopEnabledCheckbox = document.getElementById(`loop-enabled-${villageId}`);
+            if (loopEnabledCheckbox) {
+                loopEnabledCheckbox.checked = loopState.enabled || false;
+            }
+            const loopStatusDisplay = document.getElementById(`loop-status-display-${villageId}`);
+            if (loopStatusDisplay) {
+                loopStatusDisplay.textContent = loopState.status || 'idle';
+            }
+
+            // Populate catapult origin dropdown
+            const catapultOriginSelect = document.getElementById(`catapult-origin-village-${villageId}`);
+            if (catapultOriginSelect) {
+                // Clear existing options
+                catapultOriginSelect.innerHTML = ''; 
+                
+                let sourceAccountUsername = null;
+                for (const username in FULL_STATE.village_data) {
+                    if (Array.isArray(FULL_STATE.village_data[username]) && FULL_STATE.village_data[username].some(v => v.id == villageId)) {
+                        sourceAccountUsername = username;
+                        break;
+                    }
+                }
+                
+                if(sourceAccountUsername){
+                    const allVillages = FULL_STATE.village_data[sourceAccountUsername] || [];
+                    allVillages.forEach(v => {
+                        const option = document.createElement('option');
+                        option.value = v.id;
+                        option.textContent = v.name;
+                        if (v.id == loopState.catapult_origin_village) {
+                            option.selected = true;
+                        }
+                        catapultOriginSelect.appendChild(option);
+                    });
+                }
+            }
+            // --- END OF CORRECTION ---
+
             openTab(null, currentTab);
         }
 
@@ -637,6 +697,15 @@ trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px so
             let optionsHtml = '<option value="">-- Select Target --</option><option value="__ALL__">All Other Villages</option>';
             otherVillages.forEach(v => { optionsHtml += `<option value="${v.id}">${v.name}</option>`; });
             container.innerHTML = `<div class="copy-controls" style="display: flex; gap: 0.5rem; align-items: center;"><label>Copy to:</label><select id="${settingType}-copy-target-select" class="form-control" style="width: auto;">${optionsHtml}</select><button onclick="copySettings('${villageId}', '${settingType}')" class="btn">Copy</button></div>`;
+        }
+        function saveLoopSettings(villageId) {
+            const enabled = document.getElementById(`loop-enabled-${villageId}`).checked;
+            const catapultOrigin = document.getElementById(`catapult-origin-village-${villageId}`).value;
+            const settings = {
+                enabled: enabled,
+                catapult_origin_village: catapultOrigin
+            };
+            socket.emit('update_loop_settings', { villageId: villageId, settings: settings });
         }
         function renderSmithyUpgrades(villageId) {
             const smithyTab = document.getElementById('smithy');

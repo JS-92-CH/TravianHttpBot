@@ -66,8 +66,6 @@ def handle_stop_account(data):
                 break
     save_config()
 
-# dashboard.py
-
 @socketio.on('add_build_task')
 def handle_add_build_task(data):
     """
@@ -86,7 +84,6 @@ def handle_add_build_task(data):
         BOT_STATE['build_queues'][str(village_id)].append(task)
     save_config()
 
-    # Find the running agent and wake it up by setting its next check time to now.
     if bot_manager_thread and bot_manager_thread.is_alive():
         with state_lock:
             agents_found = False
@@ -94,7 +91,6 @@ def handle_add_build_task(data):
                 for agent in agents:
                     if str(agent.village_id) == str(village_id):
                         log.info(f"Nudging agent for village {agent.village_name} to check new build task.")
-                        # This now works because the `time` module is imported
                         agent.next_check_time = time.time()
                         agents_found = True
                         break
@@ -482,3 +478,26 @@ def handle_fetch_proxies():
     log.info("UI request to fetch and test proxies.")
     fastest_proxies = get_fastest_proxies()
     socketio.emit("proxy_results", {"proxies": fastest_proxies})
+
+@socketio.on('update_loop_settings')
+def handle_update_loop_settings(data):
+    village_id = data.get('villageId')
+    settings = data.get('settings')
+    if village_id and settings:
+        log.info(f"UI request to update loop settings for village {village_id}")
+        with state_lock:
+            if "loop_module_state" not in BOT_STATE:
+                BOT_STATE["loop_module_state"] = {}
+            if str(village_id) not in BOT_STATE["loop_module_state"]:
+                 BOT_STATE["loop_module_state"][str(village_id)] = {} # Initialize if needed
+            BOT_STATE["loop_module_state"][str(village_id)].update(settings)
+        save_config()
+
+@socketio.on('start_special_agent')
+def handle_start_special_agent(data):
+    """Relay from a village agent to the bot manager to start a special agent."""
+    if bot_manager_thread and bot_manager_thread.is_alive():
+        bot_manager_thread.start_special_agent_for_village(
+            data.get('account_username'),
+            data.get('village_id')
+        )

@@ -10,13 +10,14 @@ from modules.training import Module as TrainingModule
 # We still import it to use it
 from modules.demolish import Module as DemolishModule
 from modules.smithyupgrades import Module as SmithyModule
+from modules.loop import Module as LoopModule
 from client import TravianClient
 from config import log, BOT_STATE, state_lock, save_config
 from modules import load_modules
 from proxy_util import test_proxy
 
 class VillageAgent(threading.Thread):
-    def __init__(self, account_info: Dict, village_info: Dict, socketio_instance):
+    def __init__(self, account_info: Dict, village_info: Dict, socketio_instance, is_special_agent=False):
         super().__init__()
         self.client = TravianClient(
             account_info["username"],
@@ -33,7 +34,9 @@ class VillageAgent(threading.Thread):
         self.use_hero_resources = account_info.get("use_hero_resources", False)
         self.stop_event = threading.Event()
         self.daemon = True
+        self.is_special_agent = is_special_agent
         self.modules = load_modules(self)
+        self.modules.append(LoopModule(self))
         self.building_module = next((m for m in self.modules if 'building' in type(m).__module__), None)
         self.resources_module = next((m for m in self.modules if 'resources' in type(m).__module__), None)
         self.next_check_time = time.time()
@@ -42,6 +45,14 @@ class VillageAgent(threading.Thread):
         self.stop_event.set()
 
     def run(self):
+        if self.is_special_agent:
+            log.info(f"[SPECIAL AGENT] Started for new village: {self.village_name} ({self.village_id})")
+            with state_lock:
+                # Assign the "task_focused" build order
+                task_focused_build_order = BOT_STATE.get("build_templates", {}).get("Task_Focused", [])
+                BOT_STATE["build_queues"][str(self.village_id)] = copy.deepcopy(task_focused_build_order)
+            save_config()
+            
         log.info(f"Agent started for village: {self.village_name} ({self.village_id})")
 
         if not self.client.login():
@@ -167,12 +178,12 @@ class VillageAgent(threading.Thread):
         log.info(f"Agent stopped for village: {self.village_name} ({self.village_id})")
 
 class BotManager(threading.Thread):
-    # ... (rest of BotManager is unchanged)
     def __init__(self, socketio_instance):
         super().__init__()
         self.socketio = socketio_instance
         self.stop_event = threading.Event()
         self.running_account_agents: Dict[str, List[VillageAgent]] = {}
+        self.running_special_agents: Dict[str, VillageAgent] = {}
         self.running_training_agents: Dict[str, TrainingModule] = {}
         self.running_smithy_agents: Dict[str, SmithyModule] = {}
         self.running_demolish_agents: Dict[str, DemolishModule] = {}
@@ -371,7 +382,7 @@ class BotManager(threading.Thread):
             self.running_account_agents[username] = []
             for village in villages:
                 log.info(f"Creating new agent for village {village['name']} under account {username}")
-                agent = VillageAgent(account_info, village, self.socketio)
+                agent = VillageAgent(account_info, village, self.socketio, is_special_agent=False)
                 self.running_account_agents[username].append(agent)
                 agent.start()
 
@@ -379,3 +390,19 @@ class BotManager(threading.Thread):
             log.error(f"Failed to start village agents for {username}: {exc}", exc_info=True)
             self.running_account_clients.pop(username, None)
             self.running_account_agents.pop(username, None)
+
+    def start_special_agent_for_village(self, account_username: str, village_id: int):
+        """Starts a temporary agent for a newly settled village."""
+        log.info(f"BotManager received request to start SPECIAL AGENT for village {village_id}")
+        with state_lock:
+            account_info = next((acc for acc in BOT_STATE['accounts'] if acc['username'] == account_username), None)
+            # The new village might not be in the main village_data yet, so we create a temporary entry
+            village_info = {'id': village_id, 'name': f"New Village {village_id}"}
+
+        if not account_info:
+            log.error(f"Cannot start special agent: Account '{account_username}' not found.")
+            return
+
+        agent = VillageAgent(account_info, village_info, self.socketio, is_special_agent=True)
+        self.running_special_agents[str(village_id)] = agent
+        agent.start()

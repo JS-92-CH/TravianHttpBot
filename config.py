@@ -108,32 +108,43 @@ BOT_STATE: Dict[str, Any] = {
             {"type": "building", "location": 37, "gid": 11, "level": 20}
         ],
             "Task_Focused": [
-            { "type": "building", "gid": 15, "level": 20, "location": 26 },
-            { "type": "resource_plan", "level": 2 },
-            { "type": "building", "gid": 10, "level": 1 },
-            { "type": "building", "gid": 11, "level": 1 },
-            { "type": "building", "gid": 16, "level": 1 },
-            { "type": "building", "gid": 19, "level": 10 },
-            { "type": "building", "gid": 22, "level": 10 },
-            { "type": "building", "gid": 24, "level": 1 },
-            { "type": "building", "gid": 17, "level": 1 },
-            { "type": "building", "gid": 25, "level": 1 },
-            { "type": "building", "gid": 31, "level": 1 },
-            { "type": "building", "gid": 23, "level": 10 },
-            { "type": "resource_plan", "level": 4 },
-            { "type": "resource_plan", "level": 7 },
-            { "type": "resource_plan", "level": 10 },
-            { "type": "building", "gid": 18, "level": 10 },
-            { "type": "building", "gid": 13, "level": 10 },
-            { "type": "building", "gid": 20, "level": 10 },
-            { "type": "building", "gid": 10, "level": 10 },
-            { "type": "building", "gid": 11, "level": 10 },
-            { "type": "building", "gid": 24, "level": 10 },
-            { "type": "building", "gid": 17, "level": 10 },
-            { "type": "building", "gid": 25, "level": 10 },
-            { "type": "building", "gid": 31, "level": 10 },
-            { "type": "building", "gid": 16, "level": 10 }
-        ],
+    { "type": "building", "gid": 15, "level": 20, "location": 26 }, # Main Building
+    { "type": "resource_plan", "level": 2 },                        # Upgrade all resource fields to level 2
+    { "type": "building", "gid": 10, "level": 1 },                  # Warehouse
+    { "type": "building", "gid": 11, "level": 1 },                  # Granary
+    { "type": "building", "gid": 16, "level": 1 },                  # Rally Point
+    { "type": "building", "gid": 19, "level": 10 },                 # Barracks
+    { "type": "building", "gid": 22, "level": 10 },                 # Academy
+    { "type": "building", "gid": 24, "level": 1 },                  # Town Hall
+    { "type": "building", "gid": 17, "level": 1 },                  # Marketplace
+    { "type": "building", "gid": 25, "level": 1 },                  # Residence
+    { "type": "building", "gid": 31, "level": 1 },                  # City Wall
+    { "type": "building", "gid": 23, "level": 10 },                 # Cranny
+    { "type": "resource_plan", "level": 4 },                        # Upgrade all resource fields to level 4
+    { "type": "resource_plan", "level": 7 },                        # Upgrade all resource fields to level 7
+    { "type": "building", "gid": 1, "level": 10 },                  # Woodcutter
+    { "type": "building", "gid": 2, "level": 10 },                  # Clay Pit
+    { "type": "building", "gid": 3, "level": 10 },                  # Iron Mine
+    { "type": "building", "gid": 4, "level": 10 },                  # Cropland
+    { "type": "building", "gid": 18, "level": 10 },                 # Embassy
+    { "type": "building", "gid": 13, "level": 10 },                 # Smithy
+    { "type": "building", "gid": 20, "level": 10 },                 # Stable
+    { "type": "building", "gid": 10, "level": 10 },                 # Warehouse
+    { "type": "building", "gid": 11, "level": 10 },                 # Granary
+    { "type": "building", "gid": 16, "level": 10 },                 # Rally Point
+    { "type": "building", "gid": 17, "level": 10 },                 # Marketplace
+    { "type": "building", "gid": 25, "level": 10 },                 # Residence
+    { "type": "building", "gid": 31, "level": 10 },                 # City Wall
+    { "type": "building", "gid": 24, "level": 10 },                  # Town Hall
+    { "type": "building", "gid": 18, "level": 16 },                 # Embassy
+    { "type": "building", "gid": 13, "level": 16 },                 # Smithy
+    { "type": "building", "gid": 20, "level": 16 },                 # Stable
+    { "type": "building", "gid": 10, "level": 16 },                 # Warehouse
+    { "type": "building", "gid": 11, "level": 16 },                 # Granary
+    { "type": "building", "gid": 16, "level": 20 },                 # Rally Point
+    { "type": "building", "gid": 31, "level": 20 },                 # City Wall
+    { "type": "building", "gid": 17, "level": 20 }                 # Marketplace
+],
         "Roman": [
             {"type": "resource_plan", "level": 10},
             {"type": "building", "gid": 15, "level": 20},
