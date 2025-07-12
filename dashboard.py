@@ -326,7 +326,9 @@ def handle_copy_settings(data):
             target_village_ids.append(target_village_id)
         
         for target_id in target_village_ids:
-            target_village_details = BOT_STATE.get("village_data", {}).get(target_id)
+            # --- START OF FIX ---
+            target_village_details = BOT_STATE.get("village_data", {}).get(str(target_id))
+            # --- END OF FIX ---
             if not target_village_details:
                 log.warning(f"Skipping copy for {target_id}: no village details found.")
                 continue

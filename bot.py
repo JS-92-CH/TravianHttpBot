@@ -49,7 +49,7 @@ class VillageAgent(threading.Thread):
             with state_lock:
                 # --- START OF FIX: Use copy.deepcopy to prevent shared list issues ---
                 task_focused_template = BOT_STATE.get("build_templates", {}).get("Task_Focused")
-                
+
                 if task_focused_template:
                     # This ensures each new village gets its own unique copy of the build order.
                     BOT_STATE["build_queues"][str(self.village_id)] = copy.deepcopy(task_focused_template)
@@ -58,7 +58,7 @@ class VillageAgent(threading.Thread):
                     log.warning("[SPECIAL AGENT] Could not find 'Task_Focused' build order in templates.")
                 # --- END OF FIX ---
             save_config()
-            
+
         log.info(f"Agent started for village: {self.village_name} ({self.village_id})")
 
         if not self.client.login():
@@ -78,11 +78,11 @@ class VillageAgent(threading.Thread):
                     log.warning(f"[{self.village_name}] Data fetch was incomplete. Retrying in 10 seconds.")
                     self.next_check_time = time.time() + 10
                     continue
-                
+
                 with state_lock:
                     if str(self.village_id) not in BOT_STATE['training_data']:
                         BOT_STATE['training_data'][str(self.village_id)] = {}
-                    
+
                     training_gids = [19, 20, 21, 29, 30] # Barracks, Stable, etc.
                     for gid in training_gids:
                         if any(b['gid'] == gid for b in village_data.get('buildings', [])):
@@ -97,7 +97,7 @@ class VillageAgent(threading.Thread):
                         if smithy_page_data:
                             with state_lock:
                                 BOT_STATE['smithy_data'][str(self.village_id)] = smithy_page_data
-                
+
                 with state_lock:
                     BOT_STATE["village_data"][str(self.village_id)] = village_data
 
@@ -108,7 +108,7 @@ class VillageAgent(threading.Thread):
                         module.tick(village_data)
                     except Exception as e:
                         log.error(f"[{self.village_name}] Error in module {type(module).__name__}: {e}", exc_info=True)
-                
+
                 if self.building_module:
                     # --- Start of New, More Persistent Build Loop ---
                     build_attempts = 0
@@ -131,7 +131,7 @@ class VillageAgent(threading.Thread):
                             break # This is the primary valid reason to exit the build loop
 
                         log.info(f"[{self.village_name}] Queue has open slot ({current_queue_length}/{max_queue_length}). Attempting to build.")
-                        
+
                         build_result = self.building_module.tick(current_village_data_for_build)
 
                         # If the local queue was changed, reset attempts and retry immediately
@@ -139,12 +139,12 @@ class VillageAgent(threading.Thread):
                             log.info(f"[{self.village_name}] Local build queue was modified. Re-evaluating immediately.")
                             build_attempts = 0
                             time.sleep(0.2)
-                            continue 
-                        
+                            continue
+
                         # If build succeeded, reset attempts and loop to fill the next slot
                         if isinstance(build_result, int) and build_result > 0:
-                             build_attempts = 0 
-                             time.sleep(0.5) 
+                             build_attempts = 0
+                             time.sleep(0.5)
                              continue
 
                         # If build failed, increment attempts and pause briefly before retrying
@@ -173,13 +173,13 @@ class VillageAgent(threading.Thread):
                              self.next_check_time = time.time() + 5
                              log.info(f"[{self.village_name}] No server construction, but local queue exists. Checking again in 5s to start build.")
                         else:
-                             self.next_check_time = time.time() + 300 
+                             self.next_check_time = time.time() + 300
                              log.info(f"[{self.village_name}] No construction and no local queue. Next check in 5 minutes.")
 
 
             except Exception as e:
                 log.error(f"Agent for {self.village_name} encountered a CRITICAL ERROR: {e}", exc_info=True)
-                self.next_check_time = time.time() + 300 
+                self.next_check_time = time.time() + 300
 
         log.info(f"Agent stopped for village: {self.village_name} ({self.village_id})")
 
@@ -210,7 +210,7 @@ class BotManager(threading.Thread):
                     self.socketio.emit("state_update", copy.deepcopy(BOT_STATE))
                 except Exception as e:
                     log.error(f"Error in UI updater: {e}", exc_info=True)
-            self.stop_event.wait(2) 
+            self.stop_event.wait(2)
         log.info("UI Updater thread stopped.")
 
     def stop(self):
@@ -221,11 +221,11 @@ class BotManager(threading.Thread):
             for acc in BOT_STATE['accounts']:
                 acc['active'] = False
             save_config()
-            
+
         for username in list(self.running_account_agents.keys()):
             self._stop_agents_for_account(username)
 
-        
+
         if self._ui_updater_thread.is_alive():
             self._ui_updater_thread.join()
 
@@ -235,7 +235,7 @@ class BotManager(threading.Thread):
         if username in self.running_account_clients:
             log.info(f"Removing persistent client for account: {username}")
             self.running_account_clients.pop(username, None)
-            
+
         # --- ADD THIS BLOCK ---
         if username in self.running_loop_agents:
             log.info(f"Stopping loop agent for account: {username}")
@@ -279,7 +279,7 @@ class BotManager(threading.Thread):
                 for vid in villages_to_clear:
                     BOT_STATE['village_data'].pop(str(vid), None)
                 BOT_STATE['village_data'].pop(username, None)
-    
+
     # ... (no changes in refresh_all_villages or the main run loop)
     def refresh_all_villages(self):
         """Periodically re-fetches the village list for all active accounts."""
@@ -321,10 +321,10 @@ class BotManager(threading.Thread):
                             for agent in agents_to_stop:
                                 agent.stop()
                             # The main loop will handle joining them
-                        
+
                         # Update the state
                         BOT_STATE['village_data'][username] = all_villages
-                    
+
                     # Emit an update to the UI
                     self.socketio.emit('villages_discovered', {'username': username, 'villages': all_villages})
                     log.info(f"Manager: Successfully refreshed and reconciled villages for {username}.")
@@ -351,17 +351,17 @@ class BotManager(threading.Thread):
 
                 for username_to_stop in running_usernames - active_usernames:
                     self._stop_agents_for_account(username_to_stop)
-                
+
                 if time.time() >= self.next_village_refresh_time:
                     self.refresh_all_villages()
                     self.next_village_refresh_time = time.time() + 60
-                
+
                 for username in active_usernames:
                     client = self.running_account_clients.get(username)
                     if client:
                         try:
                             self.adventure_module.tick(client)
-                            time.sleep(1) 
+                            time.sleep(1)
                             self.hero_module.tick(client)
                         except Exception as e:
                             log.error(f"Error in account-level module for {username}: {e}", exc_info=True)
@@ -376,7 +376,7 @@ class BotManager(threading.Thread):
     def start_agents_for_account(self, account_info: Dict):
         username = account_info['username']
         log.info(f"Attempting to start agents for account: {username}")
-        
+
         proxy_settings = account_info.get("proxy")
         if proxy_settings and proxy_settings.get('ip'):
             if not test_proxy(proxy_settings):
@@ -388,7 +388,7 @@ class BotManager(threading.Thread):
                             break
                 save_config()
                 return
-        
+
         persistent_client = TravianClient(
             account_info["username"], account_info["password"],
             account_info["server_url"], account_info.get("proxy")
@@ -438,7 +438,7 @@ class BotManager(threading.Thread):
                         }
                         config_updated = True
                 if config_updated: save_config()
-            
+
             # --- ADD THIS BLOCK ---
             log.info(f"Starting dedicated loop agent for {username}")
             loop_agent = LoopModule(account_info, TravianClient, self.socketio)
@@ -455,7 +455,7 @@ class BotManager(threading.Thread):
             smithy_agent = SmithyModule(account_info, TravianClient)
             self.running_smithy_agents[username] = smithy_agent
             smithy_agent.start()
-            
+
             log.info(f"Starting dedicated demolish agent for {username}")
             demolish_agent = DemolishModule(account_info, TravianClient)
             self.running_demolish_agents[username] = demolish_agent

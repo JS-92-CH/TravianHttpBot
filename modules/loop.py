@@ -9,7 +9,7 @@ from config import log, BOT_STATE, state_lock, save_config, gid_name
 
 class Module(threading.Thread):
     """
-    An independent agent thread that handles the entire lifecycle of settling 
+    An independent agent thread that handles the entire lifecycle of settling
     new villages, building them up, and then destroying them to start over for a single account.
     """
 
@@ -60,7 +60,7 @@ class Module(threading.Thread):
             try:
                 with state_lock:
                     all_villages_for_user = BOT_STATE.get("village_data", {}).get(username, [])
-                
+
                 # Find all villages for this account that have the loop enabled.
                 villages_with_loop_enabled = []
                 for v_summary in all_villages_for_user:
@@ -69,7 +69,7 @@ class Module(threading.Thread):
                         loop_config = BOT_STATE.get("loop_module_state", {}).get(v_id_str, {})
                     if loop_config.get("enabled"):
                         villages_with_loop_enabled.append(v_summary)
-                
+
                 if not villages_with_loop_enabled:
                     self.stop_event.wait(60) # Wait for a minute if no villages are configured.
                     continue
@@ -77,9 +77,9 @@ class Module(threading.Thread):
                 for village_info in villages_with_loop_enabled:
                     village_id = village_info['id']
                     village_name = village_info['name']
-                    
+
                     log.info(f"[LoopAgent][{username}] Checking loop status for village: {village_name}")
-                    
+
                     # Fetch the latest full data for this specific village
                     village_data = client.fetch_and_parse_village(village_id)
                     if not village_data:
@@ -87,7 +87,7 @@ class Module(threading.Thread):
                         continue
 
                     loop_state = self._get_loop_state(village_id)
-                    
+
                     self.manage_settlement_slots(client, village_data, loop_state, village_name)
 
                     # Check if any slot is currently training settlers. If so, don't start a new training.
@@ -104,7 +104,7 @@ class Module(threading.Thread):
                                         break
                                     if slot_state["status"] == "finding_village":
                                         self.find_and_send_settlers(client, village_id, village_data, slot_state)
-                                        break 
+                                        break
                         elif status == "training_settlers":
                             self.check_settler_training(client, village_id, village_data, slot_state)
                         elif status == "finding_village":
@@ -124,7 +124,7 @@ class Module(threading.Thread):
 
             except Exception as e:
                 log.error(f"[LoopAgent][{username}] CRITICAL ERROR in main loop: {e}", exc_info=True)
-            
+
             self.stop_event.wait(20) # Wait before the next full cycle for the account
 
     def manage_settlement_slots(self, client, village_data, loop_state, village_name):
@@ -138,9 +138,9 @@ class Module(threading.Thread):
              max_slots = (palace.get('level', 0) // 10) * 1 + (1 if palace.get('level',0) >= 15 else 0) + (1 if palace.get('level',0) >= 20 else 0)
         elif residence and residence.get('level', 0) >= 10:
              max_slots = 1 if residence.get('level',0) < 20 else 2
-        
+
         loop_state["settlement_slots"] = [s for s in loop_state["settlement_slots"] if s.get("status") != "idle" and s.get("status") is not None]
-        
+
         active_slots = len(loop_state["settlement_slots"])
         if max_slots > active_slots:
             needed_slots = max_slots - active_slots
@@ -164,9 +164,9 @@ class Module(threading.Thread):
 
         needed_settlers = 3 - available_settlers
         log.info(f"[{village_name}] Not enough settlers available ({available_settlers}/3). Training {needed_settlers} more.")
-        
+
         settler_building_gid = 26 if any(b.get('gid') == 26 for b in village_data.get('buildings', [])) else 25
-        
+
         success, duration = client.train_settlers(village_id, settler_building_gid, needed_settlers)
         if success:
             slot_state["status"] = "training_settlers"
@@ -187,7 +187,7 @@ class Module(threading.Thread):
             slot_state["status"] = "finding_village"
             slot_state["settler_training_end_time"] = None
             save_config()
-            
+
             # Re-fetch data to be absolutely sure we have the latest info
             fresh_village_data = client.fetch_and_parse_village(village_id)
             if fresh_village_data:
@@ -204,7 +204,7 @@ class Module(threading.Thread):
             slot_state["status"] = "idle"
             save_config()
             return
-            
+
         map_data = client.get_map_data(current_coords['x'], current_coords['y'])
         if not map_data or not map_data.get('tiles'):
             log.error(f"[{village_name}] Failed to fetch map data.")
@@ -216,7 +216,7 @@ class Module(threading.Thread):
                 pos = tile['position']
                 dist = math.sqrt((current_coords['x'] - pos['x'])**2 + (current_coords['y'] - pos['y'])**2)
                 empty_villages.append({'x': pos['x'], 'y': pos['y'], 'distance': dist})
-        
+
         if not empty_villages:
             log.warning(f"[{village_name}] No empty villages found nearby.")
             return
@@ -243,7 +243,7 @@ class Module(threading.Thread):
             return
 
         target_coords = {'x': target_village['x'], 'y': target_village['y']}
-        
+
         success, travel_time = client.send_settlers(village_id, target_coords)
 
         if success:
@@ -271,7 +271,7 @@ class Module(threading.Thread):
             return
 
         log.info(f"[LoopAgent] Settler arrival time has passed. Checking for new village...")
-        
+
         target_coords = slot_state.get("target_coords")
         if not target_coords:
             log.error(f"[LoopAgent] No target coordinates in slot state. Resetting slot.")
@@ -299,12 +299,12 @@ class Module(threading.Thread):
 
         if new_village_id:
             log.info(f"[LoopAgent] SUCCESS! New village '{new_village_id}' has been settled.")
-            
+
             # This correctly saves the new village's ID to the slot state,
             # permanently linking this loop slot to the new village.
             slot_state["new_village_id"] = new_village_id
             slot_state["status"] = "waiting_for_build_up"
-            
+
             # Trigger the special agent to start the initial build-up.
             self.socketio.emit('start_special_agent', {
                 'account_username': client.username,
@@ -320,12 +320,12 @@ class Module(threading.Thread):
             if coord_tuple and coord_tuple in BOT_STATE.get("reserved_settle_targets", []):
                 BOT_STATE["reserved_settle_targets"].remove(coord_tuple)
                 log.info(f"[LoopAgent] Un-reserving target {coord_tuple} after settlement check.")
-            
+
         save_config()
 
     def check_build_up_complete(self, client, slot_state):
         new_village_id = slot_state.get("new_village_id")
-        
+
         # --- START OF FIX: Ensure the build queue is actually empty ---
         with state_lock:
             # We check both the local config queue and the server's queue
@@ -337,12 +337,12 @@ class Module(threading.Thread):
         # --- END OF FIX ---
             log.info(f"[LoopAgent] Build-up of village {new_village_id} is complete. Starting destruction.")
             slot_state["status"] = "destroying"
-        
+
         save_config()
 
     def destroy_village(self, client, origin_village_data, slot_state, loop_state):
         new_village_id = slot_state.get("new_village_id")
-        
+
         # --- START OF FIX: Correctly look up the designated catapult village ---
         catapult_origin_id = loop_state.get("catapult_origin_village")
 
@@ -352,7 +352,7 @@ class Module(threading.Thread):
             save_config()
             return
         # --- END OF FIX ---
-        
+
         target_village_details = client.fetch_and_parse_village(new_village_id)
 
         if not target_village_details or 'coords' not in target_village_details:
@@ -363,10 +363,10 @@ class Module(threading.Thread):
 
         target_coords = target_village_details['coords']
         # Note: Using 't8' for Teuton Catapults. This may need adjustment for other tribes.
-        attack_troops = {'t8': 100} 
+        attack_troops = {'t8': 100}
 
         log.info(f"[LoopAgent] Sending 17 catapult waves from designated village {catapult_origin_id} to destroy {new_village_id}.")
-        
+
         success = client.send_catapult_waves(
             from_village_id=int(catapult_origin_id),
             target_x=target_coords['x'],
@@ -381,7 +381,7 @@ class Module(threading.Thread):
         else:
             log.error(f"[LoopAgent] Failed to send catapult waves from {catapult_origin_id}. Resetting loop slot.")
             slot_state["status"] = "idle"
-            
+
         save_config()
 
 
@@ -393,7 +393,7 @@ class Module(threading.Thread):
             return
 
         log.info(f"[LoopAgent] Checking if village {new_village_id} has been destroyed...")
-        
+
         all_villages = client.get_all_villages()
         village_exists = any(v['id'] == new_village_id for v in all_villages)
 
