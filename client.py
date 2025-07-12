@@ -1191,7 +1191,6 @@ class TravianClient:
             # --- START OF CORRECTION: Use the correct map size and formula for kid calculation ---
             map_size = 200 
             width = 2 * map_size + 1
-            # This is the standard formula used by Travian to convert coordinates to a map ID (kid)
             kid = (map_size - target_coords['y']) * width + (target_coords['x'] + map_size) + 1
             # --- END OF CORRECTION ---
 
@@ -1220,7 +1219,11 @@ class TravianClient:
             post_url = urljoin(self.server_url, form['action'])
             final_resp = self.sess.post(post_url, data=payload, headers={'Referer': confirm_url})
 
-            if "troops are on their way" in final_resp.text:
+            # --- START OF FIX: More reliable success check ---
+            # Instead of looking for a specific phrase, we check if the response indicates a troop movement table,
+            # which is a strong sign of success.
+            if "troop_details" in final_resp.text:
+            # --- END OF FIX ---
                 log.info(f"[{self.username}] Settlement mission successfully sent. Travel time: {travel_time}s")
                 return True, travel_time
             else:

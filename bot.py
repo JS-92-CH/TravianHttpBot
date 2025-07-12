@@ -1,4 +1,4 @@
-# bot.py
+# js-92-ch/travianhttpbot/TravianHttpBot-loop/bot.py
 
 import time
 import threading
@@ -7,10 +7,9 @@ from typing import Dict, Optional, List
 from modules.adventure import Module as AdventureModule
 from modules.hero import Module as HeroModule
 from modules.training import Module as TrainingModule
-# We still import it to use it
 from modules.demolish import Module as DemolishModule
 from modules.smithyupgrades import Module as SmithyModule
-from modules.loop import Module as LoopModule
+from modules.loop import Module as LoopModule # <-- Ensure this is imported
 from client import TravianClient
 from config import log, BOT_STATE, state_lock, save_config
 from modules import load_modules
@@ -19,6 +18,7 @@ from proxy_util import test_proxy
 class VillageAgent(threading.Thread):
     def __init__(self, account_info: Dict, village_info: Dict, socketio_instance, is_special_agent=False):
         super().__init__()
+        # ... (no changes in this __init__ method)
         self.client = TravianClient(
             account_info["username"],
             account_info["password"],
@@ -35,8 +35,7 @@ class VillageAgent(threading.Thread):
         self.stop_event = threading.Event()
         self.daemon = True
         self.is_special_agent = is_special_agent
-        self.modules = load_modules(self)
-        self.modules.append(LoopModule(self))
+        self.modules = load_modules(self) # loop.py is now excluded from this
         self.building_module = next((m for m in self.modules if 'building' in type(m).__module__), None)
         self.resources_module = next((m for m in self.modules if 'resources' in type(m).__module__), None)
         self.next_check_time = time.time()
@@ -48,13 +47,16 @@ class VillageAgent(threading.Thread):
         if self.is_special_agent:
             log.info(f"[SPECIAL AGENT] Started for new village: {self.village_name} ({self.village_id})")
             with state_lock:
-                task_focused_build_order = BOT_STATE.get("build_templates", {}).get("Task_Focused", [])
+                # --- START OF FIX: Use copy.deepcopy to prevent shared list issues ---
+                task_focused_template = BOT_STATE.get("build_templates", {}).get("Task_Focused")
                 
-                if task_focused_build_order:
-                    BOT_STATE["build_queues"][str(self.village_id)] = copy.deepcopy(task_focused_build_order)
+                if task_focused_template:
+                    # This ensures each new village gets its own unique copy of the build order.
+                    BOT_STATE["build_queues"][str(self.village_id)] = copy.deepcopy(task_focused_template)
                     log.info(f"[SPECIAL AGENT] Successfully assigned 'Task_Focused' build order to village {self.village_id}.")
                 else:
                     log.warning("[SPECIAL AGENT] Could not find 'Task_Focused' build order in templates.")
+                # --- END OF FIX ---
             save_config()
             
         log.info(f"Agent started for village: {self.village_name} ({self.village_id})")
@@ -162,14 +164,14 @@ class VillageAgent(threading.Thread):
                             log.info(f"[{self.village_name}] Local queue is active. Next check in 10s.")
                         else:
                             server_eta = min([b.get('eta', 3600) for b in final_data["queue"]])
-                            wait_time = max(0.5, server_eta + 0.5)
+                            wait_time = max(1, server_eta + 1)
                             self.next_check_time = time.time() + wait_time
                             log.info(f"[{self.village_name}] Construction active. Next main check in {wait_time:.0f}s.")
                 else:
                     with state_lock:
                         if BOT_STATE["build_queues"].get(str(self.village_id)):
-                             self.next_check_time = time.time() + 10
-                             log.info(f"[{self.village_name}] No construction, but local queue exists. Next check in 10s.")
+                             self.next_check_time = time.time() + 5
+                             log.info(f"[{self.village_name}] No server construction, but local queue exists. Checking again in 5s to start build.")
                         else:
                              self.next_check_time = time.time() + 300 
                              log.info(f"[{self.village_name}] No construction and no local queue. Next check in 5 minutes.")
@@ -191,14 +193,16 @@ class BotManager(threading.Thread):
         self.running_training_agents: Dict[str, TrainingModule] = {}
         self.running_smithy_agents: Dict[str, SmithyModule] = {}
         self.running_demolish_agents: Dict[str, DemolishModule] = {}
+        self.running_loop_agents: Dict[str, LoopModule] = {} # <-- ADD THIS LINE
         self.running_account_clients: Dict[str, TravianClient] = {}
         self.adventure_module = AdventureModule(self)
         self.hero_module = HeroModule(self)
         self.daemon = True
         self._ui_updater_thread = threading.Thread(target=self._ui_updater, daemon=True)
-        self.next_village_refresh_time = time.time() + 60 # Initial refresh after 1 minute
+        self.next_village_refresh_time = time.time() + 60
 
     def _ui_updater(self):
+        # ... (no changes in this method)
         log.info("UI Updater thread started.")
         while not self.stop_event.is_set():
             with state_lock:
@@ -210,6 +214,7 @@ class BotManager(threading.Thread):
         log.info("UI Updater thread stopped.")
 
     def stop(self):
+        # ... (no changes in this method)
         log.info("Stopping Bot Manager and all active agents...")
         self.stop_event.set()
         with state_lock:
@@ -230,6 +235,15 @@ class BotManager(threading.Thread):
         if username in self.running_account_clients:
             log.info(f"Removing persistent client for account: {username}")
             self.running_account_clients.pop(username, None)
+            
+        # --- ADD THIS BLOCK ---
+        if username in self.running_loop_agents:
+            log.info(f"Stopping loop agent for account: {username}")
+            loop_agent = self.running_loop_agents.pop(username, None)
+            if loop_agent:
+                loop_agent.stop()
+                loop_agent.join()
+        # --- END OF BLOCK ---
 
         if username in self.running_training_agents:
             log.info(f"Stopping training agent for account: {username}")
@@ -265,9 +279,8 @@ class BotManager(threading.Thread):
                 for vid in villages_to_clear:
                     BOT_STATE['village_data'].pop(str(vid), None)
                 BOT_STATE['village_data'].pop(username, None)
-
-    # --- START OF CHANGE ---
-    # Add the new refresh method
+    
+    # ... (no changes in refresh_all_villages or the main run loop)
     def refresh_all_villages(self):
         """Periodically re-fetches the village list for all active accounts."""
         log.info("Manager: Performing periodic refresh of all village lists...")
@@ -319,8 +332,6 @@ class BotManager(threading.Thread):
                     log.warning(f"Manager: Could not refresh villages for {username}, list was empty.")
             except Exception as e:
                 log.error(f"Manager: Error refreshing villages for {username}: {e}", exc_info=True)
-    # --- END OF CHANGE ---
-
     def run(self):
         log.info("Bot Manager thread started and is now monitoring accounts.")
         self._ui_updater_thread.start()
@@ -428,6 +439,13 @@ class BotManager(threading.Thread):
                         config_updated = True
                 if config_updated: save_config()
             
+            # --- ADD THIS BLOCK ---
+            log.info(f"Starting dedicated loop agent for {username}")
+            loop_agent = LoopModule(account_info, TravianClient, self.socketio)
+            self.running_loop_agents[username] = loop_agent
+            loop_agent.start()
+            # --- END OF BLOCK ---
+
             log.info(f"Starting dedicated training agent for {username}")
             training_agent = TrainingModule(account_info, TravianClient)
             self.running_training_agents[username] = training_agent
@@ -455,6 +473,7 @@ class BotManager(threading.Thread):
             self.running_account_clients.pop(username, None)
             self.running_account_agents.pop(username, None)
 
+    # ... (no changes in start_special_agent_for_village)
     def start_special_agent_for_village(self, account_username: str, village_id: int):
         """Starts a temporary agent for a newly settled village."""
         log.info(f"BotManager received request to start SPECIAL AGENT for village {village_id}")

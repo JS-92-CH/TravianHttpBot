@@ -626,7 +626,6 @@ trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px so
             renderSmithyUpgrades(villageId);
             renderCopyControls(villageId, 'smithy');
             
-            // --- CORRECT PLACEMENT FOR POPULATING THE LOOP TAB ---
             const loopState = (FULL_STATE.loop_module_state || {})[villageId] || {};
             const loopEnabledCheckbox = document.getElementById(`loop-enabled-${villageId}`);
             if (loopEnabledCheckbox) {
@@ -641,7 +640,6 @@ trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px so
                     settlementSlots.forEach((slot, index) => {
                         let villageNameStr = '';
                         if (slot.new_village_id) {
-                            // Find the village name from the main state
                             for (const user in FULL_STATE.village_data) {
                                 const village = (FULL_STATE.village_data[user] || []).find(v => v.id == slot.new_village_id);
                                 if (village) {
@@ -662,9 +660,7 @@ trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px so
             // Populate catapult origin dropdown
             const catapultOriginSelect = document.getElementById(`catapult-origin-village-${villageId}`);
             if (catapultOriginSelect) {
-                // Clear existing options
                 catapultOriginSelect.innerHTML = ''; 
-                
                 let sourceAccountUsername = null;
                 for (const username in FULL_STATE.village_data) {
                     if (Array.isArray(FULL_STATE.village_data[username]) && FULL_STATE.village_data[username].some(v => v.id == villageId)) {
@@ -672,7 +668,6 @@ trainingContent += `<div class="form-group" style="padding: 1rem; border: 1px so
                         break;
                     }
                 }
-                
                 if(sourceAccountUsername){
                     const allVillages = FULL_STATE.village_data[sourceAccountUsername] || [];
                     allVillages.forEach(v => {
