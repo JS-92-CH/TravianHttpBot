@@ -75,30 +75,40 @@ class Module(BaseModule):
         if goal_task.get('type') == 'resource_plan':
             target_level = goal_task.get('level')
             
-            # Factor in the buildings already in the server queue
-            queued_field_ids = []
-            for build in active_builds:
-                 # Regex to find a location ID which is usually preceded by a space and a dot
-                match = re.search(r'\s(\d+)\s*\.', build.get('name', ''))
-                if match:
-                    # This logic is a bit fragile and depends on the naming convention in the queue.
-                    # A more robust solution would be to track builds initiated by the bot.
-                    pass
+            # --- START OF IMPROVED LOGIC ---
 
+            # Extract the names of buildings currently in the server-side construction queue.
+            # This makes the bot aware of what it has already told the server to do.
+            queued_building_names = [re.sub(r'\sLevel\s\d+', '', build['name']).strip() for build in active_builds]
 
             resource_fields = sorted(
                 [b for b in all_buildings if 1 <= b['id'] <= 18], 
                 key=lambda x: (x.get('level', 0), x['id'])
             )
             
-            field_to_upgrade = next((field for field in resource_fields if field.get('level', 0) < target_level), None)
+            # Filter out fields that are already being upgraded to avoid re-queueing them.
+            available_fields_to_upgrade = [
+                field for field in resource_fields 
+                if gid_name(field.get('gid')) not in queued_building_names
+            ]
+
+            # Find the first available field that is below the target level.
+            field_to_upgrade = next((field for field in available_fields_to_upgrade if field.get('level', 0) < target_level), None)
 
             if not field_to_upgrade:
-                log.info(f"AGENT({agent.village_name}): Resource plan to level {target_level} is complete. Removing task.")
-                with state_lock:
-                    BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
-                save_config()
-                return 'queue_modified'
+                # If no field is available to upgrade, check if the plan is actually finished.
+                all_fields_at_target = all(f.get('level', 0) >= target_level for f in resource_fields)
+                if all_fields_at_target:
+                    log.info(f"AGENT({agent.village_name}): Resource plan to level {target_level} is complete. Removing task.")
+                    with state_lock:
+                        BOT_STATE["build_queues"][str(agent.village_id)] = build_queue[1:]
+                    save_config()
+                    return 'queue_modified'
+                else:
+                    # If not finished, but no fields are available, it means they are all in the server queue.
+                    # The bot should wait patiently for a slot to open.
+                    log.info(f"AGENT({agent.village_name}): All available resource fields for the plan are already in the build queue. Waiting for an open slot.")
+                    return 0 # Return 0 to signify no action was taken, causing the agent to wait.
 
             action_plan = {'type': 'upgrade', 'location': field_to_upgrade['id'], 'gid': field_to_upgrade['gid'], 'is_new': False}
             log.info(f"AGENT({agent.village_name}): Resource plan: Upgrading {gid_name(action_plan['gid'])} at Loc {action_plan['location']} to Lvl {field_to_upgrade.get('level', 0) + 1}.")
