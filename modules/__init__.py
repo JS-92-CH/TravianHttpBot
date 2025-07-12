@@ -17,7 +17,8 @@ def load_modules(agent):
         'hero.py', 
         'training.py', 
         'demolish.py',
-        'smithyupgrades.py'
+        'smithyupgrades.py',
+        'loop.py'
     ]
 
     for fname in sorted(os.listdir(base_dir)):

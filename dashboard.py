@@ -493,6 +493,19 @@ def handle_update_loop_settings(data):
             BOT_STATE["loop_module_state"][str(village_id)].update(settings)
         save_config()
 
+        if bot_manager_thread and bot_manager_thread.is_alive():
+            with state_lock:
+                agent_found = False
+                for username, agents in bot_manager_thread.running_account_agents.items():
+                    for agent in agents:
+                        if str(agent.village_id) == str(village_id):
+                            log.info(f"Nudging agent for village {agent.village_name} to check new loop settings.")
+                            agent.next_check_time = time.time()
+                            agent_found = True
+                            break
+                    if agent_found:
+                        break
+
 @socketio.on('start_special_agent')
 def handle_start_special_agent(data):
     """Relay from a village agent to the bot manager to start a special agent."""
