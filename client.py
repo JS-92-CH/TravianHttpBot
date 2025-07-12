@@ -1105,6 +1105,7 @@ class TravianClient:
         """Trains a specific amount of settlers and returns the total queue time."""
         log.info(f"[{self.username}] Attempting to train {amount} settlers in village {village_id} from GID {building_gid}.")
         try:
+            # Find the location ID of the building (Residence/Palace)
             dorf2_resp = self.sess.get(f"{self.server_url}/dorf2.php?newdid={village_id}", timeout=15)
             dorf2_soup = BeautifulSoup(dorf2_resp.text, 'html.parser')
             building_slot = dorf2_soup.select_one(f'.buildingSlot.g{building_gid}')
@@ -1113,6 +1114,7 @@ class TravianClient:
                 return False, 0
             location_id = building_slot['data-aid']
 
+            # Get the training page to find the settler info
             train_page_url = f"{self.server_url}/build.php?newdid={village_id}&gid={building_gid}&s=1"
             train_page_resp = self.sess.get(train_page_url, timeout=15)
             train_soup = BeautifulSoup(train_page_resp.text, 'html.parser')
@@ -1122,9 +1124,22 @@ class TravianClient:
                 log.error(f"[{self.username}] Could not find training form for settlers.")
                 return False, 0
 
-            payload = {i['name']: i['value'] for i in form.find_all('input', {'type': 'hidden'})}
+            # Find the time per settler
+            time_per_settler = 0
+            duration_div = train_soup.find('div', class_='duration')
+            if duration_div:
+                time_str_match = re.search(r'(\d{2}):(\d{2}):(\d{2})', duration_div.text)
+                if time_str_match:
+                    h, m, s = map(int, time_str_match.groups())
+                    time_per_settler = h * 3600 + m * 60 + s
+
+            if time_per_settler == 0:
+                log.warning(f"[{self.username}] Could not parse time per settler. Cannot calculate total duration.")
+                # We can proceed but the wait time will be incorrect
             
-            settler_input = train_soup.find('input', {'name': re.compile(r't\d0')})
+            # Prepare and send the training request
+            payload = {i['name']: i['value'] for i in form.find_all('input', {'type': 'hidden'})}
+            settler_input = train_soup.find('input', {'name': re.compile(r't\d0')}) # Matches t10, t20, t30
             if not settler_input:
                 log.error(f"[{self.username}] Could not find settler input field on training page.")
                 return False, 0
@@ -1135,24 +1150,34 @@ class TravianClient:
             post_url = urljoin(self.server_url, form['action'])
             resp = self.sess.post(post_url, data=payload, headers={'Referer': train_page_url})
             
+            # Check for success and calculate total duration
             if "in training" in resp.text.lower() or "duration" in resp.text.lower():
                 log.info(f"[{self.username}] Successfully queued {amount} settlers for training.")
+                
+                # Get current queue duration
                 soup = BeautifulSoup(resp.text, 'html.parser')
-                duration = 0
+                current_queue_duration = 0
                 if queue_table := soup.find('table', class_='under_progress'):
                     timers = queue_table.select('td.dur span.timer')
                     if timers:
-                        duration = int(timers[-1].get('value', 0))
-                
-                if duration > 0:
-                    log.info(f"[{self.username}] Total training time for settlers: {duration}s.")
-                else:
-                    log.warning(f"[{self.username}] Could not parse settler training time, will use a default wait.")
-                    duration = 300
+                        # The last timer is the total duration of the queue
+                        current_queue_duration = int(timers[-1].get('value', 0))
 
-                return True, duration
+                # This is a fallback calculation in case the queue parsing is tricky
+                calculated_duration = time_per_settler * amount
+                
+                # The most reliable duration is the one parsed from the updated queue
+                final_duration = current_queue_duration if current_queue_duration > 0 else calculated_duration
+
+                if final_duration > 0:
+                    log.info(f"[{self.username}] Total training time for settlers is now {final_duration}s.")
+                else:
+                    log.warning(f"[{self.username}] Could not determine settler training time, will use a default wait.")
+                    final_duration = 300 # Default to 5 minutes as a safe fallback
+
+                return True, final_duration
             else:
-                log.error(f"[{self.username}] Failed to queue settlers. Response might indicate lack of resources.")
+                log.error(f"[{self.username}] Failed to queue settlers. Response might indicate lack of resources or other issues.")
                 return False, 0
 
         except Exception as e:

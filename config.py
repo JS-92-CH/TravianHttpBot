@@ -143,6 +143,8 @@ BOT_STATE: Dict[str, Any] = {
     { "type": "building", "gid": 11, "level": 16 },                 # Granary
     { "type": "building", "gid": 16, "level": 20 },                 # Rally Point
     { "type": "building", "gid": 31, "level": 20 },                 # City Wall
+    { "type": "building", "gid": 22, "level": 20 },                 # Academy
+    { "type": "building", "gid": 19, "level": 20 },                 # Barracks
     { "type": "building", "gid": 17, "level": 20 }                 # Marketplace
 ],
         "Roman": [

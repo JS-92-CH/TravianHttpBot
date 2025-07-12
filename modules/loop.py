@@ -40,18 +40,29 @@ class Module(BaseModule):
 
         self.manage_settlement_slots(village_data, loop_state)
 
+        # Check if any slot is currently training settlers. If so, don't start a new training.
+        is_training_settlers = any(s.get("status") == "training_settlers" for s in loop_state.get("settlement_slots", []))
+
         for i, slot_state in enumerate(loop_state.get("settlement_slots", [])):
             log.info(f"[{agent.village_name}] Loop slot {i+1} active. Current status: {slot_state.get('status', 'unknown')}")
 
             status = slot_state.get("status")
             if status == "idle":
-                if self.start_settling_process(agent, village_data, slot_state):
-                    if slot_state["status"] == "finding_village":
-                        self.find_and_send_settlers(agent, village_data, slot_state)
+                if not is_training_settlers:
+                    if self.start_settling_process(agent, village_data, slot_state):
+                        # If we just started training, break the loop to not start another one in the same tick.
+                        if slot_state["status"] == "training_settlers":
+                            break
+                        if slot_state["status"] == "finding_village":
+                            self.find_and_send_settlers(agent, village_data, slot_state)
+                            break # also break after sending settlers
             elif status == "training_settlers":
                 self.check_settler_training(agent, slot_state)
             elif status == "finding_village":
                 self.find_and_send_settlers(agent, village_data, slot_state)
+                # break after sending settlers to not send for another slot in the same tick
+                if slot_state.get("status") == "settling":
+                    break
             elif status == "settling":
                 self.check_settlement_complete(agent, slot_state)
             elif status == "waiting_for_build_up":
@@ -112,10 +123,16 @@ class Module(BaseModule):
     def check_settler_training(self, agent, slot_state):
         end_time = slot_state.get("settler_training_end_time")
         if end_time and time.time() > end_time:
-            log.info(f"[{agent.village_name}] Settlers have finished training for a slot.")
+            log.info(f"[{agent.village_name}] Settlers have finished training for a slot. Immediately proceeding to send them.")
             slot_state["status"] = "finding_village"
             slot_state["settler_training_end_time"] = None
             save_config()
+            
+            village_data = agent.client.fetch_and_parse_village(agent.village_id)
+            if village_data:
+                self.find_and_send_settlers(agent, village_data, slot_state)
+            else:
+                log.warning(f"[{agent.village_name}] Could not fetch village data to send settlers. Will retry on the next tick.")
 
     def find_and_send_settlers(self, agent, village_data, slot_state):
         log.info(f"[{agent.village_name}] Searching for a nearby empty village for a slot...")
@@ -187,40 +204,57 @@ class Module(BaseModule):
             return
 
         log.info(f"[{agent.village_name}] Settler arrival time has passed. Checking for new village...")
-        all_villages = agent.client.get_all_villages()
         
-        new_village = None
-        with state_lock:
-            current_known_villages = BOT_STATE['village_data'][agent.client.username]
-            known_ids = {v['id'] for v in current_known_villages}
-            
-            for v in all_villages:
-                if v['id'] not in known_ids:
-                    new_village = v
-                    break
-
         target_coords = slot_state.get("target_coords")
-        coord_tuple = (target_coords['x'], target_coords['y']) if target_coords else None
+        if not target_coords:
+            log.error(f"[{agent.village_name}] No target coordinates in slot state. Resetting slot.")
+            slot_state["status"] = "idle"
+            save_config()
+            return
 
-        if new_village:
-            log.info(f"[{agent.village_name}] SUCCESS! New village '{new_village['name']}' ({new_village['id']}) has been settled.")
-            slot_state["status"] = "waiting_for_build_up"
-            slot_state["new_village_id"] = new_village['id']
+        # --- START OF MORE RELIABLE NEW VILLAGE DETECTION ---
+        new_village_id = None
+        all_villages = agent.client.get_all_villages()
+        with state_lock:
+            # Get a set of all known village IDs for the current user
+            current_known_villages = BOT_STATE.get("village_data", {}).get(agent.client.username, [])
+            known_ids = {v['id'] for v in current_known_villages}
+
+        # Find any village that is not in our known list
+        for v in all_villages:
+            if v['id'] not in known_ids:
+                # To be sure, let's check its coordinates
+                details = agent.client.fetch_and_parse_village(v['id'])
+                if details and details.get('coords') == target_coords:
+                    new_village_id = v['id']
+                    break
+        # --- END OF DETECTION ---
+
+        coord_tuple = (target_coords['x'], target_coords['y'])
+
+        if new_village_id:
+            log.info(f"[{agent.village_name}] SUCCESS! New village '{new_village_id}' has been settled.")
             
+            # --- START OF STATE PERSISTENCE FIX ---
+            # Save the new village ID directly into the slot state for persistence
+            slot_state["new_village_id"] = new_village_id
+            slot_state["status"] = "waiting_for_build_up"
+            # --- END OF STATE PERSISTENCE FIX ---
+            
+            # Trigger the special agent to start the build-up
             agent.socketio.emit('start_special_agent', {
                 'account_username': agent.client.username,
-                'village_id': new_village['id']
+                'village_id': new_village_id
             })
         else:
             log.error(f"[{agent.village_name}] Settlement failed. New village not found. Resetting slot.")
             slot_state["status"] = "idle"
 
-        # --- START OF CHANGE: Always un-reserve the target after checking ---
+        # Un-reserve the target coordinates
         with state_lock:
-            if coord_tuple and coord_tuple in BOT_STATE["reserved_settle_targets"]:
+            if coord_tuple and coord_tuple in BOT_STATE.get("reserved_settle_targets", []):
                 BOT_STATE["reserved_settle_targets"].remove(coord_tuple)
                 log.info(f"[{agent.village_name}] Un-reserving target {coord_tuple} after settlement check.")
-        # --- END OF CHANGE ---
             
         save_config()
 

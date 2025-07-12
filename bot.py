@@ -48,9 +48,13 @@ class VillageAgent(threading.Thread):
         if self.is_special_agent:
             log.info(f"[SPECIAL AGENT] Started for new village: {self.village_name} ({self.village_id})")
             with state_lock:
-                # Assign the "task_focused" build order
                 task_focused_build_order = BOT_STATE.get("build_templates", {}).get("Task_Focused", [])
-                BOT_STATE["build_queues"][str(self.village_id)] = copy.deepcopy(task_focused_build_order)
+                
+                if task_focused_build_order:
+                    BOT_STATE["build_queues"][str(self.village_id)] = copy.deepcopy(task_focused_build_order)
+                    log.info(f"[SPECIAL AGENT] Successfully assigned 'Task_Focused' build order to village {self.village_id}.")
+                else:
+                    log.warning("[SPECIAL AGENT] Could not find 'Task_Focused' build order in templates.")
             save_config()
             
         log.info(f"Agent started for village: {self.village_name} ({self.village_id})")
@@ -192,6 +196,7 @@ class BotManager(threading.Thread):
         self.hero_module = HeroModule(self)
         self.daemon = True
         self._ui_updater_thread = threading.Thread(target=self._ui_updater, daemon=True)
+        self.next_village_refresh_time = time.time() + 60 # Initial refresh after 1 minute
 
     def _ui_updater(self):
         log.info("UI Updater thread started.")
@@ -261,6 +266,61 @@ class BotManager(threading.Thread):
                     BOT_STATE['village_data'].pop(str(vid), None)
                 BOT_STATE['village_data'].pop(username, None)
 
+    # --- START OF CHANGE ---
+    # Add the new refresh method
+    def refresh_all_villages(self):
+        """Periodically re-fetches the village list for all active accounts."""
+        log.info("Manager: Performing periodic refresh of all village lists...")
+        with state_lock:
+            active_accounts = [acc for acc in BOT_STATE["accounts"] if acc.get('active')]
+
+        for account_info in active_accounts:
+            username = account_info['username']
+            client = self.running_account_clients.get(username)
+            if not client:
+                log.warning(f"Manager: No active client for {username} during village refresh, skipping.")
+                continue
+
+            try:
+                log.info(f"Manager: Refreshing villages for {username}...")
+                all_villages = client.get_all_villages()
+
+                if all_villages:
+                    with state_lock:
+                        # Get the current list of known villages for this account
+                        current_village_ids = {v['id'] for v in BOT_STATE['village_data'].get(username, [])}
+                        refreshed_village_ids = {v['id'] for v in all_villages}
+
+                        # Check for new villages
+                        new_villages = [v for v in all_villages if v['id'] not in current_village_ids]
+                        if new_villages:
+                            log.info(f"Manager: Found {len(new_villages)} new village(s) for {username}. Starting new agents...")
+                            for village in new_villages:
+                                agent = VillageAgent(account_info, village, self.socketio)
+                                self.running_account_agents.setdefault(username, []).append(agent)
+                                agent.start()
+
+                        # Check for lost villages
+                        lost_village_ids = current_village_ids - refreshed_village_ids
+                        if lost_village_ids:
+                            log.info(f"Manager: Detected {len(lost_village_ids)} lost village(s) for {username}. Stopping agents...")
+                            agents_to_stop = [agent for agent in self.running_account_agents.get(username, []) if agent.village_id in lost_village_ids]
+                            for agent in agents_to_stop:
+                                agent.stop()
+                            # The main loop will handle joining them
+                        
+                        # Update the state
+                        BOT_STATE['village_data'][username] = all_villages
+                    
+                    # Emit an update to the UI
+                    self.socketio.emit('villages_discovered', {'username': username, 'villages': all_villages})
+                    log.info(f"Manager: Successfully refreshed and reconciled villages for {username}.")
+                else:
+                    log.warning(f"Manager: Could not refresh villages for {username}, list was empty.")
+            except Exception as e:
+                log.error(f"Manager: Error refreshing villages for {username}: {e}", exc_info=True)
+    # --- END OF CHANGE ---
+
     def run(self):
         log.info("Bot Manager thread started and is now monitoring accounts.")
         self._ui_updater_thread.start()
@@ -280,6 +340,10 @@ class BotManager(threading.Thread):
 
                 for username_to_stop in running_usernames - active_usernames:
                     self._stop_agents_for_account(username_to_stop)
+                
+                if time.time() >= self.next_village_refresh_time:
+                    self.refresh_all_villages()
+                    self.next_village_refresh_time = time.time() + 60
                 
                 for username in active_usernames:
                     client = self.running_account_clients.get(username)
